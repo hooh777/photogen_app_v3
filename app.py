@@ -1,17 +1,10 @@
-# app.py
 import gradio as gr
 import yaml
-import os
-import time
-import numpy as np
-from PIL import Image
 import logging
-
 from core.generator import Generator
 from core.ui import create_ui
 from core.secure_storage import SecureStorage
-from core import constants as const, utils
-from core.handlers.demo_handler import DemoHandler
+from core import constants as const
 from core.handlers.i2i_handler import I2IHandler
 from core.handlers.t2i_handler import T2IHandler
 
@@ -25,10 +18,8 @@ class PhotoGenApp:
         
         self.secure_storage = SecureStorage()
         self.generator = Generator(self.config)
-        
         self.demo, self.ui, self.states = create_ui()
 
-        self.demo_handler = DemoHandler(self.ui, self.generator, self.secure_storage, self.config)
         self.i2i_handler = I2IHandler(self.ui, self.generator, self.secure_storage)
         self.t2i_handler = T2IHandler(self.ui, self.generator, self.secure_storage)
 
@@ -37,25 +28,19 @@ class PhotoGenApp:
     
     def _register_event_handlers(self):
         with self.demo:
-            self.ui['mode_tabs'].select(self.switch_main_view, None, [self.ui['output_gallery'], self.ui['i2i_interactive_canvas']])
+            self.demo.load(self.load_app_state, outputs=[self.ui['provider_select'], self.ui['api_key_input'], self.ui['pro_api_key_input']])
             
-            self.ui['t2i_prompt'].change(fn=self.update_token_count, inputs=self.ui['t2i_prompt'], outputs=self.ui['t2i_token_counter'])
-            self.ui['i2i_prompt'].change(fn=self.update_token_count, inputs=self.ui['i2i_prompt'], outputs=self.ui['i2i_token_counter'])
-            
-            self.demo_handler.register_event_handlers()
-            self.i2i_handler.register_event_handlers()
-            self.t2i_handler.register_event_handlers()
-            
-            self.ui['save_btn'].click(
-                lambda imgs: self.save_image(imgs[0] if isinstance(imgs, list) else imgs, "photogen"),
-                inputs=[self.ui['output_gallery']], 
-                outputs=self.ui['download_output']
+            self.ui['mode_tabs'].select(
+                self.switch_main_view, 
+                None, 
+                [self.ui['output_gallery'], self.ui['i2i_interactive_canvas']]
             )
             
-            self._register_api_enhancer_handlers()
+            self.i2i_handler.register_event_handlers()
+            self.t2i_handler.register_event_handlers()
+            self._register_api_key_handlers()
 
-    def _register_api_enhancer_handlers(self):
-        """Registers the event handlers for the API key settings."""
+    def _register_api_key_handlers(self):
         self.ui['provider_select'].change(fn=self.load_saved_key, inputs=self.ui['provider_select'], outputs=self.ui['api_key_input'])
         self.ui['save_api_key_btn'].click(self.save_enhancer_api_key, inputs=[self.ui['provider_select'], self.ui['api_key_input']])
         self.ui['clear_api_key_btn'].click(lambda p: self.secure_storage.clear_api_key(p), inputs=[self.ui['provider_select']], outputs=self.ui['api_key_input'])
@@ -67,40 +52,30 @@ class PhotoGenApp:
         """Shows/hides the correct output view based on the selected tab."""
         if evt.index == 1: # Index 1 is the "Edit" tab
             return gr.update(visible=False), gr.update(visible=True)
-        else: # "Create" and "Demo" tabs use the gallery
+        else: # "Create" tab uses the gallery
             return gr.update(visible=True), gr.update(visible=False)
 
-    def update_token_count(self, prompt_text):
-        if self.generator.tokenizer is None: return "Tokenizer not available."
-        max_length = 77 
-        if not prompt_text: return f"Tokens: 0 / {max_length}"
-        count = len(self.generator.tokenizer.encode(prompt_text))
-        message = f"Tokens: {count} / {max_length}"
-        if count > max_length: message += " ⚠️ **Warning:** Prompt will be truncated!"
-        return message
+    def load_app_state(self):
+        providers_from_config = self.config.get('enhancer_providers', [])
+        if isinstance(providers_from_config, dict):
+            enhancer_providers = list(providers_from_config.keys())
+        elif isinstance(providers_from_config, list):
+            enhancer_providers = providers_from_config
+        else:
+            enhancer_providers = []
 
-    def save_image(self, img, img_type):
-        if img is None:
-            gr.Warning("No image to save.")
-            return
-        os.makedirs(const.OUTPUTS_DIR, exist_ok=True)
+        first_provider = enhancer_providers[0] if enhancer_providers else None
+        enhancer_key = self.secure_storage.load_api_key(first_provider) if first_provider else ""
+        pro_model_key = self.secure_storage.load_api_key(const.FLUX_PRO_API)
         
-        if isinstance(img, tuple):
-            img = img[0]
-
-        pil_img = Image.fromarray(img) if isinstance(img, np.ndarray) else img
-        filepath = f"{const.OUTPUTS_DIR}/{img_type}_output_{int(time.time())}.png"
-        pil_img.save(filepath)
-        gr.Info(f"Image saved to {filepath}")
-        return gr.update(value=filepath, visible=True)
+        return gr.update(choices=enhancer_providers, value=first_provider), enhancer_key, pro_model_key
 
     def load_saved_key(self, provider_name):
-        """Loads the API key for the selected provider from secure storage."""
         return self.secure_storage.load_api_key(provider_name)
 
     def save_enhancer_api_key(self, provider_name, api_key):
         if not provider_name:
-            gr.Warning("Please select an LLM Provider first.")
+            gr.Warning("Please select a Provider first.")
             return
         self.secure_storage.save_api_key(provider_name, api_key)
         gr.Info(f"API key for {provider_name} has been saved securely.")

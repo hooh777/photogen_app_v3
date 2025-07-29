@@ -17,8 +17,8 @@ GROQ_CLOUD = "Grok Cloud (groq.com)"
 GROK_3 = "Grok-3 (x.ai)"
 
 # --- I2I Canvas Tools ---
-PIN_TOOL = "📍 Place Pin"
-ANCHOR_TOOL = "⚓ Select Anchor"
+BOX_START_TOOL = "Define Box (Start)"
+BOX_END_TOOL = "Define Box (End)"
 
 # --- File & Directory Naming ---
 OUTPUTS_DIR = "outputs"

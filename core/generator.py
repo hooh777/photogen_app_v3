@@ -151,13 +151,19 @@ class Generator:
         else:
             raise ValueError(f"Invalid model choice: {model_choice}")
             
-    def image_to_image(self, source_image_np, prompt, steps, guidance, model_choice, num_images, api_key="", progress=gr.Progress()):
+    def image_to_image(self, source_image_np, prompt, steps, guidance, model_choice, num_images, width, height, api_key="", progress=gr.Progress()):
         if model_choice == const.LOCAL_MODEL:
             kontext_pipeline = self._load_local_i2i_pipeline()
             if kontext_pipeline is None:
                 raise gr.Error("Local Image-to-Image pipeline could not be loaded.")
             
             current_image_pil = Image.fromarray(source_image_np)
+            
+            # Resize the input image to match the target dimensions before generation
+            if current_image_pil.size != (width, height):
+                gr.Info(f"Resizing input image to {width}x{height} before generation.")
+                current_image_pil = current_image_pil.resize((width, height), Image.LANCZOS)
+            
             with torch.inference_mode():
                 images = kontext_pipeline(
                     image=current_image_pil, 
@@ -167,10 +173,14 @@ class Generator:
                     num_images_per_prompt=int(num_images)
                 ).images
             return images
+            
         elif model_choice == const.PRO_MODEL:
             if not api_key: raise gr.Error(f"API Key for {const.FLUX_PRO_API} is missing!")
             
             pil_img = Image.fromarray(source_image_np)
+            if pil_img.size != (width, height):
+                pil_img = pil_img.resize((width, height), Image.LANCZOS)
+
             buffered = BytesIO()
             pil_img.save(buffered, format="PNG")
             img_str = base64.b64encode(buffered.getvalue()).decode()

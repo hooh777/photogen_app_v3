@@ -18,10 +18,9 @@ uvicorn[standard]==0.29.0
 
 # --- API Clients & Web ---
 requests
-google-generativeai
 python-dotenv
-openai
-grok
+openai  # Used for both OpenAI and x.ai (Grok) APIs
+groq    # Used for Groq Cloud API
 
 # --- Utilities ---
 PyYAML

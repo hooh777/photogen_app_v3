@@ -14,11 +14,11 @@ defaults:
     guidance: 3.0
 
 # LLM providers for the prompt enhancer
+# Only providers with working implementations are included
 enhancer_providers:
-  - "Google Gemini"
-  - "OpenAI (GPT)"
-  - "Grok Cloud (groq.com)"
-  - "Grok-3 (x.ai)"
+  - "Qwen-VL-Max (Alibaba Cloud)"  # ✅ Premier vision + text enhancement
+  - "Grok-3 (x.ai)"        # ✅ Full vision + text enhancement support
+  - "Grok Cloud (groq.com)" # ✅ Fast text-only enhancement
 
 # API-based model configurations
 api_models:

@@ -1,14 +1,15 @@
 # core/enhancer.py
 import os
 import abc
-import google.generativeai as genai
-from openai import OpenAI
 from groq import Groq
+from openai import OpenAI
 from PIL import Image
 import numpy as np
 import logging
 
 from core import constants as const
+import requests
+import json
 
 class Enhancer(abc.ABC):
     """Abstract base class for all prompt enhancers."""
@@ -43,7 +44,19 @@ class Enhancer(abc.ABC):
         except FileNotFoundError:
             logging.error("prompt_guide.md not found. Please ensure the file exists in the main project directory.")
             # Fallback to a basic instruction if the file is missing
-            prompt_template = "Enhance this prompt: {base_prompt}"
+            prompt_template = """
+            Please enhance this image generation prompt: "{base_prompt}"
+            
+            Provide three enhanced versions:
+            1. **Detailed Version**: Add specific details about lighting, composition, and technical aspects
+            2. **Stylized Version**: Apply artistic style and mood enhancements 
+            3. **Rephrased Version**: Rewrite with better structure and flow
+            
+            Format your response exactly as:
+            **Detailed:** [enhanced prompt]
+            **Stylized:** [enhanced prompt]  
+            **Rephrased:** [enhanced prompt]
+            """
 
         return prompt_template.format(
             image_context_instruction=image_context_instruction,
@@ -51,78 +64,289 @@ class Enhancer(abc.ABC):
         )
 
     def parse_response(self, text):
-        """Parses the LLM's response text."""
-        parts = text.split('---')
-        detailed = parts[0].strip() if len(parts) > 0 else "Could not generate."
-        stylized = parts[1].strip() if len(parts) > 1 else "Could not generate."
-        rephrased = parts[2].strip() if len(parts) > 2 else "Could not generate."
-        return detailed, stylized, rephrased
-
-class GeminiEnhancer(Enhancer):
-    def setup_client(self):
-        genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
-
-    def enhance(self, base_prompt, image=None):
-        instruction = self.get_instruction(base_prompt, has_image=(image is not None))
-        content = [instruction]
-        if image is not None:
-            pil_image = Image.fromarray(image)
-            content.insert(0, pil_image)
+        """Parses the LLM's response text into three prompt variations."""
         try:
-            response = self.model.generate_content(content)
-            return self.parse_response(response.text)
+            # Look for the formatted response pattern
+            lines = text.split('\n')
+            detailed = ""
+            stylized = ""
+            rephrased = ""
+            
+            current_section = None
+            for line in lines:
+                line = line.strip()
+                if line.startswith('**Detailed:**'):
+                    detailed = line.replace('**Detailed:**', '').strip()
+                    current_section = 'detailed'
+                elif line.startswith('**Stylized:**'):
+                    stylized = line.replace('**Stylized:**', '').strip()
+                    current_section = 'stylized'
+                elif line.startswith('**Rephrased:**'):
+                    rephrased = line.replace('**Rephrased:**', '').strip()
+                    current_section = 'rephrased'
+                elif line and current_section:
+                    # Continue previous section if no new marker found
+                    if current_section == 'detailed' and not detailed:
+                        detailed = line
+                    elif current_section == 'stylized' and not stylized:
+                        stylized = line
+                    elif current_section == 'rephrased' and not rephrased:
+                        rephrased = line
+            
+            # Fallback to simple split if structured parsing fails
+            if not detailed or not stylized or not rephrased:
+                parts = text.split('---')
+                detailed = detailed or (parts[0].strip() if len(parts) > 0 else "Enhanced version of the prompt")
+                stylized = stylized or (parts[1].strip() if len(parts) > 1 else "Stylized version of the prompt")
+                rephrased = rephrased or (parts[2].strip() if len(parts) > 2 else "Rephrased version of the prompt")
+            
+            return detailed, stylized, rephrased
+            
         except Exception as e:
-            logging.error("Gemini API Error", exc_info=True)
-            return f"API Error: {e}", f"API Error: {e}", f"API Error: {e}"
-
-class OpenAIEnhancer(Enhancer):
-    def setup_client(self):
-        self.client = OpenAI(api_key=self.api_key)
-
-    def enhance(self, base_prompt, image=None):
-        instruction = self.get_instruction(base_prompt, has_image=(image is not None))
-        messages = [{"role": "user", "content": instruction}]
-        # NOTE: Full vision support for OpenAI requires encoding the image and adding it to the message list.
-        # This is a placeholder for text-only enhancement.
-        if image is not None:
-            logging.info("OpenAI vision enhancement called (image data not yet fully implemented in this example).")
-        try:
-            response = self.client.chat.completions.create(
-                model="gpt-4o-mini", messages=messages
-            )
-            return self.parse_response(response.choices[0].message.content)
-        except Exception as e:
-            logging.error("OpenAI API Error", exc_info=True)
-            return f"API Error: {e}", f"API Error: {e}", f"API Error: {e}"
+            logging.error(f"Error parsing response: {e}")
+            return "Could not generate detailed version.", "Could not generate stylized version.", "Could not generate rephrased version."
 
 class GroqEnhancer(Enhancer):
-    def setup_client(self): self.client = Groq(api_key=self.api_key)
+    def setup_client(self): 
+        self.client = Groq(api_key=self.api_key)
+    
     def enhance(self, base_prompt, image=None):
-        if image is not None: return "This provider does not support images.", "", ""
+        # Note: Groq doesn't have vision models, so we only do text enhancement
+        if image is not None: 
+            logging.warning("Groq does not support vision. Using text-only enhancement.")
+        
         instruction = self.get_instruction(base_prompt)
         try:
-            response = self.client.chat.completions.create(model="llama3-70b-8192", messages=[{"role": "user", "content": instruction}])
+            response = self.client.chat.completions.create(
+                model="llama3-70b-8192", 
+                messages=[{"role": "user", "content": instruction}]
+            )
             return self.parse_response(response.choices[0].message.content)
         except Exception as e: 
             logging.error("Groq API Error", exc_info=True)
             return f"API Error: {e}", f"API Error: {e}", f"API Error: {e}"
 
 class XaiEnhancer(Enhancer):
-    def setup_client(self): self.client = OpenAI(api_key=self.api_key, base_url="https://api.x.ai/v1")
+    def setup_client(self): 
+        self.client = OpenAI(api_key=self.api_key, base_url="https://api.x.ai/v1")
+    
     def enhance(self, base_prompt, image=None):
-        if image is not None: return "This provider does not support images.", "", ""
+        if image is not None:
+            return self._enhance_with_vision(base_prompt, image)
+        else:
+            return self._enhance_text_only(base_prompt)
+    
+    def _enhance_text_only(self, base_prompt):
+        """Text-only prompt enhancement using Grok."""
         instruction = self.get_instruction(base_prompt)
         try:
-            response = self.client.chat.completions.create(model="grok-4", messages=[{"role": "user", "content": instruction}])
+            response = self.client.chat.completions.create(
+                model="grok-beta", 
+                messages=[{"role": "user", "content": instruction}]
+            )
             return self.parse_response(response.choices[0].message.content)
         except Exception as e: 
-            logging.error("X.ai API Error", exc_info=True)
+            logging.error("Grok API Error", exc_info=True)
             return f"API Error: {e}", f"API Error: {e}", f"API Error: {e}"
+    
+    def _enhance_with_vision(self, base_prompt, image):
+        """Vision-enhanced prompt generation using Grok vision models."""
+        import base64
+        from io import BytesIO
+        from PIL import Image as PILImage
+        
+        # Convert numpy array to PIL Image if needed
+        if isinstance(image, np.ndarray):
+            pil_image = PILImage.fromarray(image)
+        else:
+            pil_image = image
+            
+        # Convert to base64
+        buffered = BytesIO()
+        pil_image.save(buffered, format="PNG")
+        img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+        
+        vision_instruction = f"""
+        I want to improve this image generation prompt: "{base_prompt}"
+        
+        Please analyze the image and provide three enhanced versions:
+        1. **Detailed Version**: Add specific details about lighting, composition, and technical aspects
+        2. **Stylized Version**: Apply artistic style and mood enhancements 
+        3. **Rephrased Version**: Rewrite with better structure and flow
+        
+        Format your response exactly as:
+        **Detailed:** [enhanced prompt]
+        **Stylized:** [enhanced prompt]  
+        **Rephrased:** [enhanced prompt]
+        """
+        
+        try:
+            response = self.client.chat.completions.create(
+                model="grok-vision-beta",  # Use Grok vision model
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": vision_instruction},
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": f"data:image/png;base64,{img_base64}"}
+                            }
+                        ]
+                    }
+                ]
+            )
+            return self.parse_response(response.choices[0].message.content)
+        except Exception as e:
+            logging.error("Grok Vision API Error", exc_info=True)
+            # Fallback to text-only enhancement
+            logging.info("Falling back to text-only enhancement...")
+            return self._enhance_text_only(base_prompt)
+
+class QwenVLMaxEnhancer(Enhancer):
+    def setup_client(self):
+        # No client setup needed for DashScope API - we use requests directly
+        pass
+    
+    def enhance(self, base_prompt, image=None):
+        if image is not None:
+            return self._enhance_with_vision(base_prompt, image)
+        else:
+            return self._enhance_text_only(base_prompt)
+    
+    def _enhance_text_only(self, base_prompt):
+        """Text-only prompt enhancement using Qwen-VL-Max."""
+        instruction = self.get_instruction(base_prompt)
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": "qwen-max",  # Use text-only model for text enhancement
+            "input": {
+                "messages": [
+                    {"role": "user", "content": instruction}
+                ]
+            },
+            "parameters": {
+                "max_tokens": 1000,
+                "temperature": 0.7
+            }
+        }
+        
+        try:
+            response = requests.post(
+                "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation",
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                if 'output' in result and 'choices' in result['output']:
+                    content = result['output']['choices'][0]['message']['content']
+                    return self.parse_response(content)
+                else:
+                    logging.error("Unexpected response format from Qwen-Max")
+                    return f"API Error: Unexpected response format", f"API Error: Unexpected response format", f"API Error: Unexpected response format"
+            else:
+                logging.error(f"Qwen-Max API error: {response.status_code} - {response.text}")
+                return f"API Error: {response.status_code}", f"API Error: {response.status_code}", f"API Error: {response.status_code}"
+                
+        except Exception as e:
+            logging.error("Qwen-Max API Error", exc_info=True)
+            return f"API Error: {e}", f"API Error: {e}", f"API Error: {e}"
+    
+    def _enhance_with_vision(self, base_prompt, image):
+        """Vision-enhanced prompt generation using Qwen-VL-Max."""
+        import base64
+        from io import BytesIO
+        from PIL import Image as PILImage
+        
+        # Convert numpy array to PIL Image if needed
+        if isinstance(image, np.ndarray):
+            pil_image = PILImage.fromarray(image)
+        else:
+            pil_image = image
+            
+        # Convert to base64
+        buffered = BytesIO()
+        pil_image.save(buffered, format="PNG")
+        img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+        
+        vision_instruction = f"""
+        I want to improve this image generation prompt: "{base_prompt}"
+        
+        Please analyze the provided image and provide three enhanced versions:
+        1. **Detailed Version**: Add specific details about lighting, composition, and technical aspects based on what you see
+        2. **Stylized Version**: Apply artistic style and mood enhancements that complement the image
+        3. **Rephrased Version**: Rewrite with better structure and flow while maintaining visual consistency
+        
+        Format your response exactly as:
+        **Detailed:** [enhanced prompt]
+        **Stylized:** [enhanced prompt]  
+        **Rephrased:** [enhanced prompt]
+        """
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": "qwen-vl-max",
+            "input": {
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"text": vision_instruction},
+                            {"image": f"data:image/png;base64,{img_base64}"}
+                        ]
+                    }
+                ]
+            },
+            "parameters": {
+                "max_tokens": 1000,
+                "temperature": 0.7
+            }
+        }
+        
+        try:
+            response = requests.post(
+                "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation",
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                if 'output' in result and 'choices' in result['output']:
+                    content = result['output']['choices'][0]['message']['content']
+                    return self.parse_response(content)
+                else:
+                    logging.error("Unexpected response format from Qwen-VL-Max")
+                    # Fallback to text-only enhancement
+                    logging.info("Falling back to text-only enhancement...")
+                    return self._enhance_text_only(base_prompt)
+            else:
+                logging.error(f"Qwen-VL-Max API error: {response.status_code} - {response.text}")
+                # Fallback to text-only enhancement
+                logging.info("Falling back to text-only enhancement...")
+                return self._enhance_text_only(base_prompt)
+                
+        except Exception as e:
+            logging.error("Qwen-VL-Max Vision API Error", exc_info=True)
+            # Fallback to text-only enhancement
+            logging.info("Falling back to text-only enhancement...")
+            return self._enhance_text_only(base_prompt)
 
 ENHANCER_MAP = {
-    const.GOOGLE_GEMINI: GeminiEnhancer,
-    const.OPENAI_GPT: OpenAIEnhancer,
+    const.QWEN_VL_MAX: QwenVLMaxEnhancer,
     const.GROQ_CLOUD: GroqEnhancer,
     const.GROK_3: XaiEnhancer,
 }
@@ -130,5 +354,5 @@ ENHANCER_MAP = {
 def get_enhancer(provider_name, api_key):
     enhancer_class = ENHANCER_MAP.get(provider_name)
     if not enhancer_class:
-        raise ValueError(f"Invalid provider selected: {provider_name}")
+        raise ValueError(f"Invalid provider selected: {provider_name}. Available providers: {list(ENHANCER_MAP.keys())}")
     return enhancer_class(api_key=api_key)

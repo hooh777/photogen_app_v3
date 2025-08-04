@@ -1,5 +1,6 @@
 import gradio as gr
 import numpy as np
+import os
 from PIL import Image
 from core import utils, constants as const
 
@@ -9,6 +10,35 @@ class DemoHandler:
         self.generator = generator
         self.secure_storage = secure_storage
         self.config = config
+        self._load_demo_assets()
+
+    def _load_demo_assets(self):
+        """Load available demo assets into galleries."""
+        # Load background images
+        background_images = []
+        for bg_config in self.config.get('demo_backgrounds', []):
+            bg_path = bg_config['background_path']
+            if os.path.exists(bg_path):
+                background_images.append(bg_path)
+            else:
+                # Create placeholder or skip
+                print(f"Warning: Background image not found: {bg_path}")
+        
+        # Load object images  
+        object_images = []
+        for obj_config in self.config.get('demo_objects', []):
+            obj_path = obj_config['image']
+            if os.path.exists(obj_path):
+                object_images.append(obj_path)
+            else:
+                # Create placeholder or skip
+                print(f"Warning: Object image not found: {obj_path}")
+        
+        # Update galleries if they exist
+        if background_images and 'demo_background_gallery' in self.ui:
+            self.ui['demo_background_gallery'].value = background_images
+        if object_images and 'demo_object_gallery' in self.ui:
+            self.ui['demo_object_gallery'].value = object_images
 
     def register_event_handlers(self):
         """Registers all event handlers for the Demo panel."""

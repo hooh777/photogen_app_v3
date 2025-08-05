@@ -24,8 +24,8 @@ enhancer_providers:
 api_models:
   pro_t2i:
     api_base: "https://api.bfl.ai"
-    model_name: "flux-1-pro"
-    endpoint: "/v1/flux-pro"
+    model_name: "flux-1-kontext-pro"
+    endpoint: "/v1/flux-kontext-pro"
   pro_i2i:
     api_base: "https://api.bfl.ai"
     model_name: "flux-1-kontext-pro"

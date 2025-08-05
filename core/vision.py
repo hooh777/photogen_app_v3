@@ -77,40 +77,48 @@ Look at the background image which shows a scene with a blue selection box indic
 1. A background scene with a blue selection box showing the placement location
 2. The object that will be placed there
 
-Describe WHERE the object will be placed in 10 words or less.
+Describe the SURFACE TYPE only for object placement in around 10 words or less.
 
-Format: "on the [surface] in the [location]"
+Format: "on the [surface type]" or "in the [immediate area]"
 
 Examples:
-- "on the wooden table in the kitchen"
-- "on the marble countertop near the window"
-- "on the glass coffee table in living room"
-- "on the fabric sofa in the bedroom"
+- "on the existing surface"
+- "on the wooden surface"
+- "on the fabric surface"
+- "in the grass area"
+- "on the stone surface"
+- "on the metal surface"
 
-Be BRIEF and focus on:
-- Surface type (wooden, marble, glass, fabric, etc.)
-- Location (kitchen, living room, bedroom, etc.)
+Focus ONLY on:
+- Surface material type (wood, fabric, grass, stone, metal, glass, etc.)
+- Use "existing surface" if surface type is unclear
 
-Keep it simple and short!"""
+DO NOT mention rooms, furniture names, or scene descriptions.
+Keep it extremely concise - surface type only."""
 
     else:
         # Fallback for surface analysis only
-        content[0]["text"] = """Analyze the background scene and describe the selected area (marked with blue box) with specific details about the surface and context.
+        content[0]["text"] = """Analyze the background scene and describe only the SURFACE TYPE in the selected area (marked with blue box) in around 10 words or less.
 
-Be SPECIFIC about:
-- What type of surface/material (wooden table, marble countertop, fabric sofa, glass shelf, etc.)
-- What room or setting (living room, kitchen, bedroom, office, etc.)
-- What furniture or objects are nearby
-- Position within the space (center, corner, edge, etc.)
+Be SPECIFIC about SURFACE MATERIAL only:
+- Surface material (wooden, marble, fabric, stone, glass, metal, grass, etc.)
 
-Format: "The selected area is [specific detailed location]."
+Format: "on the [surface type]" or "in the [immediate area type]"
 
 Examples:
-- "The selected area is on the wooden dining table near the large window, positioned in the center-right area next to the ceramic vase."
-- "The selected area is on the marble kitchen countertop beside the stainless steel sink, near the corner by the window."
-- "The selected area is on the fabric sofa in the living room, positioned on the left cushion next to the throw pillow."
+- "on the wooden surface"
+- "on the marble surface" 
+- "on the fabric surface"
+- "in the grass area"
+- "on the stone surface"
+- "on the existing surface"
 
-Focus on specific materials and spatial context."""
+DO NOT mention:
+- Room names (kitchen, living room, etc.)
+- Furniture names (table, sofa, etc.)
+- Scene descriptions or context
+
+Keep it focused - surface material type only."""
 
     try:
         logging.info("Sending contextual scene analysis to Qwen-VL-Max...")
@@ -185,18 +193,7 @@ Focus on specific materials and spatial context."""
             else:
                 final_placement = f"on {placement_desc}"
             
-            # Limit length to keep responses concise (max 50 characters for better UX)
-            if len(final_placement) > 50:
-                # Try to truncate at a natural break point
-                words = final_placement.split()
-                truncated = ""
-                for word in words:
-                    if len(truncated + word + " ") <= 47:  # Leave room for "..."
-                        truncated += word + " "
-                    else:
-                        break
-                final_placement = truncated.strip() + "..."
-            
+            # Keep the full detailed analysis - no truncation
             logging.info(f"Qwen-VL-Max contextual analysis: '{description}'")
             logging.info(f"Extracted placement: '{final_placement}'")
             return final_placement

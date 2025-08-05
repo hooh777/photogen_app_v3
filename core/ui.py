@@ -201,7 +201,7 @@ def create_ui():
                     save_btn = gr.Button("💾 Save Selected Image", variant="secondary")
                     download_output = gr.DownloadButton(label="Download Image", visible=False)
                 
-                i2i_interactive_canvas = gr.Image(type="pil", label="📋 Click twice to select areas (Edit Mode)", visible=True, height=None, interactive=True)
+                i2i_interactive_canvas = gr.Image(type="pil", label="📋 Click and drag to select areas (Edit Mode)", visible=True, height=None, interactive=True)
                 with gr.Column(visible=False) as i2i_actions_group:
                     with gr.Row() as i2i_decision_group:
                         accept_btn = gr.Button("✅ Accept", variant="primary")

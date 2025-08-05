@@ -177,13 +177,10 @@ class I2IHandler:
         logging.info(f"Raw click coordinates: {click_coords}")
         logging.info(f"Image dimensions: {img_width}x{img_height}")
         
-        # Use coordinates as-is - the previous scaling detection was too aggressive
+        # Use coordinates as-is
         x, y = click_coords
         
-        # Also display this info to the user via Gradio info
-        gr.Info(f"🎯 Click at {click_coords} on {img_width}x{img_height} image")
-        
-        # Handle edge cases more aggressively - expand the clickable area
+        # Handle edge cases - expand the clickable area
         edge_tolerance = 10  # pixels tolerance for edge detection
         
         # If click is very close to edges, snap to edge
@@ -209,14 +206,23 @@ class I2IHandler:
         
         logging.info(f"Final coordinates: {constrained_coords}")
         
-        if top_left is None or (top_left and bottom_right):
+        # Improved selection logic: Click and drag simulation
+        if top_left is None:
+            # First click - start selection
             new_top_left = constrained_coords
             new_bottom_right = None
-            logging.info(f"Set top-left corner: {new_top_left}")
+            gr.Info(f"🎯 Selection started at ({x}, {y}). Click again to complete the selection area.")
+            logging.info(f"Started selection at: {new_top_left}")
         else:
+            # Second click - complete selection
             new_top_left = top_left
             new_bottom_right = constrained_coords
-            logging.info(f"Set bottom-right corner: {new_bottom_right}")
+            
+            # Calculate selection area size for user feedback
+            width = abs(new_bottom_right[0] - new_top_left[0])
+            height = abs(new_bottom_right[1] - new_top_left[1])
+            gr.Info(f"✅ Selection completed! Area: {width}×{height} pixels. Click 'Smart Prompt' to analyze this region.")
+            logging.info(f"Completed selection: {new_top_left} to {new_bottom_right}")
         
         updated_canvas = self._redraw_canvas(base_img, obj_img, new_top_left, new_bottom_right)
         return updated_canvas, new_top_left, new_bottom_right
@@ -378,9 +384,9 @@ class I2IHandler:
             
             box = (left, top, right, bottom)
             
-            # Draw selection box with enhanced visibility
-            # Semi-transparent blue fill
-            draw.rectangle(box, fill=(0, 100, 255, 80), outline=None)
+            # Draw transparent selection box with visible border
+            # Very light transparent fill (almost invisible)
+            draw.rectangle(box, fill=(0, 100, 255, 20), outline=None)  # Much more transparent (20 instead of 80)
             # White border for contrast
             draw.rectangle(box, fill=None, outline=(255, 255, 255, 255), width=3)
             # Blue border for style
@@ -390,10 +396,10 @@ class I2IHandler:
             corner_marker_size = 8
             # Top-left corner
             draw.rectangle((left, top, left + corner_marker_size, top + corner_marker_size), 
-                         fill=(255, 255, 255, 255), outline=(0, 100, 255, 255), width=1)
+                         fill=(255, 255, 255, 200), outline=(0, 100, 255, 255), width=1)
             # Bottom-right corner
             draw.rectangle((right - corner_marker_size, bottom - corner_marker_size, right, bottom), 
-                         fill=(255, 255, 255, 255), outline=(0, 100, 255, 255), width=1)
+                         fill=(255, 255, 255, 200), outline=(0, 100, 255, 255), width=1)
             
         elif top_left:
             # Constrain first click point
@@ -497,12 +503,12 @@ class I2IHandler:
         else:
             gr.Warning("Vision analysis returned generic result. Try selecting a clearer region.")
         
-        new_prompt_part = f", with the object placed {description}"
+        new_prompt_part = f", placed {description}, maintaining the existing background and scene composition"
         
         if existing_prompt and existing_prompt.strip():
             final_prompt = existing_prompt + new_prompt_part
         else:
-            final_prompt = "A photo of the object" + new_prompt_part
+            final_prompt = "Place the object" + new_prompt_part
             
         gr.Info(f"Generated prompt: {final_prompt}")
         status_text = "**Status:** ✅ Smart prompt generated successfully!"

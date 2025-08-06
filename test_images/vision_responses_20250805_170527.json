@@ -1,0 +1,6 @@
+{
+  "model": "Qwen-VL-Max (Alibaba Cloud)",
+  "prompt": "Describe SURFACE TYPE only, Format: 'on the [surface type]'",
+  "timestamp": "2025-08-05T17:05:27.056852",
+  "responses": []
+}

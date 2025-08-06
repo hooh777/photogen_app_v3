@@ -1,0 +1,231 @@
+{
+  "total_images": 20,
+  "categories": {
+    "indoor_tables_surfaces": 5,
+    "indoor_floors_complex": 5,
+    "outdoor_natural": 5,
+    "outdoor_mixed_complex": 5
+  },
+  "test_images": [
+    {
+      "id": 1,
+      "filename": "01_wooden_dining_table.jpg",
+      "category": "indoor_tables_surfaces",
+      "scene_description": "Dining room with wooden table",
+      "expected_surface": "wooden surface",
+      "expected_format": "on the wooden surface",
+      "complexity": "simple",
+      "lighting": "natural",
+      "notes": "Clear wood grain, single material focus"
+    },
+    {
+      "id": 2,
+      "filename": "02_marble_kitchen_counter.jpg",
+      "category": "indoor_tables_surfaces",
+      "scene_description": "Kitchen with marble countertop",
+      "expected_surface": "marble surface",
+      "expected_format": "on the marble surface",
+      "complexity": "simple",
+      "lighting": "artificial",
+      "notes": "White marble with veining patterns"
+    },
+    {
+      "id": 3,
+      "filename": "03_glass_coffee_table.jpg",
+      "category": "indoor_tables_surfaces",
+      "scene_description": "Living room with glass coffee table",
+      "expected_surface": "glass surface",
+      "expected_format": "on the glass surface",
+      "complexity": "simple",
+      "lighting": "mixed",
+      "notes": "Transparent surface, reflective properties"
+    },
+    {
+      "id": 4,
+      "filename": "04_fabric_sofa_cushion.jpg",
+      "category": "indoor_tables_surfaces",
+      "scene_description": "Living room sofa with fabric cushions",
+      "expected_surface": "fabric surface",
+      "expected_format": "on the fabric surface",
+      "complexity": "simple",
+      "lighting": "natural",
+      "notes": "Textured fabric, soft material"
+    },
+    {
+      "id": 5,
+      "filename": "05_ceramic_tile_counter.jpg",
+      "category": "indoor_tables_surfaces",
+      "scene_description": "Bathroom or kitchen with ceramic tiles",
+      "expected_surface": "ceramic surface",
+      "expected_format": "on the ceramic surface",
+      "complexity": "simple",
+      "lighting": "artificial",
+      "notes": "Smooth ceramic with grout lines"
+    },
+    {
+      "id": 6,
+      "filename": "06_hardwood_floor_room.jpg",
+      "category": "indoor_floors_complex",
+      "scene_description": "Living room with hardwood flooring",
+      "expected_surface": "wooden floor",
+      "expected_format": "on the wooden floor",
+      "complexity": "medium",
+      "lighting": "natural",
+      "notes": "Wood planks, natural grain pattern"
+    },
+    {
+      "id": 7,
+      "filename": "07_carpet_bedroom.jpg",
+      "category": "indoor_floors_complex",
+      "scene_description": "Bedroom with carpeted floor",
+      "expected_surface": "carpeted surface",
+      "expected_format": "on the carpeted surface",
+      "complexity": "medium",
+      "lighting": "mixed",
+      "notes": "Soft carpet texture, possibly patterned"
+    },
+    {
+      "id": 8,
+      "filename": "08_concrete_industrial.jpg",
+      "category": "indoor_floors_complex",
+      "scene_description": "Industrial space with concrete floor",
+      "expected_surface": "concrete surface",
+      "expected_format": "on the concrete surface",
+      "complexity": "medium",
+      "lighting": "artificial",
+      "notes": "Raw concrete, industrial setting"
+    },
+    {
+      "id": 9,
+      "filename": "09_kitchen_multiple_surfaces.jpg",
+      "category": "indoor_floors_complex",
+      "scene_description": "Kitchen with multiple visible surfaces",
+      "expected_surface": "tile floor",
+      "expected_format": "on the tile floor",
+      "complexity": "complex",
+      "lighting": "mixed",
+      "notes": "Multiple materials visible - test surface priority"
+    },
+    {
+      "id": 10,
+      "filename": "10_office_desk_area.jpg",
+      "category": "indoor_floors_complex",
+      "scene_description": "Office space with desk and floor",
+      "expected_surface": "wooden desk",
+      "expected_format": "on the wooden desk",
+      "complexity": "complex",
+      "lighting": "artificial",
+      "notes": "Professional environment, mixed materials"
+    },
+    {
+      "id": 11,
+      "filename": "11_green_grass_lawn.jpg",
+      "category": "outdoor_natural",
+      "scene_description": "Open lawn area with green grass",
+      "expected_surface": "grass surface",
+      "expected_format": "on the grass surface",
+      "complexity": "simple",
+      "lighting": "natural",
+      "notes": "Natural grass, outdoor setting"
+    },
+    {
+      "id": 12,
+      "filename": "12_sandy_beach_area.jpg",
+      "category": "outdoor_natural",
+      "scene_description": "Beach or sandy area",
+      "expected_surface": "sand surface",
+      "expected_format": "on the sand surface",
+      "complexity": "simple",
+      "lighting": "natural",
+      "notes": "Fine sand texture, beach environment"
+    },
+    {
+      "id": 13,
+      "filename": "13_rocky_stone_ground.jpg",
+      "category": "outdoor_natural",
+      "scene_description": "Natural area with rocks and stones",
+      "expected_surface": "stone surface",
+      "expected_format": "on the stone surface",
+      "complexity": "medium",
+      "lighting": "natural",
+      "notes": "Natural rock formation, rough texture"
+    },
+    {
+      "id": 14,
+      "filename": "14_wooden_deck_outdoor.jpg",
+      "category": "outdoor_natural",
+      "scene_description": "Outdoor deck or patio with wood planks",
+      "expected_surface": "wooden deck",
+      "expected_format": "on the wooden deck",
+      "complexity": "simple",
+      "lighting": "natural",
+      "notes": "Weathered wood, outdoor treatment"
+    },
+    {
+      "id": 15,
+      "filename": "15_concrete_patio.jpg",
+      "category": "outdoor_natural",
+      "scene_description": "Patio or walkway with concrete surface",
+      "expected_surface": "concrete surface",
+      "expected_format": "on the concrete surface",
+      "complexity": "simple",
+      "lighting": "natural",
+      "notes": "Smooth concrete, outdoor paving"
+    },
+    {
+      "id": 16,
+      "filename": "16_garden_mixed_surfaces.jpg",
+      "category": "outdoor_mixed_complex",
+      "scene_description": "Garden with grass, stone path, and plants",
+      "expected_surface": "grass surface",
+      "expected_format": "on the grass surface",
+      "complexity": "complex",
+      "lighting": "natural",
+      "notes": "Multiple natural materials - test priority detection"
+    },
+    {
+      "id": 17,
+      "filename": "17_street_sidewalk.jpg",
+      "category": "outdoor_mixed_complex",
+      "scene_description": "Urban street with asphalt and sidewalk",
+      "expected_surface": "asphalt surface",
+      "expected_format": "on the asphalt surface",
+      "complexity": "complex",
+      "lighting": "mixed",
+      "notes": "Urban environment, multiple paved surfaces"
+    },
+    {
+      "id": 18,
+      "filename": "18_park_bench_setting.jpg",
+      "category": "outdoor_mixed_complex",
+      "scene_description": "Park area with bench and surrounding ground",
+      "expected_surface": "grass surface",
+      "expected_format": "on the grass surface",
+      "complexity": "medium",
+      "lighting": "natural",
+      "notes": "Park environment, natural and manufactured materials"
+    },
+    {
+      "id": 19,
+      "filename": "19_picnic_table_area.jpg",
+      "category": "outdoor_mixed_complex",
+      "scene_description": "Outdoor picnic area with table and ground",
+      "expected_surface": "wooden table",
+      "expected_format": "on the wooden table",
+      "complexity": "medium",
+      "lighting": "natural",
+      "notes": "Recreation area, table and natural ground"
+    },
+    {
+      "id": 20,
+      "filename": "20_brick_paved_area.jpg",
+      "category": "outdoor_mixed_complex",
+      "scene_description": "Paved area with brick or stone pattern",
+      "expected_surface": "brick surface",
+      "expected_format": "on the brick surface",
+      "complexity": "medium",
+      "lighting": "natural",
+      "notes": "Patterned paving, structured outdoor surface"
+    }
+  ]
+}

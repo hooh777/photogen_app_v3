@@ -1,5 +1,83 @@
 from PIL import Image
 import re
+import math
+
+def merge_images_with_smart_scaling(background_img, object_img, target_size=None):
+    """
+    Intelligently merges background and object images with proportional scaling.
+    If target_size is provided, scales appropriately. Otherwise uses background dimensions.
+    """
+    if not background_img:
+        return object_img if object_img else None
+    if not object_img:
+        return background_img
+    
+    # Determine target size
+    if target_size is None:
+        target_size = background_img.size
+    target_width, target_height = target_size
+    
+    # Scale background to target size
+    if background_img.size != target_size:
+        background_scaled = background_img.resize(target_size, Image.LANCZOS)
+    else:
+        background_scaled = background_img
+    
+    # Improved object scaling to preserve quality
+    bg_area = target_width * target_height
+    obj_area = object_img.width * object_img.height
+    
+    # More conservative scaling - keep object larger to preserve detail
+    # Use 20% of background area instead of 15% for better object preservation
+    target_area_ratio = 0.20
+    
+    # Adjust based on aspect ratios
+    bg_ratio = target_width / target_height
+    if bg_ratio > 2.5:  # Very wide background
+        target_area_ratio *= 0.8  # Less aggressive reduction
+    elif bg_ratio < 0.4:  # Very tall background  
+        target_area_ratio *= 0.9  # Less aggressive reduction
+    
+    # Calculate scale factor with quality preservation bias
+    target_area = bg_area * target_area_ratio
+    scale_factor = math.sqrt(target_area / obj_area)
+    
+    # More conservative clamping - allow larger objects to preserve detail
+    scale_factor = max(0.15, min(scale_factor, 1.5))  # Don't shrink too much, don't grow too much
+    
+    # Ensure minimum viable object size for quality preservation
+    min_obj_dimension = min(target_width, target_height) * 0.15  # At least 15% of smaller dimension
+    
+    # Scale object proportionally
+    new_obj_width = max(int(min_obj_dimension), int(object_img.width * scale_factor))
+    new_obj_height = max(int(min_obj_dimension), int(object_img.height * scale_factor))
+    
+    # Maintain aspect ratio if one dimension was clamped
+    obj_aspect_ratio = object_img.width / object_img.height
+    if new_obj_width / new_obj_height != obj_aspect_ratio:
+        if new_obj_width < new_obj_height * obj_aspect_ratio:
+            new_obj_width = int(new_obj_height * obj_aspect_ratio)
+        else:
+            new_obj_height = int(new_obj_width / obj_aspect_ratio)
+    
+    object_scaled = object_img.resize((new_obj_width, new_obj_height), Image.LANCZOS)
+    
+    # Create side-by-side merged image with better proportions
+    # Reduce gap between background and object
+    gap = min(10, target_width // 50)  # Small gap, proportional to image size
+    merged_width = target_width + new_obj_width + gap
+    merged_height = max(target_height, new_obj_height)
+    
+    merged_image = Image.new('RGB', (merged_width, merged_height), color='white')
+    
+    # Paste background on the left
+    merged_image.paste(background_scaled, (0, 0))
+    
+    # Paste object on the right with small gap, vertically centered
+    obj_y_offset = max(0, (merged_height - new_obj_height) // 2)
+    merged_image.paste(object_scaled, (target_width + gap, obj_y_offset))
+    
+    return merged_image
 
 def merge_multiple_images_high_quality(image_list, bg_color="black"):
     """

@@ -18,7 +18,6 @@ defaults:
 enhancer_providers:
   - "Qwen-VL-Max (Alibaba Cloud)"  # ✅ Premier vision + text enhancement
   - "Grok-3 (x.ai)"        # ✅ Full vision + text enhancement support
-  - "Grok Cloud (groq.com)" # ✅ Fast text-only enhancement
 
 # API-based model configurations
 api_models:
@@ -30,78 +29,3 @@ api_models:
     api_base: "https://api.bfl.ai"
     model_name: "flux-1-kontext-pro"
     endpoint: "/v1/flux-kontext-pro"
-
-# Content for the Demo Mode
-
-demo_backgrounds:
-  - background_path: 'assets/backgrounds/windowsill.png'
-    display_name: 'Windowsill'
-    prompts:
-      - label: "Base Description"
-        template: "A photo of {object} on the windowsill"
-        placeholder: "a teacup, a small plant..."
-      - label: "Position & Lighting"
-        template: "with the object {position}"
-        placeholder: "catching the morning sun..."
-      - label: "Style & Tone"
-        template: "in a {style} style"
-        placeholder: "cozy and warm, soft focus..."
-
-  - background_path: 'assets/backgrounds/beach.png'
-    display_name: 'Beach'
-    prompts:
-      - label: "Base Description"
-        template: "A cinematic shot of {object} on the beach at sunset"
-        placeholder: "a seashell, a pair of sunglasses..."
-      - label: "Position & Lighting"
-        template: "as it is {position}"
-        placeholder: "glistening in the golden hour light..."
-      - label: "Style & Tone"
-        template: "with a {style} aesthetic"
-        placeholder: "dreamy and serene, shot on film..."
-
-  - background_path: 'assets/backgrounds/rock.png'
-    display_name: 'Rock'
-    prompts:
-      - label: "Base Description"
-        template: "A photo of {object} on the rock"
-        placeholder: "a hiking boot, a lizard..."
-      - label: "Position & Lighting"
-        template: "which is {position}"
-        placeholder: "perched on the edge, under a clear blue sky..."
-      - label: "Style & Tone"
-        template: "captured with {style} detail"
-        placeholder: "sharp, high-contrast, National Geographic..."
-
-  - background_path: 'assets/backgrounds/green_lawn.png'
-    display_name: 'Lawn'
-    prompts:
-      - label: "Base Description"
-        template: "A cinematic shot of {object} on the green lawn"
-        placeholder: "a picnic basket, a soccer ball..."
-      - label: "Position & Lighting"
-        template: "sitting {position}"
-        placeholder: "in the middle of the lawn on a bright, sunny day..."
-      - label: "Style & Tone"
-        template: "creating a {style} mood"
-        placeholder: "vibrant and cheerful, with a slight blur..."
-
-  - background_path: 'assets/backgrounds/model.png'
-    display_name: 'Model'
-    prompts:
-      - label: "Base Description"
-        template: "A photo of a model holding {object} at the lower part of the body"
-        placeholder: "a designer handbag, a leather jacket..."
-      - label: "Position & Lighting"
-        template: "with the object {position}"
-        placeholder: "held casually, creating a dynamic pose..."
-      - label: "Style & Tone"
-        template: "in a {style} style"
-        placeholder: "modern, high-fashion, editorial..."
-    
-demo_objects:
-  - image: 'assets/demo/black_phone_pochette.png'
-  - image: 'assets/demo/blush_thermal_bottle.png'
-  - image: 'assets/demo/brown_envision_case.png'
-  - image: 'assets/demo/flower_phone_pochette.png'
-  - image: 'assets/demo/navy_thermal_bottle.png'

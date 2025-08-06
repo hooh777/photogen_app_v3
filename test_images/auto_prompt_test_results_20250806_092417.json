@@ -1,0 +1,280 @@
+[
+  {
+    "filename": "1.png",
+    "scene_analysis": {
+      "environment": {
+        "type": "outdoor",
+        "location": "park or garden with trees and a pathway",
+        "time_of_day": "morning",
+        "weather": "sunny"
+      },
+      "people": {
+        "present": false,
+        "count": 0,
+        "descriptions": [],
+        "activities": [],
+        "clothing_style": "N/A"
+      },
+      "selection_area": {
+        "surface_material": "wood",
+        "texture": "rough",
+        "color": "brown with natural wood grain patterns",
+        "condition": "worn",
+        "size": "large surface area"
+      },
+      "lighting": {
+        "type": "natural",
+        "direction": "overhead",
+        "quality": "bright",
+        "shadows": "soft"
+      },
+      "style_mood": {
+        "overall_style": "rustic",
+        "atmosphere": "relaxed",
+        "color_palette": "neutral"
+      },
+      "context_details": {
+        "surrounding_objects": [
+          "trees",
+          "pathway",
+          "greenery"
+        ],
+        "spatial_relationship": "the selection area is in the foreground with the park in the background",
+        "purpose": "relaxing",
+        "formality_level": "very casual"
+      }
+    },
+    "test_object": "wine glass",
+    "auto_prompt": "with natural wood tones wine glass, positioned on rough wood, in bright natural lighting, in park or garden with trees and a pathway outdoor setting, rustic style, relaxed atmosphere, photorealistic",
+    "user_prompt": "a beautiful wine glass",
+    "enhanced_prompt": "a beautiful wine glass, bright natural lighting, on wood surface, rustic style, in park or garden with trees and a pathway",
+    "variations": [
+      "with natural wood tones wine glass, positioned on rough wood, in bright natural lighting, in park or garden with trees and a pathway outdoor setting, rustic style, relaxed atmosphere, photorealistic, emphasizing rough wood texture, tactile details",
+      "with natural wood tones wine glass, positioned on rough wood, in bright natural lighting, in park or garden with trees and a pathway outdoor setting, rustic style, relaxed atmosphere, photorealistic, dramatic bright lighting, relaxed mood",
+      "with natural wood tones wine glass, positioned on rough wood, in bright natural lighting, in park or garden with trees and a pathway outdoor setting, rustic style, relaxed atmosphere, photorealistic, rustic aesthetic, artistic composition"
+    ],
+    "success": true
+  },
+  {
+    "filename": "2.png",
+    "scene_analysis": {
+      "environment": {
+        "type": "outdoor",
+        "location": "lake with distant mountains",
+        "time_of_day": "evening",
+        "weather": "clear"
+      },
+      "people": {
+        "present": false,
+        "count": 0,
+        "descriptions": [],
+        "activities": [],
+        "clothing_style": "N/A"
+      },
+      "selection_area": {
+        "surface_material": "stone",
+        "texture": "rough",
+        "color": "gray with hints of pinkish hues from the reflection",
+        "condition": "natural",
+        "size": "medium"
+      },
+      "lighting": {
+        "type": "natural",
+        "direction": "ambient",
+        "quality": "soft",
+        "shadows": "minimal"
+      },
+      "style_mood": {
+        "overall_style": "natural",
+        "atmosphere": "serene",
+        "color_palette": "cool"
+      },
+      "context_details": {
+        "surrounding_objects": [
+          "water",
+          "distant trees",
+          "mountains"
+        ],
+        "spatial_relationship": "the selection area is in the foreground, near the water's edge",
+        "purpose": "natural landscape",
+        "formality_level": "very casual"
+      }
+    },
+    "test_object": "small plant",
+    "auto_prompt": "rustic stone-compatible small plant, positioned on rough stone, in soft natural lighting, in lake with distant mountains outdoor setting, natural style, serene atmosphere, photorealistic",
+    "user_prompt": "a beautiful small plant",
+    "enhanced_prompt": "a beautiful small plant, soft natural lighting, on stone surface, natural style, in lake with distant mountains",
+    "variations": [
+      "rustic stone-compatible small plant, positioned on rough stone, in soft natural lighting, in lake with distant mountains outdoor setting, natural style, serene atmosphere, photorealistic, emphasizing rough stone texture, tactile details",
+      "rustic stone-compatible small plant, positioned on rough stone, in soft natural lighting, in lake with distant mountains outdoor setting, natural style, serene atmosphere, photorealistic, dramatic soft lighting, serene mood",
+      "rustic stone-compatible small plant, positioned on rough stone, in soft natural lighting, in lake with distant mountains outdoor setting, natural style, serene atmosphere, photorealistic, natural aesthetic, artistic composition"
+    ],
+    "success": true
+  },
+  {
+    "filename": "3.png",
+    "scene_analysis": {
+      "environment": {
+        "type": "outdoor",
+        "location": "tropical garden or conservatory",
+        "time_of_day": "afternoon",
+        "weather": "sunny"
+      },
+      "people": {
+        "present": false,
+        "count": 0,
+        "descriptions": [],
+        "activities": [],
+        "clothing_style": "N/A"
+      },
+      "selection_area": {
+        "surface_material": "stone",
+        "texture": "rough",
+        "color": "gray with green moss",
+        "condition": "natural",
+        "size": "medium"
+      },
+      "lighting": {
+        "type": "natural",
+        "direction": "overhead",
+        "quality": "bright",
+        "shadows": "strong"
+      },
+      "style_mood": {
+        "overall_style": "natural",
+        "atmosphere": "serene",
+        "color_palette": "cool"
+      },
+      "context_details": {
+        "surrounding_objects": [
+          "tropical plants",
+          "green wall"
+        ],
+        "spatial_relationship": "central focus of the scene",
+        "purpose": "relaxing",
+        "formality_level": "very casual"
+      }
+    },
+    "test_object": "smartphone",
+    "auto_prompt": "rustic stone-compatible smartphone, positioned on rough stone, in bright natural lighting, in tropical garden or conservatory outdoor setting, natural style, serene atmosphere, photorealistic",
+    "user_prompt": "a beautiful smartphone",
+    "enhanced_prompt": "a beautiful smartphone, bright natural lighting, natural style, in tropical garden or conservatory",
+    "variations": [
+      "rustic stone-compatible smartphone, positioned on rough stone, in bright natural lighting, in tropical garden or conservatory outdoor setting, natural style, serene atmosphere, photorealistic, emphasizing rough stone texture, tactile details",
+      "rustic stone-compatible smartphone, positioned on rough stone, in bright natural lighting, in tropical garden or conservatory outdoor setting, natural style, serene atmosphere, photorealistic, dramatic bright lighting, serene mood",
+      "rustic stone-compatible smartphone, positioned on rough stone, in bright natural lighting, in tropical garden or conservatory outdoor setting, natural style, serene atmosphere, photorealistic, natural aesthetic, artistic composition"
+    ],
+    "success": true
+  },
+  {
+    "filename": "4.png",
+    "scene_analysis": {
+      "environment": {
+        "type": "outdoor",
+        "location": "rural landscape with trees and open fields",
+        "time_of_day": "afternoon",
+        "weather": "cloudy"
+      },
+      "people": {
+        "present": false,
+        "count": 0,
+        "descriptions": [],
+        "activities": [],
+        "clothing_style": "N/A"
+      },
+      "selection_area": {
+        "surface_material": "wood",
+        "texture": "rough",
+        "color": "brown with natural wood grain patterns",
+        "condition": "worn",
+        "size": "large surface area"
+      },
+      "lighting": {
+        "type": "natural",
+        "direction": "ambient",
+        "quality": "soft",
+        "shadows": "soft"
+      },
+      "style_mood": {
+        "overall_style": "rustic",
+        "atmosphere": "serene",
+        "color_palette": "neutral"
+      },
+      "context_details": {
+        "surrounding_objects": [
+          "trees",
+          "open fields"
+        ],
+        "spatial_relationship": "foreground focus on wooden surface with background landscape",
+        "purpose": "viewing/photography",
+        "formality_level": "very casual"
+      }
+    },
+    "test_object": "book",
+    "auto_prompt": "with natural wood tones book, positioned on rough wood, in soft natural lighting, in rural landscape with trees and open fields outdoor setting, rustic style, serene atmosphere, photorealistic",
+    "user_prompt": "a beautiful book",
+    "enhanced_prompt": "a beautiful book, soft natural lighting, on wood surface, rustic style, in rural landscape with trees and open fields",
+    "variations": [
+      "with natural wood tones book, positioned on rough wood, in soft natural lighting, in rural landscape with trees and open fields outdoor setting, rustic style, serene atmosphere, photorealistic, emphasizing rough wood texture, tactile details",
+      "with natural wood tones book, positioned on rough wood, in soft natural lighting, in rural landscape with trees and open fields outdoor setting, rustic style, serene atmosphere, photorealistic, dramatic soft lighting, serene mood",
+      "with natural wood tones book, positioned on rough wood, in soft natural lighting, in rural landscape with trees and open fields outdoor setting, rustic style, serene atmosphere, photorealistic, rustic aesthetic, artistic composition"
+    ],
+    "success": true
+  },
+  {
+    "filename": "5.png",
+    "scene_analysis": {
+      "environment": {
+        "type": "outdoor",
+        "location": "mountainous area with clear skies",
+        "time_of_day": "morning",
+        "weather": "sunny"
+      },
+      "people": {
+        "present": false,
+        "count": 0,
+        "descriptions": [],
+        "activities": [],
+        "clothing_style": "N/A"
+      },
+      "selection_area": {
+        "surface_material": "stone",
+        "texture": "rough",
+        "color": "grayish beige",
+        "condition": "worn",
+        "size": "medium"
+      },
+      "lighting": {
+        "type": "natural",
+        "direction": "overhead",
+        "quality": "bright",
+        "shadows": "minimal"
+      },
+      "style_mood": {
+        "overall_style": "rustic",
+        "atmosphere": "serene",
+        "color_palette": "neutral"
+      },
+      "context_details": {
+        "surrounding_objects": [
+          "mountains",
+          "greenery",
+          "flowers"
+        ],
+        "spatial_relationship": "foreground with background scenery",
+        "purpose": "relaxing",
+        "formality_level": "very casual"
+      }
+    },
+    "test_object": "candle",
+    "auto_prompt": "rustic stone-compatible candle, positioned on rough stone, in bright natural lighting, in mountainous area with clear skies outdoor setting, rustic style, serene atmosphere, photorealistic",
+    "user_prompt": "a beautiful candle",
+    "enhanced_prompt": "a beautiful candle, bright natural lighting, on stone surface, rustic style, in mountainous area with clear skies",
+    "variations": [
+      "rustic stone-compatible candle, positioned on rough stone, in bright natural lighting, in mountainous area with clear skies outdoor setting, rustic style, serene atmosphere, photorealistic, emphasizing rough stone texture, tactile details",
+      "rustic stone-compatible candle, positioned on rough stone, in bright natural lighting, in mountainous area with clear skies outdoor setting, rustic style, serene atmosphere, photorealistic, dramatic bright lighting, serene mood",
+      "rustic stone-compatible candle, positioned on rough stone, in bright natural lighting, in mountainous area with clear skies outdoor setting, rustic style, serene atmosphere, photorealistic, rustic aesthetic, artistic composition"
+    ],
+    "success": true
+  }
+]

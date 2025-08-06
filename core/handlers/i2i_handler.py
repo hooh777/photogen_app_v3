@@ -5,12 +5,193 @@ from core import constants as const, utils, vision
 import time
 import os
 import logging
+import json
+import re
 
 class I2IHandler:
     def __init__(self, ui, generator, secure_storage):
         self.ui = ui
         self.generator = generator
         self.secure_storage = secure_storage
+    
+    def _parse_vision_response(self, response_text):
+        """Parse vision API response with intelligent JSON detection and field extraction"""
+        try:
+            # Try to detect and parse JSON structure first
+            if response_text.strip().startswith('{') and response_text.strip().endswith('}'):
+                try:
+                    vision_data = json.loads(response_text)
+                    logging.info("✅ JSON vision response detected and parsed")
+                    
+                    # Initialize components
+                    surface_parts = []
+                    context_parts = []
+                    
+                    # Extract surface material information (priority fields)
+                    selection_area = vision_data.get('selection_area', {})
+                    if selection_area:
+                        # Build surface description: "{condition} {texture} {color} {material}"
+                        condition = selection_area.get('condition', '').strip()
+                        texture = selection_area.get('texture', '').strip()
+                        color = selection_area.get('color', '').strip()
+                        surface_material = selection_area.get('surface_material', '').strip()
+                        
+                        # Combine surface elements in specified format
+                        surface_elements = [part for part in [condition, texture, color, surface_material] if part]
+                        if surface_elements:
+                            surface_parts.append(' '.join(surface_elements))
+                    
+                    # Add people information if present
+                    people = vision_data.get('people', [])
+                    if people:
+                        people_descriptions = []
+                        for person in people:
+                            if isinstance(person, dict):
+                                # Extract person details
+                                person_parts = []
+                                if person.get('clothing'):
+                                    person_parts.append(f"person in {person['clothing']}")
+                                elif person.get('appearance'):
+                                    person_parts.append(f"person with {person['appearance']}")
+                                else:
+                                    person_parts.append("person")
+                                    
+                                if person.get('action'):
+                                    person_parts.append(f"who is {person['action']}")
+                                    
+                                people_descriptions.append(' '.join(person_parts))
+                            elif isinstance(person, str):
+                                people_descriptions.append(person)
+                        
+                        if people_descriptions:
+                            surface_parts.extend(people_descriptions)
+                    
+                    # Add environmental context for richer descriptions
+                    environment = vision_data.get('environment', {})
+                    if environment:
+                        location = environment.get('location', '').strip()
+                        setting = environment.get('setting', '').strip()
+                        
+                        env_parts = [part for part in [location, setting] if part]
+                        if env_parts:
+                            context_parts.append(f"in a {' '.join(env_parts)}")
+                    
+                    # Add lighting context if available
+                    lighting = vision_data.get('lighting', {})
+                    if lighting:
+                        lighting_type = lighting.get('type', '').strip()
+                        lighting_quality = lighting.get('quality', '').strip()
+                        
+                        light_parts = [part for part in [lighting_quality, lighting_type] if part]
+                        if light_parts:
+                            context_parts.append(f"with {' '.join(light_parts)} lighting")
+                    
+                    # Combine all parts
+                    final_parts = surface_parts + context_parts
+                    if final_parts:
+                        result = ', '.join(final_parts)
+                        logging.info(f"🎯 Enhanced surface description: {result}")
+                        return result
+                    else:
+                        # No structured data found - use generic fallback
+                        logging.warning("⚠️ JSON parsed but no usable surface data found")
+                        return "textured surface"
+                        
+                except json.JSONDecodeError:
+                    logging.warning("⚠️ Response looks like JSON but failed to parse")
+                    # Fall through to text processing
+            
+            # Process as structured text response (markdown format)
+            logging.info("📝 Processing as structured text vision response")
+            response_clean = response_text.strip()
+            
+            # Check for markdown Surface Analysis section
+            if "### 4. **Surface Analysis**" in response_clean or "Surface Analysis" in response_clean:
+                # Extract the surface analysis content
+                lines = response_clean.split('\n')
+                surface_content = []
+                found_surface_section = False
+                
+                for line in lines:
+                    line = line.strip()
+                    if "Surface Analysis" in line:
+                        found_surface_section = True
+                        continue
+                    elif found_surface_section and line:
+                        # Skip empty lines and headers
+                        if not line.startswith('#') and not line.startswith('**') and line:
+                            surface_content.append(line)
+                        elif line.startswith('##') or line.startswith('### '):
+                            # Hit another section, stop collecting
+                            break
+                
+                if surface_content:
+                    # Join the surface analysis content and extract key information
+                    full_surface_text = ' '.join(surface_content)
+                    
+                    # Extract material, color, texture information
+                    surface_parts = []
+                    
+                    # Look for material keywords
+                    material_keywords = ['wood', 'metal', 'plastic', 'glass', 'fabric', 'stone', 'concrete', 'leather', 'ceramic']
+                    for material in material_keywords:
+                        if material in full_surface_text.lower():
+                            surface_parts.append(material)
+                            break
+                    
+                    # Look for color information
+                    color_pattern = r'(\w+\s+brown|\w+\s+color|brown|white|black|gray|grey|red|blue|green|yellow|orange|purple|pink)'
+                    import re
+                    color_matches = re.findall(color_pattern, full_surface_text.lower())
+                    if color_matches:
+                        surface_parts.append(color_matches[0])
+                    
+                    # Look for texture information
+                    texture_keywords = ['smooth', 'rough', 'textured', 'glossy', 'matte', 'polished', 'weathered', 'grain']
+                    for texture in texture_keywords:
+                        if texture in full_surface_text.lower():
+                            surface_parts.append(texture)
+                            break
+                    
+                    # Look for condition
+                    condition_keywords = ['clean', 'dirty', 'new', 'old', 'worn', 'pristine', 'damaged']
+                    for condition in condition_keywords:
+                        if condition in full_surface_text.lower():
+                            surface_parts.append(condition)
+                            break
+                    
+                    if surface_parts:
+                        result = ' '.join(surface_parts)
+                        logging.info(f"🎯 Extracted surface description: {result}")
+                        return result
+            
+            # Fallback: clean up any malformed patterns and process as plain text
+            response_clean = response_clean.replace("placed on placed", "placed")
+            response_clean = response_clean.replace("  ", " ")  # Remove double spaces
+            
+            # Remove markdown formatting and extract just the essence
+            response_clean = re.sub(r'#{1,6}\s+', '', response_clean)  # Remove headers
+            response_clean = re.sub(r'\*\*([^*]+)\*\*', r'\1', response_clean)  # Remove bold
+            
+            # If it's very long, try to extract just the key surface description
+            if len(response_clean) > 200:
+                # Look for the first substantial sentence about the surface
+                sentences = response_clean.split('.')
+                for sentence in sentences:
+                    if len(sentence.strip()) > 20 and any(keyword in sentence.lower() for keyword in ['surface', 'material', 'texture', 'color']):
+                        result = sentence.strip()
+                        logging.info(f"🎯 Extracted key surface sentence: {result}")
+                        return result
+            
+            # If it's very short, enhance it
+            if len(response_clean.split()) < 3:
+                return f"{response_clean} surface"
+            
+            return response_clean[:100] + "..." if len(response_clean) > 100 else response_clean
+            
+        except Exception as e:
+            logging.error(f"🔥 Error parsing vision response: {e}")
+            return "textured surface"  # Generic fallback
     
     def register_event_handlers(self):
         self.ui['i2i_source_uploader'].upload(
@@ -70,10 +251,20 @@ class I2IHandler:
             ]
         )
 
-        self.ui['i2i_generate_btn'].click(self.run_i2i, inputs=[self.ui['i2i_canvas_image_state'], self.ui['i2i_object_image_state'], self.ui['i2i_prompt'], self.ui['i2i_style_select'], self.ui['aspect_ratio'], self.ui['i2i_steps'], self.ui['i2i_guidance'], self.ui['i2i_model_select'], self.ui['i2i_pin_coords_state'], self.ui['i2i_anchor_coords_state']], outputs=[self.ui['i2i_interactive_canvas'], self.ui['i2i_actions_group']])
-        self.ui['accept_btn'].click(self.accept_and_continue, inputs=self.ui['i2i_interactive_canvas'], outputs=[self.ui['i2i_canvas_image_state'], self.ui['i2i_interactive_canvas'], self.ui['i2i_actions_group']])
-        self.ui['retry_btn'].click(self.discard_and_retry, inputs=self.ui['i2i_canvas_image_state'], outputs=[self.ui['i2i_interactive_canvas'], self.ui['i2i_actions_group']])
-        self.ui['i2i_save_btn'].click(self.save_image, inputs=self.ui['i2i_interactive_canvas'], outputs=self.ui['i2i_download_output'])
+        self.ui['i2i_generate_btn'].click(
+            self.run_i2i_with_state_update, 
+            inputs=[
+                self.ui['i2i_canvas_image_state'], self.ui['i2i_object_image_state'], 
+                self.ui['i2i_prompt'], self.ui['aspect_ratio'], self.ui['i2i_steps'], 
+                self.ui['i2i_guidance'], self.ui['i2i_model_select'], 
+                self.ui['i2i_pin_coords_state'], self.ui['i2i_anchor_coords_state']
+            ], 
+            outputs=[self.ui['output_gallery'], self.ui['last_generated_image_state']] if 'last_generated_image_state' in self.ui else [self.ui['output_gallery']]
+        ).then(
+            # Clear the selected gallery image state when new generation starts
+            lambda: None,
+            outputs=[self.ui['selected_gallery_image_state']] if 'selected_gallery_image_state' in self.ui else []
+        )
         
         # Add handler for prompt input to update status
         self.ui['i2i_prompt'].change(
@@ -94,10 +285,11 @@ class I2IHandler:
         return [self.ui['i2i_canvas_image_state'], self.ui['i2i_object_image_state'], self.ui['i2i_pin_coords_state'], self.ui['i2i_anchor_coords_state']]
 
     def update_canvas_with_merge(self, base_img, obj_img, top_left, bottom_right):
-        """Updates the canvas to show merged image when both background and object are available."""
+        """Updates the canvas to show merged image when both background and object are available.
+        NOTE: This is for PREVIEW ONLY - the actual generation uses separate images to avoid distortion."""
         if base_img and obj_img:
-            # Show the merged side-by-side image that the AI will see
-            merged_image = utils.merge_multiple_images_high_quality([base_img, obj_img])
+            # Show the intelligently merged image preview (for visual feedback only)
+            merged_image = utils.merge_images_with_smart_scaling(base_img, obj_img)
             return merged_image
         else:
             # Fall back to normal canvas redraw
@@ -113,11 +305,14 @@ class I2IHandler:
             
             # If we already have an object, show the merged image immediately
             if existing_object is not None:
-                canvas_image = utils.merge_multiple_images_high_quality([img, existing_object])
-                gr.Info("🎯 Edit Mode with merged view! The canvas now shows how the AI sees both images side-by-side.")
+                # This merged preview helps users visualize composition (doesn't affect generation)
+                canvas_image = utils.merge_images_with_smart_scaling(img, existing_object)
+                bg_size = img.size
+                gr.Info(f"🎯 Edit Mode with preview composition! Background: {bg_size[0]}×{bg_size[1]}. Preview shows proportional object scaling.")
             else:
                 canvas_image = img
-                gr.Info("🎯 Edit Mode activated! Upload an object image to see the merged view.")
+                bg_size = img.size
+                gr.Info(f"🎯 Edit Mode activated! Background: {bg_size[0]}×{bg_size[1]}. Upload an object to see composition preview.")
         else:
             # Create Mode - hide auto-generate button and area selection
             auto_btn_visible = False
@@ -206,15 +401,15 @@ class I2IHandler:
         
         logging.info(f"Final coordinates: {constrained_coords}")
         
-        # Improved selection logic: Click and drag simulation
+        # Improved selection logic with three states
         if top_left is None:
-            # First click - start selection
+            # State 1: No selection started - start new selection
             new_top_left = constrained_coords
             new_bottom_right = None
             gr.Info(f"🎯 Selection started at ({x}, {y}). Click again to complete the selection area.")
             logging.info(f"Started selection at: {new_top_left}")
-        else:
-            # Second click - complete selection
+        elif bottom_right is None:
+            # State 2: First click done, waiting for second click - complete selection
             new_top_left = top_left
             new_bottom_right = constrained_coords
             
@@ -223,6 +418,12 @@ class I2IHandler:
             height = abs(new_bottom_right[1] - new_top_left[1])
             gr.Info(f"✅ Selection completed! Area: {width}×{height} pixels. Click 'Smart Prompt' to analyze this region.")
             logging.info(f"Completed selection: {new_top_left} to {new_bottom_right}")
+        else:
+            # State 3: Selection already complete - start fresh selection
+            new_top_left = constrained_coords
+            new_bottom_right = None
+            gr.Info(f"🔄 Starting new selection at ({x}, {y}). Click again to complete the new selection area.")
+            logging.info(f"Reset and started new selection at: {new_top_left}")
         
         updated_canvas = self._redraw_canvas(base_img, obj_img, new_top_left, new_bottom_right)
         return updated_canvas, new_top_left, new_bottom_right
@@ -472,8 +673,8 @@ class I2IHandler:
             logging.error(f"Error cropping image: {e}")
             raise gr.Error(f"Could not crop the selected area. Please try selecting a different region.")
 
-        # Save cropped region for debugging (optional)
-        debug_save = True  # Set to False in production
+        # Save cropped region for debugging (disabled in production)
+        debug_save = False  # Set to True only for debugging
         if debug_save:
             try:
                 os.makedirs("debug", exist_ok=True)
@@ -490,12 +691,15 @@ class I2IHandler:
         
         gr.Info(f"Analyzing image region with {provider_name}...")
         # Pass both background region and object image for enhanced contextual analysis
-        description = vision.analyze_image_region(
+        raw_description = vision.analyze_image_region(
             background_image=cropped_region, 
             object_image=object_img, 
             provider_name=provider_name, 
             api_key=api_key
         )
+        
+        # Parse the vision response with intelligent JSON detection
+        description = self._parse_vision_response(raw_description)
         
         # Provide feedback about the analysis
         if description and description != "on the selected surface":
@@ -503,25 +707,48 @@ class I2IHandler:
         else:
             gr.Warning("Vision analysis returned generic result. Try selecting a clearer region.")
         
-        new_prompt_part = f", placed {description}, maintaining the existing background and scene composition"
+        # Enhanced prompt generation based on model choice
+        if base_img is not None:  # Edit mode with background
+            # Check which model will be used to adjust prompt strategy
+            # Note: We don't have direct access to model choice here, so we'll use a generic approach
+            # For Pro API (merged image): emphasize object preservation with spatial reference
+            # For Local model (multi-image): use first/second image references
+            new_prompt_part = f", placed {description}. Preserve the object's original appearance, colors, and shape while integrating it naturally into the background scene, maintaining the existing lighting and composition"
+        else:  # Create mode - no background reference needed
+            new_prompt_part = f", placed {description}"
         
         if existing_prompt and existing_prompt.strip():
+            # Enhance existing prompt with spatial context
             final_prompt = existing_prompt + new_prompt_part
         else:
-            final_prompt = "Place the object" + new_prompt_part
+            if base_img is not None:
+                final_prompt = "Place the object into the background scene" + new_prompt_part
+            else:
+                final_prompt = "Create an image with the object" + new_prompt_part
             
         gr.Info(f"Generated prompt: {final_prompt}")
         status_text = "**Status:** ✅ Smart prompt generated successfully!"
         return final_prompt, status_text
 
-    def run_i2i(self, source_image, object_image, prompt, style, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress=gr.Progress()):
+    def run_i2i(self, source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress=gr.Progress()):
         if not prompt or not prompt.strip(): 
             raise gr.Error("Please enter a prompt.")
         
-        # Truncate prompt if it's too long to prevent indexing errors
+        # Enhanced prompt for object preservation based on model type
         full_prompt = prompt
-        if style and style.strip():
-            full_prompt = f"{prompt}, {style} style"
+        is_pro_api = "pro" in model_choice.lower()
+        
+        # Add object preservation instructions for Pro API
+        if object_image and source_image and is_pro_api:
+            # Pro API with merged image needs stronger preservation instructions
+            if "preserve" not in full_prompt.lower() and "keep" not in full_prompt.lower():
+                full_prompt = f"EXACTLY preserve the object from the reference image without changing its type, material, color, or shape. {full_prompt}. The object must remain identical to the reference - do not transform it into any other type of object."
+        elif object_image and source_image:
+            # Local model with multi-image support
+            if "preserve" not in full_prompt.lower():
+                full_prompt = f"Preserve the object while {full_prompt}"
+        
+        # Truncate prompt if it's too long to prevent indexing errors
         
         # Check and truncate if needed
         if hasattr(self.generator, 'tokenizer') and self.generator.tokenizer is not None:
@@ -561,35 +788,49 @@ class I2IHandler:
         else:
             # EDIT MODE: Image-to-Image generation  
             if object_image:
-                # Use side-by-side merging approach (what was working before)
-                input_image = utils.merge_multiple_images_high_quality([source_image, object_image])
-                gr.Info(f"Using side-by-side merge approach - you control all settings via UI")
+                # Use different strategies based on model (Pro API needs merged input)
+                input_image = source_image  # Always pass background as main input
+                gr.Info(f"🎯 Edit Mode: Background image with object context for AI generation")
+                logging.info(f"🔍 Generation input - Background: {source_image.size}, Object: {object_image.size} (will be processed according to model capabilities)")
             else:
                 # No object - use original image
                 input_image = source_image
-                gr.Info(f"Using background only - you control all settings via UI")
+                gr.Info(f"Using background only")
             
             source_np = np.array(input_image)
             
+            # Pass background and object info to generator for smart handling based on model choice
             result_pil = self.generator.image_to_image(
-                source_np, full_prompt, steps, guidance, model_choice, 1, width, height, api_key, progress
+                source_np, full_prompt, steps, guidance, model_choice, 1, width, height, api_key, 
+                background_img=source_image, object_img=object_image, aspect_ratio_setting=aspect_ratio, progress=progress
             )[0]
         
-        return result_pil, gr.update(visible=True)
-
-    def accept_and_continue(self, preview_image):
-        return preview_image, preview_image, gr.update(visible=False)
-
-    def discard_and_retry(self, source_image):
-        return source_image, gr.update(visible=False)
+        # Ensure we return a fresh PIL image to avoid caching issues
+        if result_pil:
+            # Create a copy to avoid reference issues
+            fresh_result = result_pil.copy()
+            
+            # Add unique metadata to ensure Gradio treats it as a new image
+            import time
+            fresh_result.info['generation_timestamp'] = str(int(time.time() * 1000))  # millisecond precision
+            fresh_result.info['generation_id'] = f"photogen_{int(time.time() * 1000)}"
+            
+            logging.info(f"🎯 Returning fresh result image: {fresh_result.size} {fresh_result.mode} with timestamp {fresh_result.info.get('generation_timestamp')}")
+            return [fresh_result]
+        else:
+            logging.warning("🔥 No result image generated")
+            return []
+    
+    def run_i2i_with_state_update(self, source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress=gr.Progress()):
+        """Wrapper for run_i2i that also returns the last generated image for state tracking."""
+        result_list = self.run_i2i(source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress)
         
-    def save_image(self, img):
-        if img is None:
-            gr.Warning("No image to save.")
-            return
-        os.makedirs("outputs", exist_ok=True)
-        pil_img = img if isinstance(img, Image.Image) else Image.fromarray(img)
-        filepath = f"outputs/i2i_output_{int(time.time())}.png"
-        pil_img.save(filepath)
-        gr.Info(f"Image saved to {filepath}")
-        return gr.update(value=filepath, visible=True)
+        # Return both gallery list and the single image for last_generated_image_state
+        last_image = result_list[0] if result_list else None
+        logging.info(f"🎯 Storing last generated image: {type(last_image)} for direct save access")
+        
+        # Return for gallery and last image state
+        if 'last_generated_image_state' in self.ui:
+            return result_list, last_image
+        else:
+            return result_list

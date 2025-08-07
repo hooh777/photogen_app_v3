@@ -1,7 +1,6 @@
 # core/constants.py
 
 # --- UI Modes ---
-DEMO_MODE = "Demo"
 I2I_MODE = "Edit an Existing Image (Image-to-Image)"
 T2I_MODE = "Create a New Image (Text-to-Image)"
 
@@ -10,10 +9,9 @@ LOCAL_MODEL = "Local"
 PRO_MODEL = "Pro"
 
 # --- API Provider & Key Names ---
-FLUX_PRO_API = "Flux Pro API"
+FLUX_PRO_API = "Black Forest Labs API"  # Renamed for clarity
+GRS_AI_FLUX_API = "GRS AI Flux API"     # New alternative provider
 QWEN_VL_MAX = "Qwen-VL-Max (Alibaba Cloud)"  # Premier vision + text enhancement
-GROQ_CLOUD = "Grok Cloud (groq.com)"  # Text-only enhancement
-GROK_3 = "Grok-3 (x.ai)"              # Vision + text enhancement
 
 # --- I2I Canvas Tools ---
 BOX_START_TOOL = "Define Box (Start)"

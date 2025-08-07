@@ -21,7 +21,7 @@ class Generator:
         self.pipeline = None
         self.kontext_pipeline = None
         self.tokenizer = None
-        self._load_local_i2i_pipeline()
+        # Lazy loading - only load when actually needed for better startup time
 
     def _initialize_tokenizer(self):
         if self.kontext_pipeline and hasattr(self.kontext_pipeline, 'tokenizer'):
@@ -211,12 +211,26 @@ class Generator:
 
         full_endpoint = f"{api_base}{endpoint}"
         api_key = payload.pop("api_key", "")
+        
+        logging.info(f"🔑 API Call Debug - Config key: {api_config_key}")
+        logging.info(f"🔑 API Base: {api_base}")
+        logging.info(f"🔑 Endpoint: {endpoint}")
+        logging.info(f"🔑 API Key received: {'✅ Found' if api_key else '❌ Empty'}")
+        
+        # Both providers use the same authentication method (Flux API compatible)
         headers = {"x-key": api_key, "Content-Type": "application/json"}
+        logging.info("🔑 Using Flux-compatible authentication (x-key header)")
         
         try:
             progress(0, desc="Sending request to Pro API...")
+            logging.info(f"🔑 Request headers: {headers}")
+            logging.info(f"🔑 Request payload keys: {list(payload.keys())}")
             post_response = requests.post(full_endpoint, headers=headers, json=payload, timeout=120)
             post_response.raise_for_status()
+            
+            logging.info(f"🔑 Response status: {post_response.status_code}")
+            logging.info(f"🔑 Response content: {post_response.text[:500]}...")  # First 500 chars
+            
             polling_url = post_response.json().get('polling_url')
             if not polling_url:
                 raise gr.Error(f"API did not return a polling URL. Response: {post_response.text}")
@@ -261,6 +275,28 @@ class Generator:
 
         raise gr.Error("API request timed out after 2 minutes.")
 
+    def _get_pro_provider_info(self, model_choice):
+        """Extract provider info from Pro model choice and return config keys and provider name"""
+        if model_choice == "Pro (Black Forest Labs)":
+            return {
+                'provider_name': const.FLUX_PRO_API,
+                't2i_config_key': 'bfl_flux_t2i',
+                'i2i_config_key': 'bfl_flux_i2i'
+            }
+        elif model_choice == "Pro (GRS AI)":
+            return {
+                'provider_name': const.GRS_AI_FLUX_API,
+                't2i_config_key': 'grs_flux_t2i', 
+                'i2i_config_key': 'grs_flux_i2i'
+            }
+        else:
+            # Fallback for compatibility with old "Pro" choice
+            return {
+                'provider_name': const.FLUX_PRO_API,
+                't2i_config_key': 'bfl_flux_t2i',
+                'i2i_config_key': 'bfl_flux_i2i'
+            }
+
     def text_to_image(self, prompt, steps, guidance, model_choice, num_images, width, height, api_key="", progress=gr.Progress(track_tqdm=True)):
         if model_choice == const.LOCAL_MODEL:
             pipeline = self._load_local_t2i_pipeline()
@@ -276,10 +312,17 @@ class Generator:
                     height=int(height)
                 ).images
                 return images
-        elif model_choice == const.PRO_MODEL:
-            if not api_key: raise gr.Error(f"API Key for {const.FLUX_PRO_API} is missing!")
+        elif model_choice.startswith("Pro"):
+            # Handle provider-specific Pro model selection
+            provider_info = self._get_pro_provider_info(model_choice)
+            provider_name = provider_info['provider_name']
+            config_key = provider_info['t2i_config_key']
+            
+            if not api_key: 
+                raise gr.Error(f"API Key for {provider_name} is missing!")
+            
             payload = {
-                "model": self.config.get('api_models', {}).get('pro_t2i', {}).get('model_name'),
+                "model": self.config.get('api_models', {}).get(config_key, {}).get('model_name'),
                 "prompt": prompt,
                 "num_inference_steps": int(steps),
                 "guidance_scale": float(guidance),
@@ -288,7 +331,7 @@ class Generator:
                 "height": int(height),
                 "api_key": api_key
             }
-            return self._call_pro_api(payload, 'pro_t2i', progress)
+            return self._call_pro_api(payload, config_key, progress)
         else:
             raise ValueError(f"Invalid model choice: {model_choice}")
             
@@ -375,17 +418,27 @@ class Generator:
                 ).images
             return images
             
-        elif model_choice == const.PRO_MODEL:
-            if not api_key: raise gr.Error(f"API Key for {const.FLUX_PRO_API} is missing!")
+        elif model_choice.startswith("Pro"):
+            # Handle provider-specific Pro model selection
+            provider_info = self._get_pro_provider_info(model_choice)
+            provider_name = provider_info['provider_name'] 
+            config_key = provider_info['i2i_config_key']
+            
+            if not api_key: 
+                raise gr.Error(f"API Key for {provider_name} is missing!")
             
             # Pro API doesn't support multi-image input - use merged approach for Pro API
             if background_img and object_img:
-                # For Pro API: intelligently merge images with proper scaling
-                # Use target dimensions for merging to avoid distortion
-                merged_input = utils.merge_images_with_smart_scaling(background_img, object_img, target_size=(target_width, target_height))
+                # For Pro API: intelligently merge images with ENHANCED scaling for human placement
+                # Use preserve_object_scale=True to maintain better object size for human interaction
+                merged_input = utils.merge_images_with_smart_scaling(
+                    background_img, object_img, 
+                    target_size=(target_width, target_height),
+                    preserve_object_scale=True  # Enhanced scaling for human placement scenarios
+                )
                 pil_img = merged_input
-                logging.info(f"🔍 Pro API - Using merged image: {merged_input.size} (Background: {background_img.size} + Object: {object_img.size})")
-                gr.Info(f"Pro API: Using merged image approach (background + object combined)")
+                logging.info(f"🔍 Pro API - Using enhanced merged image: {merged_input.size} (Background: {background_img.size} + Object: {object_img.size}) [preserve_object_scale=True]")
+                gr.Info(f"Pro API: Using enhanced merged image approach with preserved object scaling (background + object combined)")
             else:
                 # Single image for Pro API
                 pil_img = Image.fromarray(source_image_np)
@@ -410,7 +463,7 @@ class Generator:
             img_str = base64.b64encode(buffered.getvalue()).decode()
             
             payload = {
-                "model": self.config.get('api_models', {}).get('pro_i2i', {}).get('model_name'),
+                "model": self.config.get('api_models', {}).get(config_key, {}).get('model_name'),
                 "prompt": prompt,
                 "input_image": img_str,
                 "num_inference_steps": int(steps),
@@ -418,6 +471,6 @@ class Generator:
                 "num_images_per_prompt": int(num_images),
                 "api_key": api_key
             }
-            return self._call_pro_api(payload, 'pro_i2i', progress)
+            return self._call_pro_api(payload, config_key, progress)
         else:
             raise ValueError(f"Invalid model choice: {model_choice}")

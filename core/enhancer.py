@@ -1,7 +1,6 @@
 # core/enhancer.py
 import os
 import abc
-from groq import Groq
 from openai import OpenAI
 from PIL import Image
 import numpy as np
@@ -105,103 +104,6 @@ class Enhancer(abc.ABC):
         except Exception as e:
             logging.error(f"Error parsing response: {e}")
             return "Could not generate detailed version.", "Could not generate stylized version.", "Could not generate rephrased version."
-
-class GroqEnhancer(Enhancer):
-    def setup_client(self): 
-        self.client = Groq(api_key=self.api_key)
-    
-    def enhance(self, base_prompt, image=None):
-        # Note: Groq doesn't have vision models, so we only do text enhancement
-        if image is not None: 
-            logging.warning("Groq does not support vision. Using text-only enhancement.")
-        
-        instruction = self.get_instruction(base_prompt)
-        try:
-            response = self.client.chat.completions.create(
-                model="llama3-70b-8192", 
-                messages=[{"role": "user", "content": instruction}]
-            )
-            return self.parse_response(response.choices[0].message.content)
-        except Exception as e: 
-            logging.error("Groq API Error", exc_info=True)
-            return f"API Error: {e}", f"API Error: {e}", f"API Error: {e}"
-
-class XaiEnhancer(Enhancer):
-    def setup_client(self): 
-        self.client = OpenAI(api_key=self.api_key, base_url="https://api.x.ai/v1")
-    
-    def enhance(self, base_prompt, image=None):
-        if image is not None:
-            return self._enhance_with_vision(base_prompt, image)
-        else:
-            return self._enhance_text_only(base_prompt)
-    
-    def _enhance_text_only(self, base_prompt):
-        """Text-only prompt enhancement using Grok."""
-        instruction = self.get_instruction(base_prompt)
-        try:
-            response = self.client.chat.completions.create(
-                model="grok-beta", 
-                messages=[{"role": "user", "content": instruction}]
-            )
-            return self.parse_response(response.choices[0].message.content)
-        except Exception as e: 
-            logging.error("Grok API Error", exc_info=True)
-            return f"API Error: {e}", f"API Error: {e}", f"API Error: {e}"
-    
-    def _enhance_with_vision(self, base_prompt, image):
-        """Vision-enhanced prompt generation using Grok vision models."""
-        import base64
-        from io import BytesIO
-        from PIL import Image as PILImage
-        
-        # Convert numpy array to PIL Image if needed
-        if isinstance(image, np.ndarray):
-            pil_image = PILImage.fromarray(image)
-        else:
-            pil_image = image
-            
-        # Convert to base64
-        buffered = BytesIO()
-        pil_image.save(buffered, format="PNG")
-        img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
-        
-        vision_instruction = f"""
-        I want to improve this image generation prompt: "{base_prompt}"
-        
-        Please analyze the image and provide three enhanced versions:
-        1. **Detailed Version**: Add specific details about lighting, composition, and technical aspects
-        2. **Stylized Version**: Apply artistic style and mood enhancements 
-        3. **Rephrased Version**: Rewrite with better structure and flow
-        
-        Format your response exactly as:
-        **Detailed:** [enhanced prompt]
-        **Stylized:** [enhanced prompt]  
-        **Rephrased:** [enhanced prompt]
-        """
-        
-        try:
-            response = self.client.chat.completions.create(
-                model="grok-vision-beta",  # Use Grok vision model
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": vision_instruction},
-                            {
-                                "type": "image_url",
-                                "image_url": {"url": f"data:image/png;base64,{img_base64}"}
-                            }
-                        ]
-                    }
-                ]
-            )
-            return self.parse_response(response.choices[0].message.content)
-        except Exception as e:
-            logging.error("Grok Vision API Error", exc_info=True)
-            # Fallback to text-only enhancement
-            logging.info("Falling back to text-only enhancement...")
-            return self._enhance_text_only(base_prompt)
 
 class QwenVLMaxEnhancer(Enhancer):
     def setup_client(self):
@@ -347,8 +249,6 @@ class QwenVLMaxEnhancer(Enhancer):
 
 ENHANCER_MAP = {
     const.QWEN_VL_MAX: QwenVLMaxEnhancer,
-    const.GROQ_CLOUD: GroqEnhancer,
-    const.GROK_3: XaiEnhancer,
 }
 
 def get_enhancer(provider_name, api_key):

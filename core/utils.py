@@ -2,10 +2,15 @@ from PIL import Image
 import re
 import math
 
-def merge_images_with_smart_scaling(background_img, object_img, target_size=None):
+def merge_images_with_smart_scaling(background_img, object_img, target_size=None, preserve_object_scale=False):
     """
     Intelligently merges background and object images with proportional scaling.
+    Enhanced to better preserve object size for human placement scenarios.
     If target_size is provided, scales appropriately. Otherwise uses background dimensions.
+    
+    Args:
+        preserve_object_scale (bool): If True, uses more conservative scaling to preserve object size.
+                                    Recommended for human placement scenarios.
     """
     if not background_img:
         return object_img if object_img else None
@@ -23,30 +28,38 @@ def merge_images_with_smart_scaling(background_img, object_img, target_size=None
     else:
         background_scaled = background_img
     
-    # Improved object scaling to preserve quality
+    # Enhanced object scaling to better preserve size for human placement
     bg_area = target_width * target_height
     obj_area = object_img.width * object_img.height
     
-    # More conservative scaling - keep object larger to preserve detail
-    # Use 20% of background area instead of 15% for better object preservation
-    target_area_ratio = 0.20
+    # ENHANCED: Adaptive sizing based on use case
+    if preserve_object_scale:
+        # More aggressive size preservation for human placement
+        target_area_ratio = 0.45  # Increase to 45% for human placement
+        max_scale_factor = 3.0    # Allow even larger scaling
+        min_dimension_ratio = 0.3  # 30% of smaller dimension minimum
+    else:
+        # Standard sizing for general object placement
+        target_area_ratio = 0.35  # 35% for better object prominence
+        max_scale_factor = 2.5    # Standard maximum scaling
+        min_dimension_ratio = 0.25 # 25% of smaller dimension minimum
     
     # Adjust based on aspect ratios
     bg_ratio = target_width / target_height
     if bg_ratio > 2.5:  # Very wide background
-        target_area_ratio *= 0.8  # Less aggressive reduction
+        target_area_ratio *= 0.85  # Less aggressive reduction
     elif bg_ratio < 0.4:  # Very tall background  
-        target_area_ratio *= 0.9  # Less aggressive reduction
+        target_area_ratio *= 0.9   # Less aggressive reduction
     
-    # Calculate scale factor with quality preservation bias
+    # Calculate scale factor with ENHANCED quality preservation bias
     target_area = bg_area * target_area_ratio
     scale_factor = math.sqrt(target_area / obj_area)
     
-    # More conservative clamping - allow larger objects to preserve detail
-    scale_factor = max(0.15, min(scale_factor, 1.5))  # Don't shrink too much, don't grow too much
+    # ENHANCED: More liberal clamping - allow much larger objects to preserve natural scale
+    scale_factor = max(0.2, min(scale_factor, max_scale_factor))
     
-    # Ensure minimum viable object size for quality preservation
-    min_obj_dimension = min(target_width, target_height) * 0.15  # At least 15% of smaller dimension
+    # ENHANCED: Ensure better minimum viable object size for visibility
+    min_obj_dimension = min(target_width, target_height) * min_dimension_ratio
     
     # Scale object proportionally
     new_obj_width = max(int(min_obj_dimension), int(object_img.width * scale_factor))
@@ -190,6 +203,48 @@ def paste_object(background_img, object_img, target_position=None):
         composite.paste(object_img, offset)
     
     return composite.convert("RGB")
+
+def create_side_by_side_display(background_img, object_img):
+    """
+    Creates a side-by-side display of background and object images for UI visualization.
+    Used for the simplified Edit mode workflow where users can see both images before selection.
+    
+    Format: [Background] | [Object] side-by-side
+    No visual indicators, no resizing - just clean horizontal layout.
+    """
+    if not background_img and not object_img:
+        return None
+    
+    if not background_img:
+        return object_img
+    
+    if not object_img:
+        return background_img
+    
+    # Get dimensions
+    bg_width, bg_height = background_img.size
+    obj_width, obj_height = object_img.size
+    
+    # Calculate target height (use the maximum height for better visibility)
+    target_height = max(bg_height, obj_height)
+    
+    # Calculate proportional widths to maintain aspect ratios
+    bg_target_width = int((bg_width * target_height) / bg_height)
+    obj_target_width = int((obj_width * target_height) / obj_height)
+    
+    # Resize images to target height while maintaining aspect ratio
+    bg_resized = background_img.resize((bg_target_width, target_height), Image.LANCZOS)
+    obj_resized = object_img.resize((obj_target_width, target_height), Image.LANCZOS)
+    
+    # Create the combined image
+    total_width = bg_target_width + obj_target_width
+    combined = Image.new('RGB', (total_width, target_height), color='white')
+    
+    # Paste background on left, object on right
+    combined.paste(bg_resized, (0, 0))
+    combined.paste(obj_resized, (bg_target_width, 0))
+    
+    return combined
 
 def stitch_images(background_img, object_img):
     """Legacy function - redirects to paste_object for better integration."""

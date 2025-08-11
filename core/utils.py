@@ -1,6 +1,7 @@
 from PIL import Image
 import re
 import math
+import logging
 
 def merge_images_with_smart_scaling(background_img, object_img, target_size=None, preserve_object_scale=False):
     """
@@ -34,36 +35,65 @@ def merge_images_with_smart_scaling(background_img, object_img, target_size=None
     
     # ENHANCED: Adaptive sizing based on use case
     if preserve_object_scale:
-        # More aggressive size preservation for human placement
-        target_area_ratio = 0.45  # Increase to 45% for human placement
-        max_scale_factor = 3.0    # Allow even larger scaling
-        min_dimension_ratio = 0.3  # 30% of smaller dimension minimum
+        # More realistic sizing for human placement in life scenes
+        # Calculate based on realistic human proportions in environments
+        
+        # Check if this looks like a human (height > width suggests standing person)
+        obj_aspect_ratio = object_img.height / object_img.width
+        likely_human = obj_aspect_ratio > 1.1  # Lowered threshold for more human detection
+        
+        if likely_human:
+            # For humans: use height-based scaling for realistic life-size appearance
+            # Humans should typically occupy 60-80% of scene height in indoor environments
+            target_height_ratio = 0.7  # 70% of background height for realistic scale
+            scale_factor_height = (target_height * target_height_ratio) / object_img.height
+            
+            # Limit scaling to prevent unrealistic sizes
+            scale_factor = max(0.4, min(scale_factor_height, 1.5))  # 40% to 150% of original
+            
+            # Calculate final dimensions
+            new_obj_width = int(object_img.width * scale_factor)
+            new_obj_height = int(object_img.height * scale_factor)
+            
+            logging.info(f"🧑 Human-optimized scaling: {scale_factor:.2f}x (height-based: {target_height_ratio*100:.0f}% of background)")
+            
+            # Skip the area-based calculation below for humans
+            human_scaling_applied = True
+        else:
+            # For non-human objects with preserve_object_scale=True: use enhanced area method
+            target_area_ratio = 0.35  # More conservative for objects
+            max_scale_factor = 2.5
+            min_dimension_ratio = 0.25
+            human_scaling_applied = False
     else:
         # Standard sizing for general object placement
-        target_area_ratio = 0.35  # 35% for better object prominence
-        max_scale_factor = 2.5    # Standard maximum scaling
-        min_dimension_ratio = 0.25 # 25% of smaller dimension minimum
+        target_area_ratio = 0.25  # Reduced for better composition
+        max_scale_factor = 2.0    # Standard maximum scaling  
+        min_dimension_ratio = 0.2  # 20% of smaller dimension minimum
+        human_scaling_applied = False
     
-    # Adjust based on aspect ratios
-    bg_ratio = target_width / target_height
-    if bg_ratio > 2.5:  # Very wide background
-        target_area_ratio *= 0.85  # Less aggressive reduction
-    elif bg_ratio < 0.4:  # Very tall background  
-        target_area_ratio *= 0.9   # Less aggressive reduction
-    
-    # Calculate scale factor with ENHANCED quality preservation bias
-    target_area = bg_area * target_area_ratio
-    scale_factor = math.sqrt(target_area / obj_area)
-    
-    # ENHANCED: More liberal clamping - allow much larger objects to preserve natural scale
-    scale_factor = max(0.2, min(scale_factor, max_scale_factor))
-    
-    # ENHANCED: Ensure better minimum viable object size for visibility
-    min_obj_dimension = min(target_width, target_height) * min_dimension_ratio
-    
-    # Scale object proportionally
-    new_obj_width = max(int(min_obj_dimension), int(object_img.width * scale_factor))
-    new_obj_height = max(int(min_obj_dimension), int(object_img.height * scale_factor))
+    # Apply area-based scaling only if human scaling wasn't used
+    if not human_scaling_applied:
+        # Adjust based on aspect ratios
+        bg_ratio = target_width / target_height
+        if bg_ratio > 2.5:  # Very wide background
+            target_area_ratio *= 0.85  # Less aggressive reduction
+        elif bg_ratio < 0.4:  # Very tall background  
+            target_area_ratio *= 0.9   # Less aggressive reduction
+        
+        # Calculate scale factor with ENHANCED quality preservation bias
+        target_area = bg_area * target_area_ratio
+        scale_factor = math.sqrt(target_area / obj_area)
+        
+        # ENHANCED: More liberal clamping - allow much larger objects to preserve natural scale
+        scale_factor = max(0.2, min(scale_factor, max_scale_factor))
+        
+        # ENHANCED: Ensure better minimum viable object size for visibility
+        min_obj_dimension = min(target_width, target_height) * min_dimension_ratio
+        
+        # Scale object proportionally
+        new_obj_width = max(int(min_obj_dimension), int(object_img.width * scale_factor))
+        new_obj_height = max(int(min_obj_dimension), int(object_img.height * scale_factor))
     
     # Maintain aspect ratio if one dimension was clamped
     obj_aspect_ratio = object_img.width / object_img.height
@@ -245,7 +275,3 @@ def create_side_by_side_display(background_img, object_img):
     combined.paste(obj_resized, (bg_target_width, 0))
     
     return combined
-
-def stitch_images(background_img, object_img):
-    """Legacy function - redirects to paste_object for better integration."""
-    return paste_object(background_img, object_img)

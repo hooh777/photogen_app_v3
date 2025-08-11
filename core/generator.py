@@ -2,8 +2,18 @@ import torch
 import gradio as gr
 from diffusers import FluxPipeline, FluxKontextPipeline
 from transformers import AutoTokenizer
-from nunchaku import NunchakuFluxTransformer2dModel
-from nunchaku.utils import get_precision
+try:
+    from nunchaku import NunchakuFluxTransformer2dModel
+    from nunchaku.utils import get_precision
+    NUNCHAKU_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Nunchaku not available: {e}")
+    NUNCHAKU_AVAILABLE = False
+    # Placeholder classes
+    class NunchakuFluxTransformer2dModel:
+        pass
+    def get_precision():
+        return "fp16"
 from PIL import Image
 import numpy as np
 import requests
@@ -45,6 +55,11 @@ class Generator:
         if self.kontext_pipeline is None:
             logging.info("Loading FLUX.1 Kontext (Image-to-Image) pipeline...")
             try:
+                if not NUNCHAKU_AVAILABLE:
+                    logging.error("🚫 Nunchaku not available - cannot load I2I pipeline")
+                    self.kontext_pipeline = None
+                    return None
+                    
                 DTYPE = torch.bfloat16
                 torch.set_float32_matmul_precision('high')
                 nunchaku_path = self.config['models']['nunchaku_transformer'].format(precision=get_precision())
@@ -462,9 +477,12 @@ class Generator:
             pil_img.save(buffered, format="PNG")
             img_str = base64.b64encode(buffered.getvalue()).decode()
             
+            # Enhanced prompt handling for Pro API to preserve human figures
+            enhanced_prompt = self._enhance_prompt_for_pro_api(prompt, object_img, background_img)
+            
             payload = {
                 "model": self.config.get('api_models', {}).get(config_key, {}).get('model_name'),
-                "prompt": prompt,
+                "prompt": enhanced_prompt,
                 "input_image": img_str,
                 "num_inference_steps": int(steps),
                 "guidance_scale": float(guidance),
@@ -474,3 +492,161 @@ class Generator:
             return self._call_pro_api(payload, config_key, progress)
         else:
             raise ValueError(f"Invalid model choice: {model_choice}")
+    
+    def _enhance_prompt_for_pro_api(self, prompt, object_img=None, background_img=None):
+        """
+        Enhance prompt for Pro API to better preserve human figures and object identity.
+        
+        Args:
+            prompt: Original user prompt
+            object_img: Object image (PIL Image) 
+            background_img: Background image (PIL Image)
+            
+        Returns:
+            Enhanced prompt with preservation instructions
+        """
+        if not object_img:
+            return prompt
+            
+        # Detect if object contains humans/people using multiple approaches
+        contains_human = self._detect_human_in_object(object_img)
+        
+        # Fallback: Check if prompt mentions human-related terms
+        human_keywords = ['girl', 'boy', 'man', 'woman', 'person', 'people', 'child', 'kid', 
+                         'lady', 'gentleman', 'figure', 'model', 'pose', 'appearance', 
+                         'facial', 'face', 'expression', 'clothing', 'dress', 'outfit']
+        
+        prompt_mentions_human = any(keyword in prompt.lower() for keyword in human_keywords)
+        
+        # Use either detection result or prompt analysis
+        is_human_content = contains_human or prompt_mentions_human
+        
+        if is_human_content:
+            # Add human preservation instructions for Pro API
+            preservation_prefix = "IMPORTANT: Preserve the exact appearance, pose, clothing, and identity of the person visible in the image. "
+            focus_instruction = "Only modify the background and environment, keeping the person completely unchanged. "
+            identity_preservation = "Do not alter the person's face, expression, pose, or any personal characteristics. "
+            
+            enhanced_prompt = f"{preservation_prefix}{focus_instruction}{identity_preservation}{prompt}"
+            
+            logging.info(f"🧑 Pro API - Human content detected (detection: {contains_human}, prompt: {prompt_mentions_human})")
+            logging.info(f"🧑 Original prompt: {prompt}")
+            logging.info(f"🧑 Enhanced prompt: {enhanced_prompt}")
+            
+            return enhanced_prompt
+        else:
+            # For non-human objects, add general object preservation
+            if background_img is not None:
+                object_preservation = "Preserve the main object visible in the image while modifying the background. "
+                enhanced_prompt = f"{object_preservation}{prompt}"
+                logging.info(f"🎯 Pro API - Object preservation: {enhanced_prompt}")
+                return enhanced_prompt
+            
+        return prompt
+    
+    def _detect_human_in_object(self, object_img):
+        """
+        Improved heuristic to detect if object image contains humans/people.
+        
+        This is a basic implementation that could be enhanced with proper 
+        object detection models in the future.
+        
+        Args:
+            object_img: PIL Image object
+            
+        Returns:
+            bool: True if likely contains human, False otherwise
+        """
+        if not object_img:
+            return False
+            
+        # Convert to numpy for analysis
+        import numpy as np
+        img_array = np.array(object_img)
+        
+        # Basic heuristics:
+        # 1. Check image dimensions - humans typically need reasonable height
+        height, width = img_array.shape[:2]
+        aspect_ratio = height / width
+        
+        # 2. Enhanced skin tone detection
+        if len(img_array.shape) == 3:
+            # Convert to HSV for better skin detection
+            from PIL import Image as PILImage
+            hsv_img = object_img.convert('HSV')
+            hsv_array = np.array(hsv_img)
+            
+            h = hsv_array[:,:,0]
+            s = hsv_array[:,:,1] 
+            v = hsv_array[:,:,2]
+            
+            # Enhanced skin tone detection in HSV space
+            # Skin tones typically have:
+            # - Hue: 0-25 and 160-179 (reddish/orange tones)
+            # - Saturation: 40-255 (not too gray)
+            # - Value: 60-255 (not too dark)
+            skin_mask = (
+                ((h <= 25) | (h >= 160)) &  # Reddish/orange hues
+                (s >= 40) & (s <= 255) &    # Reasonable saturation
+                (v >= 60) & (v <= 255)      # Not too dark
+            )
+            
+            skin_percentage = np.sum(skin_mask) / (height * width)
+            
+            # More stringent requirements for human detection
+            human_likelihood_skin = skin_percentage > 0.08  # At least 8% skin tone
+            
+            # Additional RGB-based check for face-like features
+            rgb_array = np.array(object_img.convert('RGB'))
+            red = rgb_array[:,:,0]
+            green = rgb_array[:,:,1] 
+            blue = rgb_array[:,:,2]
+            
+            # Check for typical human skin RGB ranges
+            skin_rgb_mask = (
+                (red >= 80) & (red <= 255) &
+                (green >= 50) & (green <= 220) &
+                (blue >= 30) & (blue <= 200) &
+                (red > green) & (green >= blue) &  # Typical skin color relationship
+                ((red - green) >= 10) & ((green - blue) >= 5)  # Color separation
+            )
+            
+            skin_rgb_percentage = np.sum(skin_rgb_mask) / (height * width)
+            human_likelihood_rgb = skin_rgb_percentage > 0.05  # At least 5% skin-like RGB
+            
+            # Aspect ratio check - humans can be in various poses
+            human_aspect_ratio = 0.2 < aspect_ratio < 5.0  # Broader range for various poses
+            
+            # Size check: image should be large enough to contain meaningful human figure
+            min_size_check = min(height, width) > 80  # At least 80px in smaller dimension
+            
+            # Edge density check - humans have more complex edges than simple objects
+            # Simple edge detection using gradient
+            gray_array = np.array(object_img.convert('L'))
+            grad_x = np.abs(np.gradient(gray_array, axis=1))
+            grad_y = np.abs(np.gradient(gray_array, axis=0))
+            edge_density = np.mean(grad_x + grad_y)
+            complex_edges = edge_density > 8  # Humans typically have more complex edge patterns
+            
+            # Combine all checks - require multiple positive indicators
+            skin_detected = human_likelihood_skin or human_likelihood_rgb
+            basic_requirements = human_aspect_ratio and min_size_check
+            
+            # Final decision: need skin + basic requirements + reasonable complexity
+            final_detection = skin_detected and basic_requirements and complex_edges
+            
+            logging.info(f"🧑 Enhanced human detection analysis:")
+            logging.info(f"   - Image size: {width}×{height}, aspect ratio: {aspect_ratio:.2f}")
+            logging.info(f"   - HSV skin percentage: {skin_percentage:.3f} ({skin_percentage*100:.1f}%)")
+            logging.info(f"   - RGB skin percentage: {skin_rgb_percentage:.3f} ({skin_rgb_percentage*100:.1f}%)")
+            logging.info(f"   - HSV skin detected: {human_likelihood_skin}")
+            logging.info(f"   - RGB skin detected: {human_likelihood_rgb}")
+            logging.info(f"   - Overall skin detected: {skin_detected}")
+            logging.info(f"   - Aspect ratio OK: {human_aspect_ratio}")
+            logging.info(f"   - Size check: {min_size_check}")
+            logging.info(f"   - Edge density: {edge_density:.2f}, complex: {complex_edges}")
+            logging.info(f"   - Final detection: {final_detection}")
+            
+            return final_detection
+            
+        return False

@@ -19,8 +19,7 @@ uvicorn[standard]==0.29.0
 # --- API Clients & Web ---
 requests
 python-dotenv
-openai  # Used for both OpenAI and x.ai (Grok) APIs
-groq    # Used for Groq Cloud API
+openai  # Used for OpenAI-compatible APIs including Alibaba Cloud Qwen
 
 # --- Utilities ---
 PyYAML

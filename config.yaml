@@ -17,15 +17,24 @@ defaults:
 # Only providers with working implementations are included
 enhancer_providers:
   - "Qwen-VL-Max (Alibaba Cloud)"  # ✅ Premier vision + text enhancement
-  - "Grok-3 (x.ai)"        # ✅ Full vision + text enhancement support
 
 # API-based model configurations
 api_models:
-  pro_t2i:
+  # Black Forest Labs (Original Pro API)
+  bfl_flux_t2i:
     api_base: "https://api.bfl.ai"
     model_name: "flux-1-kontext-pro"
     endpoint: "/v1/flux-kontext-pro"
-  pro_i2i:
+  bfl_flux_i2i:
     api_base: "https://api.bfl.ai"
+    model_name: "flux-1-kontext-pro"
+    endpoint: "/v1/flux-kontext-pro"
+  # GRS AI Flux (Cost-effective alternative - 100% Flux API compatible)
+  grs_flux_t2i:
+    api_base: "https://api.grsai.com"
+    model_name: "flux-1-kontext-pro"
+    endpoint: "/v1/flux-kontext-pro"
+  grs_flux_i2i:
+    api_base: "https://api.grsai.com"
     model_name: "flux-1-kontext-pro"
     endpoint: "/v1/flux-kontext-pro"

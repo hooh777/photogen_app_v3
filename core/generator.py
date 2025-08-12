@@ -24,6 +24,7 @@ import logging
 import math
 from core import constants as const
 from core import utils
+from core.depth_processor import DepthMapProcessor
 
 class Generator:
     def __init__(self, config):
@@ -32,6 +33,20 @@ class Generator:
         self.kontext_pipeline = None
         self.tokenizer = None
         # Lazy loading - only load when actually needed for better startup time
+        
+        # Initialize depth processing
+        try:
+            self.depth_processor = DepthMapProcessor()
+            self.depth_enabled = self.depth_processor.depth_estimator is not None
+            if self.depth_enabled:
+                logging.info("🌊 Depth ControlNet processing enabled")
+            else:
+                logging.warning("⚠️ Depth processing unavailable - depth models failed to load")
+        except Exception as e:
+            logging.error(f"❌ Depth processing initialization failed: {e}")
+            self.depth_enabled = False
+            self.depth_processor = None
+            logging.info("📸 Running without depth processing (basic mode)")
 
     def _initialize_tokenizer(self):
         if self.kontext_pipeline and hasattr(self.kontext_pipeline, 'tokenizer'):
@@ -350,13 +365,35 @@ class Generator:
         else:
             raise ValueError(f"Invalid model choice: {model_choice}")
             
-    def image_to_image(self, source_image_np, prompt, steps, guidance, model_choice, num_images, width, height, api_key="", background_img=None, object_img=None, aspect_ratio_setting="1:1", progress=gr.Progress()):
-        """Enhanced image-to-image generation with smart dimension handling"""
+    def image_to_image(self, source_image_np, prompt, steps, guidance, model_choice, num_images, width, height, api_key="", background_img=None, object_img=None, aspect_ratio_setting="1:1", progress=gr.Progress(), use_depth_control=True, depth_strength=0.6, disable_auto_enhancement=False):
+        """Enhanced image-to-image generation with smart dimension handling and depth control"""
         
         # Debug logging for input analysis
         if background_img is not None:
             logging.info(f"🔍 Input analysis - Background: {background_img.size}, Object: {object_img.size if object_img else 'None'}")
             logging.info(f"🔍 Requested dimensions: {width}×{height}, Aspect ratio setting: {aspect_ratio_setting}")
+            logging.info(f"🌊 Depth control: {'Enabled' if use_depth_control and self.depth_enabled else 'Disabled'}")
+        
+        # Generate depth map for enhanced background replacement
+        depth_map = None
+        if use_depth_control and self.depth_enabled and background_img is not None:
+            try:
+                logging.info("🌊 Generating depth map for enhanced background replacement...")
+                if progress:
+                    progress(0.1, "Analyzing image depth...")
+                
+                depth_map = self.depth_processor.generate_depth_map(background_img)
+                if depth_map:
+                    # Enhance depth map quality
+                    depth_map = self.depth_processor.enhance_depth_map(depth_map)
+                    logging.info("✅ Depth map generated successfully")
+                    if progress:
+                        progress(0.2, "Depth analysis complete")
+                else:
+                    logging.warning("⚠️ Depth map generation failed, continuing without depth control")
+            except Exception as e:
+                logging.error(f"❌ Depth processing error: {e}")
+                depth_map = None
         
         # Determine optimal generation size using hybrid approach
         if background_img is not None:
@@ -365,10 +402,11 @@ class Generator:
             target_width, target_height = optimal_size
             
             # Provide user feedback about dimension choice
+            depth_info = " with depth control" if depth_map is not None else ""
             if optimal_size == background_img.size:
-                gr.Info(f"✅ Using background dimensions: {target_width}×{target_height}")
+                gr.Info(f"✅ Using background dimensions: {target_width}×{target_height}{depth_info}")
             else:
-                gr.Info(f"📐 Optimized dimensions: {target_width}×{target_height} (scaled from {background_img.size[0]}×{background_img.size[1]} for performance)")
+                gr.Info(f"📐 Optimized dimensions: {target_width}×{target_height}{depth_info} (scaled from {background_img.size[0]}×{background_img.size[1]} for performance)")
         else:
             # No background info - use provided dimensions
             target_width, target_height = width, height
@@ -478,22 +516,43 @@ class Generator:
             img_str = base64.b64encode(buffered.getvalue()).decode()
             
             # Enhanced prompt handling for Pro API to preserve human figures
-            enhanced_prompt = self._enhance_prompt_for_pro_api(prompt, object_img, background_img)
+            enhanced_prompt = self._enhance_prompt_for_pro_api(prompt, object_img, background_img, depth_map, disable_auto_enhancement)
             
-            payload = {
-                "model": self.config.get('api_models', {}).get(config_key, {}).get('model_name'),
-                "prompt": enhanced_prompt,
-                "input_image": img_str,
-                "num_inference_steps": int(steps),
-                "guidance_scale": float(guidance),
-                "num_images_per_prompt": int(num_images),
-                "api_key": api_key
-            }
+            # Add depth information to payload if available
+            if depth_map is not None:
+                # Convert depth map to base64 for API transmission
+                depth_buffer = BytesIO()
+                depth_preview = self.depth_processor.create_depth_preview(background_img, depth_map)
+                depth_preview.save(depth_buffer, format="PNG")
+                depth_str = base64.b64encode(depth_buffer.getvalue()).decode()
+                
+                payload = {
+                    "model": self.config.get('api_models', {}).get(config_key, {}).get('model_name'),
+                    "prompt": enhanced_prompt,
+                    "input_image": img_str,
+                    "depth_map": depth_str,
+                    "depth_strength": depth_strength,
+                    "num_inference_steps": int(steps),
+                    "guidance_scale": float(guidance),
+                    "num_images_per_prompt": int(num_images),
+                    "api_key": api_key
+                }
+                logging.info(f"🌊 Pro API - Including depth map with strength {depth_strength}")
+            else:
+                payload = {
+                    "model": self.config.get('api_models', {}).get(config_key, {}).get('model_name'),
+                    "prompt": enhanced_prompt,
+                    "input_image": img_str,
+                    "num_inference_steps": int(steps),
+                    "guidance_scale": float(guidance),
+                    "num_images_per_prompt": int(num_images),
+                    "api_key": api_key
+                }
             return self._call_pro_api(payload, config_key, progress)
         else:
             raise ValueError(f"Invalid model choice: {model_choice}")
     
-    def _enhance_prompt_for_pro_api(self, prompt, object_img=None, background_img=None):
+    def _enhance_prompt_for_pro_api(self, prompt, object_img=None, background_img=None, depth_map=None, disable_auto_enhancement=False):
         """
         Enhance prompt for Pro API to better preserve human figures and object identity.
         
@@ -501,10 +560,17 @@ class Generator:
             prompt: Original user prompt
             object_img: Object image (PIL Image) 
             background_img: Background image (PIL Image)
+            depth_map: Generated depth map
+            disable_auto_enhancement: Skip automatic enhancement if True
             
         Returns:
             Enhanced prompt with preservation instructions
         """
+        # Skip enhancement if disabled
+        if disable_auto_enhancement:
+            logging.info("🔧 Pro API auto enhancement disabled - using original prompt")
+            return prompt
+            
         if not object_img:
             return prompt
             
@@ -527,7 +593,12 @@ class Generator:
             focus_instruction = "Only modify the background and environment, keeping the person completely unchanged. "
             identity_preservation = "Do not alter the person's face, expression, pose, or any personal characteristics. "
             
-            enhanced_prompt = f"{preservation_prefix}{focus_instruction}{identity_preservation}{prompt}"
+            # Add depth-aware instructions if depth map is available
+            depth_instruction = ""
+            if depth_map is not None:
+                depth_instruction = "Maintain realistic spatial depth and lighting relationships between the person and the new background. "
+            
+            enhanced_prompt = f"{preservation_prefix}{focus_instruction}{identity_preservation}{depth_instruction}{prompt}"
             
             logging.info(f"🧑 Pro API - Human content detected (detection: {contains_human}, prompt: {prompt_mentions_human})")
             logging.info(f"🧑 Original prompt: {prompt}")
@@ -538,8 +609,14 @@ class Generator:
             # For non-human objects, add general object preservation
             if background_img is not None:
                 object_preservation = "Preserve the main object visible in the image while modifying the background. "
-                enhanced_prompt = f"{object_preservation}{prompt}"
-                logging.info(f"🎯 Pro API - Object preservation: {enhanced_prompt}")
+                
+                # Add depth-aware instructions for objects too
+                depth_instruction = ""
+                if depth_map is not None:
+                    depth_instruction = "Ensure realistic depth relationships and natural lighting between the object and background. "
+                
+                enhanced_prompt = f"{object_preservation}{depth_instruction}{prompt}"
+                logging.info(f"🎯 Pro API - Object preservation with depth: {enhanced_prompt}")
                 return enhanced_prompt
             
         return prompt

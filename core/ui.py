@@ -27,6 +27,31 @@ def create_ui():
         border: none !important;
         font-weight: 600 !important;
     }
+    
+    /* Interactive Canvas Styling - Make image bigger */
+    .interactive-canvas {
+        min-height: 600px !important;
+    }
+    
+    .interactive-canvas img {
+        max-height: 580px !important;
+        min-height: 500px !important;
+        object-fit: contain !important;
+        width: 100% !important;
+        height: auto !important;
+    }
+    
+    /* More specific targeting for canvas images */
+    .interactive-canvas [data-testid="image"] img {
+        max-height: 580px !important;
+        min-height: 500px !important;
+        object-fit: contain !important;
+    }
+    
+    /* General image component enhancement */
+    .gradio-image {
+        min-height: 600px !important;
+    }
     """
 
     with gr.Blocks(theme=gr.themes.Soft(), title="PhotoGen", css=custom_css) as demo:
@@ -155,12 +180,12 @@ def create_ui():
                     height="auto",
                     allow_preview=True,
                     selected_index=None,
-                    interactive=True
+                    interactive=False  # Make display-only, not clickable
                 )
                 
-                # Add save button for gallery images
+                # Add download and clear buttons
                 with gr.Row():
-                    save_btn = gr.Button("💾 Save Selected Image", variant="secondary")
+                    download_result_btn = gr.Button("⬇️ Download Result", variant="primary")
                     clear_all_btn = gr.Button("🗑️ Clear All", variant="stop")
                     download_output = gr.DownloadButton(label="Download Image", visible=False)
                 
@@ -182,9 +207,12 @@ def create_ui():
                         type="pil", 
                         label="🎨 Interactive Canvas", 
                         visible=True, 
-                        height=400, 
+                        height=600, 
                         interactive=True, 
-                        sources=[]
+                        sources=[],
+                        elem_classes="interactive-canvas",
+                        container=True,
+                        show_label=True
                     )
                     
                     with gr.Row():
@@ -197,7 +225,7 @@ def create_ui():
                     type="pil", 
                     label="🎨 Image Editor: Click areas for targeted editing", 
                     visible=False, 
-                    height=400, 
+                    height=600, 
                     interactive=True, 
                     sources=[]
                 )
@@ -222,17 +250,32 @@ def create_ui():
                 gr.Markdown("---")  # Separator
                 
                 gr.Markdown("### ⚙️ Output Settings")
-                num_images = gr.Slider(label="Number of Images", minimum=1, maximum=4, value=1, step=1)
-                aspect_ratios = ["1:1", "16:9", "9:16", "4:3", "3:4"]
-                aspect_ratio = gr.Radio(choices=["Match Input"] + aspect_ratios, value="1:1", label="Image Dimensions")
+                
+                # Combined dimension options with both standard and product mood shot sizes
+                dimension_options = [
+                    "Match Input",
+                    # Standard Aspect Ratios
+                    "1:1 (Square)",
+                    "16:9 (Landscape)",
+                    "9:16 (Portrait)", 
+                    "4:3 (Standard)",
+                    "3:4 (Portrait)"
+                ]
+                
+                aspect_ratio = gr.Dropdown(
+                    choices=dimension_options,
+                    value="1:1 (Square)", 
+                    label="📐 Image Dimensions",
+                    info="Standard ratios or high-quality print dimensions for product mood shots"
+                )
 
-                with gr.Accordion("Advanced Settings", open=True):
+                with gr.Accordion("Advanced Settings", open=False):
                     i2i_steps = gr.Slider(label="Inference Steps", minimum=1, maximum=50, value=25, step=1)
                     i2i_guidance = gr.Slider(label="Guidance Scale", minimum=0, maximum=10, value=2.5, step=0.1)
                     i2i_model_select = gr.Dropdown(
                         choices=[const.LOCAL_MODEL, "Pro (Black Forest Labs)", "Pro (GRS AI)"], 
                         label="🤖 Model Selection", 
-                        value=const.LOCAL_MODEL,
+                        value="Pro (GRS AI)",
                         info="Choose between local processing or Pro API providers"
                     )
                     
@@ -271,7 +314,7 @@ def create_ui():
 
     ui_components = {
         "output_gallery": output_gallery, "i2i_interactive_canvas": i2i_interactive_canvas,
-        "num_images": num_images, "aspect_ratio": aspect_ratio,
+        "aspect_ratio": aspect_ratio,
 
         "provider_select": provider_select, "api_key_input": api_key_input, "save_api_key_btn": save_api_key_btn, "clear_api_key_btn": clear_api_key_btn,
         "pro_api_provider_select": pro_api_provider_select, "pro_api_key_input": pro_api_key_input, "save_pro_api_key_btn": save_pro_api_key_btn, "clear_pro_api_key_btn": clear_pro_api_key_btn,
@@ -291,8 +334,8 @@ def create_ui():
         "step1_status": step1_status, "step2_status": step2_status,
         "final_status": final_status,
         
-        # Save/Download components
-        "save_btn": save_btn, "clear_all_btn": clear_all_btn, "download_output": download_output,
+        # Download/Clear components
+        "download_result_btn": download_result_btn, "clear_all_btn": clear_all_btn, "download_output": download_output,
         
         "i2i_steps": i2i_steps,
         "i2i_guidance": i2i_guidance, 

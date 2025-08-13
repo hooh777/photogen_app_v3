@@ -3,6 +3,27 @@ import re
 import math
 import logging
 
+def get_dimensions(aspect_ratio_setting):
+    """Get pixel dimensions for standard aspect ratios"""
+    # Default high-quality size
+    base_size = 1024
+    
+    if "Match Input" in aspect_ratio_setting:
+        return (1024, 1024)  # Default fallback
+    elif "1:1" in aspect_ratio_setting or "Square" in aspect_ratio_setting:
+        return (1024, 1024)
+    elif "16:9" in aspect_ratio_setting or "Landscape" in aspect_ratio_setting:
+        return (1024, 576)  # 16:9 ratio
+    elif "9:16" in aspect_ratio_setting or "Portrait" in aspect_ratio_setting:
+        return (576, 1024)  # 9:16 ratio  
+    elif "4:3" in aspect_ratio_setting or "Standard" in aspect_ratio_setting:
+        return (1024, 768)  # 4:3 ratio
+    elif "3:4" in aspect_ratio_setting:
+        return (768, 1024)  # 3:4 ratio
+    else:
+        # Fallback to square
+        return (1024, 1024)
+
 def merge_images_with_smart_scaling(background_img, object_img, target_size=None, preserve_object_scale=False):
     """
     Intelligently merges background and object images with proportional scaling.

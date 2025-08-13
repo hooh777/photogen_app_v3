@@ -95,9 +95,21 @@ class I2IHandler:
             show_progress=False
         )
 
-        # Single-click area selection
+        # Single-click area selection with inline handler
+        def handle_click_with_prompt_button(base_img, obj_img, top_left, bottom_right, evt: gr.SelectData):
+            # Get the canvas update from the canvas manager
+            canvas_result = self.canvas_manager.handle_click(base_img, obj_img, top_left, bottom_right, evt)
+            
+            # Show the smart prompt button after area selection
+            return (
+                canvas_result[0],  # updated canvas
+                canvas_result[1],  # pin coords
+                canvas_result[2],  # anchor coords
+                gr.update(visible=True)  # show auto-prompt button
+            )
+        
         self.ui['i2i_interactive_canvas'].select(
-            self.handle_click_with_prompt_button, 
+            handle_click_with_prompt_button, 
             inputs=[
                 self.ui['i2i_canvas_image_state'], self.ui['i2i_object_image_state'],
                 self.ui['i2i_pin_coords_state'], self.ui['i2i_anchor_coords_state']
@@ -120,9 +132,9 @@ class I2IHandler:
             outputs=[self.ui['i2i_prompt'], self.ui['step2_status']]
         )
         
-        # Selection reset
+        # Selection reset with direct manager call
         self.ui['i2i_reset_selection_btn'].click(
-            self.reset_selection,
+            self.canvas_manager.reset_selection,
             inputs=[self.ui['i2i_canvas_image_state'], self.ui['i2i_object_image_state']],
             outputs=[
                 self.ui['i2i_interactive_canvas'],
@@ -147,57 +159,25 @@ class I2IHandler:
             outputs=[self.ui['selected_gallery_image_state']] if 'selected_gallery_image_state' in self.ui else []
         )
         
-        # Prompt status updates
+        # Prompt status updates with direct manager call
         self.ui['i2i_prompt'].change(
-            self.update_prompt_status,
+            self.state_manager.update_prompt_status,
             inputs=[self.ui['i2i_prompt']],
             outputs=[self.ui['step2_status']]
         )
         
-        # Token counter (if available)
+        # Token counter (if available) with inline function
         if 'i2i_token_counter' in self.ui:
+            def update_token_count(prompt_text):
+                return self.state_manager.update_token_count(prompt_text, self.generator)
+            
             self.ui['i2i_prompt'].change(
-                self.update_token_count,
+                update_token_count,
                 inputs=[self.ui['i2i_prompt']],
                 outputs=[self.ui['i2i_token_counter']]
             )
 
-    # === Delegation Methods to Focused Managers ===
-    
-    # Canvas operations → CanvasManager
-    def update_canvas_with_merge(self, base_img, obj_img, top_left, bottom_right):
-        return self.canvas_manager.update_canvas_with_merge(base_img, obj_img, top_left, bottom_right)
-    
-    def handle_click(self, base_img, obj_img, top_left, bottom_right, evt: gr.SelectData):
-        return self.canvas_manager.handle_click(base_img, obj_img, top_left, bottom_right, evt)
-    
-    def handle_click_with_prompt_button(self, base_img, obj_img, top_left, bottom_right, evt: gr.SelectData):
-        # Get the canvas update from the original handler
-        canvas_result = self.canvas_manager.handle_click(base_img, obj_img, top_left, bottom_right, evt)
-        
-        # Show the smart prompt button after area selection
-        return (
-            canvas_result[0],  # updated canvas
-            canvas_result[1],  # pin coords
-            canvas_result[2],  # anchor coords
-            gr.update(visible=True)  # show auto-prompt button
-        )
-    
-    def reset_selection(self, base_img, obj_img):
-        return self.canvas_manager.reset_selection(base_img, obj_img)
-    
-    # State management → StateManager
-    def store_background(self, img, existing_object=None):
-        return self.state_manager.store_background(img, existing_object)
-
-    def store_object(self, img):
-        return self.state_manager.store_object(img)
-    
-    def update_prompt_status(self, prompt_text):
-        return self.state_manager.update_prompt_status(prompt_text)
-    
-    def update_token_count(self, prompt_text):
-        return self.state_manager.update_token_count(prompt_text, self.generator)
+    # === Essential Methods - Direct Manager Access ===
     
     # Auto-prompt generation → AutoPromptManager
     def auto_generate_prompt(self, base_img, object_img, top_left, bottom_right, existing_prompt, provider_name, allow_human_surfaces=False):

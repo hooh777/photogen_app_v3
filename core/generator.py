@@ -96,101 +96,54 @@ class Generator:
         return self.kontext_pipeline
         
     def _determine_safe_generation_size(self, background_img, aspect_ratio_setting, model_choice):
-        """Smart dimension selection with safety checks for optimal quality and performance"""
+        """Simplified dimension selection with safety checks"""
         if background_img is None:
-            # No background - use aspect ratio setting
             return utils.get_dimensions(aspect_ratio_setting)
         
         bg_size = background_img.size
         bg_pixels = bg_size[0] * bg_size[1]
         bg_ratio = bg_size[0] / bg_size[1]
         
-        # Log original dimensions for debugging
-        logging.info(f"🔍 Background image original size: {bg_size[0]}×{bg_size[1]} ({bg_pixels:,} pixels, ratio: {bg_ratio:.2f})")
+        logging.info(f"🔍 Background: {bg_size[0]}×{bg_size[1]} ({bg_pixels:,} pixels, ratio: {bg_ratio:.2f})")
         
-        # Safety thresholds based on model choice
+        # Set limits based on model choice
         if model_choice == const.PRO_MODEL:
-            # Pro API can handle larger images but has cost implications
-            MAX_SAFE_PIXELS = 2048 * 2048  # 4MP conservative limit for Pro
-            MAX_DIMENSION = 2048
-            MIN_QUALITY_PIXELS = 768 * 768  # Minimum for quality preservation
+            MAX_PIXELS = 2048 * 2048
+            MAX_DIM = 2048
         else:
-            # Local model - more conservative for GPU memory
-            MAX_SAFE_PIXELS = 1536 * 1536  # 2.3MP for local GPU safety
-            MAX_DIMENSION = 1536
-            MIN_QUALITY_PIXELS = 512 * 512  # Minimum for quality preservation
+            MAX_PIXELS = 1536 * 1536
+            MAX_DIM = 1536
             
-        MIN_RATIO, MAX_RATIO = 0.3, 3.5  # Reasonable aspect ratio range (3:10 to 10:3)
+        MIN_PIXELS = 512 * 512
+        MIN_RATIO, MAX_RATIO = 0.3, 3.5
         
-        # Check if background dimensions are safe to use directly
-        is_size_safe = bg_pixels <= MAX_SAFE_PIXELS
-        is_ratio_safe = MIN_RATIO <= bg_ratio <= MAX_RATIO
-        is_dimension_safe = bg_size[0] <= MAX_DIMENSION and bg_size[1] <= MAX_DIMENSION
-        is_quality_sufficient = bg_pixels >= MIN_QUALITY_PIXELS
-        
-        # QUALITY PRESERVATION LOGIC: Prioritize detail retention
-        if is_size_safe and is_ratio_safe and is_dimension_safe and is_quality_sufficient:
-            # Background is safe and high quality - preserve original
-            logging.info(f"✅ Using background dimensions: {bg_size[0]}×{bg_size[1]} (safe & high quality)")
+        # Check if we can use original size
+        if (bg_pixels <= MAX_PIXELS and 
+            bg_size[0] <= MAX_DIM and bg_size[1] <= MAX_DIM and
+            MIN_RATIO <= bg_ratio <= MAX_RATIO and
+            bg_pixels >= MIN_PIXELS):
+            logging.info(f"✅ Using original size: {bg_size[0]}×{bg_size[1]}")
             return bg_size
-        elif not is_quality_sufficient and is_ratio_safe:
-            # Image is too small - upscale to minimum quality threshold while preserving ratio
-            scale_factor = math.sqrt(MIN_QUALITY_PIXELS / bg_pixels)
-            new_width = int(bg_size[0] * scale_factor)
-            new_height = int(bg_size[1] * scale_factor)
-            
-            # Ensure dimensions are multiples of 64 for model compatibility
-            new_width = ((new_width + 63) // 64) * 64
-            new_height = ((new_height + 63) // 64) * 64
-            
-            logging.info(f"📈 Upscaling for quality: {bg_size[0]}×{bg_size[1]} → {new_width}×{new_height} (quality preservation)")
-            return (new_width, new_height)
-        elif not is_ratio_safe:
-            # Extreme aspect ratio - use aspect ratio setting but ensure minimum quality
-            fallback_size = utils.get_dimensions(aspect_ratio_setting)
-            if fallback_size[0] * fallback_size[1] < MIN_QUALITY_PIXELS:
-                # Even fallback is too small, use minimum quality dimensions
-                if bg_ratio > 1:  # Landscape
-                    new_height = int(math.sqrt(MIN_QUALITY_PIXELS / bg_ratio))
-                    new_width = int(new_height * bg_ratio)
-                else:  # Portrait
-                    new_width = int(math.sqrt(MIN_QUALITY_PIXELS * bg_ratio))
-                    new_height = int(new_width / bg_ratio)
-                
-                # Ensure multiples of 64
-                new_width = max(512, ((new_width + 63) // 64) * 64)
-                new_height = max(512, ((new_height + 63) // 64) * 64)
-                
-                logging.warning(f"⚠️ Extreme aspect ratio with quality protection: {bg_size[0]}×{bg_size[1]} → {new_width}×{new_height}")
-                return (new_width, new_height)
-            else:
-                logging.warning(f"⚠️ Background aspect ratio {bg_ratio:.2f} too extreme, using {fallback_size[0]}×{fallback_size[1]}")
-                return fallback_size
+        
+        # Handle extreme aspect ratios
+        if not (MIN_RATIO <= bg_ratio <= MAX_RATIO):
+            logging.warning(f"⚠️ Extreme aspect ratio {bg_ratio:.2f}, using fallback dimensions")
+            return utils.get_dimensions(aspect_ratio_setting)
+        
+        # Scale down if too large, scale up if too small
+        if bg_pixels > MAX_PIXELS or max(bg_size) > MAX_DIM:
+            scale_factor = min(math.sqrt(MAX_PIXELS / bg_pixels), MAX_DIM / max(bg_size))
+        elif bg_pixels < MIN_PIXELS:
+            scale_factor = math.sqrt(MIN_PIXELS / bg_pixels)
         else:
-            # Image is too large - scale down but respect minimum quality
-            scale_factor = min(
-                math.sqrt(MAX_SAFE_PIXELS / bg_pixels),
-                MAX_DIMENSION / max(bg_size[0], bg_size[1])
-            )
+            return bg_size
             
-            new_width = int(bg_size[0] * scale_factor)
-            new_height = int(bg_size[1] * scale_factor)
-            
-            # Check if scaling down would go below quality threshold
-            scaled_pixels = new_width * new_height
-            if scaled_pixels < MIN_QUALITY_PIXELS:
-                # Prioritize quality over memory safety
-                quality_scale_factor = math.sqrt(MIN_QUALITY_PIXELS / bg_pixels)
-                new_width = int(bg_size[0] * quality_scale_factor)
-                new_height = int(bg_size[1] * quality_scale_factor)
-                logging.warning(f"⚠️ Quality protection overriding memory safety: using {new_width}×{new_height} instead of smaller size")
-            
-            # Ensure dimensions are multiples of 64 for model compatibility
-            new_width = max(512, ((new_width + 63) // 64) * 64)
-            new_height = max(512, ((new_height + 63) // 64) * 64)
-            
-            logging.info(f"📐 Scaled background from {bg_size[0]}×{bg_size[1]} to {new_width}×{new_height} (balanced quality/safety)")
-            return (new_width, new_height)
+        # Apply scaling and ensure multiple of 64
+        new_width = max(512, ((int(bg_size[0] * scale_factor) + 63) // 64) * 64)
+        new_height = max(512, ((int(bg_size[1] * scale_factor) + 63) // 64) * 64)
+        
+        logging.info(f"📐 Scaled: {bg_size[0]}×{bg_size[1]} → {new_width}×{new_height}")
+        return (new_width, new_height)
     
     def _calculate_smart_object_scale(self, background_size, object_size):
         """Calculate contextually appropriate object scaling with aspect ratio preservation"""
@@ -264,42 +217,74 @@ class Generator:
             polling_url = post_response.json().get('polling_url')
             if not polling_url:
                 raise gr.Error(f"API did not return a polling URL. Response: {post_response.text}")
+        except requests.exceptions.Timeout:
+            logging.error("⏰ API Request Timeout - Server took too long to respond")
+            raise gr.Error("⏰ API Timeout: The server is taking too long to respond. Please try again in a moment, or consider switching to a different model provider.")
+        except requests.exceptions.HTTPError as e:
+            response_text = e.response.text if e.response else "N/A"
+            status_code = e.response.status_code if e.response else "Unknown"
+            
+            if status_code == 504:
+                logging.error("🚪 Gateway Timeout (504) - API server is overloaded or unavailable")
+                raise gr.Error("🚪 Server Timeout (504): The API server is currently overloaded or temporarily unavailable. Please try again in a few minutes, or switch to 'Pro (Black Forest Labs)' model.")
+            elif status_code == 503:
+                logging.error("🔧 Service Unavailable (503) - API server is down for maintenance")  
+                raise gr.Error("🔧 Service Unavailable (503): The API server is temporarily down for maintenance. Please try again later or use a different model.")
+            elif status_code == 429:
+                logging.error("⚡ Rate Limited (429) - Too many requests")
+                raise gr.Error("⚡ Rate Limited (429): Too many requests. Please wait a moment before trying again.")
+            else:
+                logging.error(f"❌ HTTP Error {status_code}: {e}")
+                raise gr.Error(f"❌ API Error ({status_code}): {e}\n\nTry switching to 'Pro (Black Forest Labs)' model or try again later.")
+        except requests.exceptions.ConnectionError:
+            logging.error("🌐 Connection Error - Cannot reach API server")
+            raise gr.Error("🌐 Connection Error: Cannot reach the API server. Please check your internet connection and try again.")
         except requests.exceptions.RequestException as e:
             response_text = e.response.text if e.response else "N/A"
-            logging.error("API Request Error", exc_info=True)
-            raise gr.Error(f"API Request Error: {e} - Response: {response_text}")
+            logging.error("❌ API Request Error", exc_info=True)
+            raise gr.Error(f"❌ API Request Error: {e}\n\nResponse: {response_text}\n\nTry switching to a different model provider.")
         
-        # Polling loop
+        # Polling loop with improved error handling
         for i in range(60):
-            progress((i + 1) / 60, desc=f"Waiting for result (Attempt {i+1})...")
-            get_response = requests.get(polling_url, headers={"x-key": api_key}, timeout=30)
-            get_response.raise_for_status()
-            result_data = get_response.json()
-            
-            if result_data.get('status') == 'Ready':
-                progress(0.95, desc="Downloading final image(s)...")
+            try:
+                progress((i + 1) / 60, desc=f"Waiting for result (Attempt {i+1})...")
+                get_response = requests.get(polling_url, headers={"x-key": api_key}, timeout=30)
+                get_response.raise_for_status()
+                result_data = get_response.json()
                 
-                # --- CORRECTED LOGIC START ---
-                # The API returns a single URL in 'sample', not a list in 'samples'.
-                single_sample_url = result_data.get('result', {}).get('sample')
+                if result_data.get('status') == 'Ready':
+                    progress(0.95, desc="Downloading final image(s)...")
+                    
+                    # --- CORRECTED LOGIC START ---
+                    # The API returns a single URL in 'sample', not a list in 'samples'.
+                    single_sample_url = result_data.get('result', {}).get('sample')
+                    
+                    if not single_sample_url:
+                        logging.error(f"API response did not contain an image URL. Full response: {result_data}")
+                        raise gr.Error("API job succeeded but the response did not contain a valid image URL.")
+
+                    # The rest of the function expects a list, so we put our single URL into a list.
+                    samples = [single_sample_url]
+                    # --- CORRECTED LOGIC END ---
+
+                    images = []
+                    for url in samples:
+                        image_response = requests.get(url)
+                        image_response.raise_for_status()
+                        images.append(Image.open(BytesIO(image_response.content)))
+                    return images
+
+                elif result_data.get('status') == 'failed':
+                    raise gr.Error(f"API job failed: {result_data.get('error', 'Unknown error')}")
                 
-                if not single_sample_url:
-                    logging.error(f"API response did not contain an image URL. Full response: {result_data}")
-                    raise gr.Error("API job succeeded but the response did not contain a valid image URL.")
-
-                # The rest of the function expects a list, so we put our single URL into a list.
-                samples = [single_sample_url]
-                # --- CORRECTED LOGIC END ---
-
-                images = []
-                for url in samples:
-                    image_response = requests.get(url)
-                    image_response.raise_for_status()
-                    images.append(Image.open(BytesIO(image_response.content)))
-                return images
-
-            elif result_data.get('status') == 'failed':
-                raise gr.Error(f"API job failed: {result_data.get('error', 'Unknown error')}")
+            except requests.exceptions.Timeout:
+                logging.warning(f"⏰ Polling timeout on attempt {i+1}/60")
+                if i >= 55:  # Last few attempts
+                    raise gr.Error("⏰ Polling Timeout: Server is taking too long to process your request. Please try again.")
+            except requests.exceptions.RequestException as e:
+                logging.warning(f"🌐 Polling error on attempt {i+1}/60: {e}")
+                if i >= 55:  # Last few attempts  
+                    raise gr.Error(f"🌐 Polling Error: {e}")
             
             time.sleep(2)
 

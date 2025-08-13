@@ -46,81 +46,52 @@ class PhotoGenApp:
         if 'i2i_token_counter' in self.ui:
             self.ui['i2i_prompt'].change(fn=self.update_token_count, inputs=self.ui['i2i_prompt'], outputs=self.ui['i2i_token_counter'])
         
-        # Image saving - handle gallery selection and save button
-        if 'save_btn' in self.ui and 'download_output' in self.ui:
-            # Handle gallery selection with more robust event handling
-            def on_gallery_select(evt: gr.SelectData):
-                # evt.index contains the index, evt.value contains the image data
+        # Simplified download button - no gallery selection needed
+        if 'download_result_btn' in self.ui and 'download_output' in self.ui:
+            # Simplified download method - gets state values as inputs
+            def download_latest_image(gallery_images, last_generated_state):
+                """Download the most recently generated image from inputs"""
                 try:
-                    logging.info(f"🖼️ Gallery selection - Index: {evt.index}, Value type: {type(evt.value)}")
+                    # Primary method: get from last_generated_image_state input
+                    logging.info(f"💾 Checking last_generated_state input: {type(last_generated_state)} - {last_generated_state is not None}")
+                    if last_generated_state is not None:
+                        logging.info(f"💾 Downloading from last_generated_state: {type(last_generated_state)}")
+                        filepath = self.save_and_download_image(last_generated_state, "photogen")
+                        if filepath and os.path.exists(filepath):
+                            absolute_path = os.path.abspath(filepath)
+                            logging.info(f"💾 Triggering download with gr.update: {absolute_path}")
+                            return gr.update(value=absolute_path, visible=True)
+                        else:
+                            logging.error(f"💾 File not found or save failed: {filepath}")
+                            return gr.update(visible=False)
                     
-                    # In newer Gradio versions, evt.value contains the image path/data
-                    if evt.value is not None:
-                        logging.info(f"🖼️ Using evt.value: {evt.value}")
-                        return evt.value
+                    # Fallback: get from gallery input
+                    logging.info(f"💾 Checking gallery_images input: {type(gallery_images)} - Length: {len(gallery_images) if gallery_images else 0}")
+                    if gallery_images and len(gallery_images) > 0:
+                        # Get the most recent image (last in the gallery)
+                        recent_img = gallery_images[-1]
+                        logging.info(f"💾 Downloading latest image from gallery: {type(recent_img)}")
+                        filepath = self.save_and_download_image(recent_img, "photogen")
+                        if filepath and os.path.exists(filepath):
+                            absolute_path = os.path.abspath(filepath)
+                            logging.info(f"💾 Triggering download with gr.update: {absolute_path}")
+                            return gr.update(value=absolute_path, visible=True)
+                        else:
+                            logging.error(f"💾 File not found or save failed: {filepath}")
+                            return gr.update(visible=False)
                     
-                    # Fallback: Try to get the image from gallery value using index
-                    gallery_value = self.ui['output_gallery'].value
-                    if gallery_value and len(gallery_value) > evt.index:
-                        selected_image = gallery_value[evt.index]
-                        logging.info(f"🖼️ Fallback - selected image at index {evt.index}: {type(selected_image)}")
-                        return selected_image
-                    else:
-                        logging.warning(f"🖼️ No valid selection found")
-                        return None
-                        
                 except Exception as e:
-                    logging.error(f"🖼️ Gallery selection error: {e}")
-                    return None
+                    logging.error(f"💾 Download failed: {e}")
+                    import traceback
+                    logging.error(f"💾 Traceback: {traceback.format_exc()}")
+                
+                gr.Warning("No image available to download. Please generate an image first.")
+                return gr.update(visible=False)
             
-            # Register the gallery selection event  
-            self.ui['output_gallery'].select(
-                fn=on_gallery_select,
-                outputs=[self.ui['selected_gallery_image_state']]
-            )
-            
-            # Enhanced save method that combines all strategies
-            def enhanced_save_image(selected_img):
-                """Enhanced save method with multiple fallback strategies"""
-                logging.info(f"💾 Enhanced save called - Selected: {type(selected_img)}")
-                
-                # Strategy 1: Use selected image if available
-                if selected_img is not None:
-                    logging.info("💾 Using selected image")
-                    return self.save_image(selected_img, "photogen")
-                
-                # Strategy 2: Get from gallery directly
-                try:
-                    gallery_value = self.ui['output_gallery'].value
-                    logging.info(f"💾 Gallery fallback - Type: {type(gallery_value)}, Length: {len(gallery_value) if gallery_value else 0}")
-                    
-                    if gallery_value and len(gallery_value) > 0:
-                        # Save the most recent image
-                        recent_img = gallery_value[-1]
-                        logging.info(f"💾 Using most recent from gallery: {type(recent_img)}")
-                        gr.Info("No image selected. Saving the most recent image from gallery...")
-                        return self.save_image(recent_img, "photogen")
-                except Exception as e:
-                    logging.error(f"💾 Gallery access failed: {e}")
-                
-                # Strategy 3: Try last generated image state
-                try:
-                    if 'last_generated_image_state' in self.ui:
-                        last_generated = self.ui['last_generated_image_state'].value
-                        if last_generated is not None:
-                            logging.info(f"💾 Using last generated: {type(last_generated)}")
-                            gr.Info("Using the most recently generated image...")
-                            return self.save_image(last_generated, "photogen")
-                except Exception as e:
-                    logging.error(f"💾 Last generated fallback failed: {e}")
-                
-                gr.Warning("No image available to save. Please generate an image first.")
-                return None
-            
-            # Register the enhanced save method
-            self.ui['save_btn'].click(
-                enhanced_save_image,
-                inputs=[self.ui['selected_gallery_image_state']], 
+            # Register the download method with inputs - output directly to download
+            self.ui['download_result_btn'].click(
+                download_latest_image,
+                inputs=[self.ui['output_gallery'], self.ui['last_generated_image_state']],
                 outputs=self.ui['download_output']
             )
 
@@ -262,95 +233,72 @@ class PhotoGenApp:
             message += " ?��? **Warning:** Prompt will be truncated!"
         return message
 
-    def save_image(self, img, img_type):
-        """Saves generated images to the outputs directory."""
-        logging.info(f"?�� Save image called - Type: {type(img)}, Value: {repr(img)[:200]}")
+    def save_and_download_image(self, img, img_type):
+        """Saves image and returns path for immediate download."""
+        logging.info(f"💾 Save and download image called - Type: {type(img)}")
         
         if img is None:
-            gr.Warning("Please select an image from the gallery first.")
-            return
+            gr.Warning("No image available to download.")
+            return None
+            
         os.makedirs(const.OUTPUTS_DIR, exist_ok=True)
         
+        # Process the image to get PIL format
+        pil_img = None
         if isinstance(img, tuple):
             img = img[0]
-            logging.info(f"?�� Extracted from tuple - Type: {type(img)}")
-
-        # Handle different image types
-        if isinstance(img, dict):
-            # Handle Gradio gallery format where img is a dict with 'image' or 'name' key
-            img_path = None
-            if 'image' in img:
-                img_data = img['image']
-                # Check if 'image' contains another dict with 'path'
-                if isinstance(img_data, dict) and 'path' in img_data:
-                    img_path = img_data['path']
-                    logging.info(f"?�� Using nested 'image.path' key: {img_path}")
-                else:
-                    img_path = img_data
-                    logging.info(f"?�� Using 'image' key: {img_path}")
-            elif 'name' in img:
-                img_path = img['name']
-                logging.info(f"?�� Using 'name' key: {img_path}")
-            elif 'path' in img:
-                img_path = img['path']
-                logging.info(f"?�� Using 'path' key: {img_path}")
-            elif 'value' in img:
-                img_path = img['value']
-                logging.info(f"?�� Using 'value' key: {img_path}")
-            else:
-                # Try to find any string value in the dict
-                for key, value in img.items():
-                    if isinstance(value, str) and (value.endswith('.png') or value.endswith('.jpg') or value.endswith('.jpeg') or value.endswith('.webp')):
-                        img_path = value
-                        logging.info(f"?�� Found image path in '{key}': {img_path}")
-                        break
-                    elif isinstance(value, dict) and 'path' in value:
-                        img_path = value['path']
-                        logging.info(f"?�� Found nested path in '{key}.path': {img_path}")
-                        break
-                
-                if not img_path:
-                    logging.error(f"?�� Could not extract image path from dict keys: {list(img.keys())}")
-                    gr.Error("Could not extract image path from gallery selection.")
-                    return
             
-            try:
-                pil_img = Image.open(img_path)
-                logging.info(f"?�� Successfully loaded image from path: {img_path}")
-            except Exception as e:
-                logging.error(f"?�� Could not open image file: {e}")
-                gr.Error(f"Could not open image file: {e}")
-                return
+        if isinstance(img, dict):
+            # Handle Gradio gallery format
+            img_path = None
+            for key in ['image', 'name', 'path', 'value']:
+                if key in img:
+                    potential_path = img[key]
+                    if isinstance(potential_path, dict) and 'path' in potential_path:
+                        img_path = potential_path['path']
+                    else:
+                        img_path = potential_path
+                    break
+            
+            if img_path:
+                try:
+                    pil_img = Image.open(img_path)
+                except Exception as e:
+                    logging.error(f"💾 Could not open image file: {e}")
+                    return None
         elif isinstance(img, str):
-            # If it's a file path, load the image first
             try:
                 pil_img = Image.open(img)
-                logging.info(f"?�� Successfully loaded image from string path: {img}")
             except Exception as e:
-                logging.error(f"?�� Could not open image file: {e}")
-                gr.Error(f"Could not open image file: {e}")
-                return
+                logging.error(f"💾 Could not open image file: {e}")
+                return None
         elif isinstance(img, np.ndarray):
             pil_img = Image.fromarray(img)
-            logging.info(f"?�� Converted numpy array to PIL image: {img.shape}")
         elif hasattr(img, 'save'):
-            pil_img = img  # Assume it's already a PIL Image
-            logging.info(f"?�� Using existing PIL image: {img.size}")
-        else:
-            logging.error(f"?�� Unknown image type: {type(img)}")
-            gr.Error(f"Unknown image format: {type(img)}. Please try selecting the image again.")
-            return
+            pil_img = img  # Already a PIL Image
         
+        if pil_img is None:
+            logging.error(f"💾 Could not process image type: {type(img)}")
+            return None
+        
+        # Save the image
         filepath = f"{const.OUTPUTS_DIR}/{img_type}_output_{int(time.time())}.png"
         try:
             pil_img.save(filepath)
-            logging.info(f"?�� Image saved successfully to: {filepath}")
-            gr.Info(f"Image saved to {filepath}")
-            return gr.update(value=filepath, visible=True)
+            logging.info(f"💾 Image saved successfully to: {filepath}")
+            gr.Info(f"Image downloaded: {os.path.basename(filepath)}")
+            return filepath
         except Exception as e:
-            logging.error(f"?�� Failed to save image: {e}")
+            logging.error(f"💾 Failed to save image: {e}")
             gr.Error(f"Failed to save image: {e}")
-            return
+            return None
+
+    def save_image(self, img, img_type):
+        """Legacy save method that shows the download button."""
+        filepath = self.save_and_download_image(img, img_type)
+        if filepath:
+            return gr.update(value=filepath, visible=True)
+        return None
 
     def launch(self):
         self.demo.launch()

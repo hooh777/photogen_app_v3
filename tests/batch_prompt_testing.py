@@ -14,8 +14,7 @@ from pathlib import Path
 
 # Import our existing systems
 from core.handlers.generation_manager import GenerationManager
-from core.handlers.scale_analyzer import ScaleAnalyzer
-from analyze_generation_result import PostGenerationAnalyzer
+# from analyze_generation_result import PostGenerationAnalyzer  # File not found
 
 
 class BatchPromptTester:
@@ -25,8 +24,7 @@ class BatchPromptTester:
         self.test_results_dir = "batch_test_results"
         self.test_images_dir = "test_images"
         self.generation_manager = GenerationManager()
-        self.scale_analyzer = ScaleAnalyzer()
-        self.post_analyzer = PostGenerationAnalyzer()
+        # self.post_analyzer = PostGenerationAnalyzer()  # Disabled - file not found
         
         # Test configuration
         self.fixed_seed = 42  # For reproducibility
@@ -388,18 +386,13 @@ class BatchPromptTester:
         
         enhanced_prompt = base_prompt
         
-        # Add scale analysis enhancement
+        # Scale analysis enhancement (simplified - scale analyzer removed)
         if enhancement_level.get("use_scale_analysis", False):
             try:
-                scale_analysis = self.scale_analyzer.analyze_scale_relationship(
-                    object_image, background_image, api_key, "Qwen-VL-Max"
-                )
-                
-                if scale_analysis.get("confidence", 0) > 0.6:
-                    size_guidance = scale_analysis.get("size_guidance", {})
-                    if size_guidance.get("has_specific_guidance"):
-                        scale_addition = size_guidance.get("prompt_addition", "")
-                        enhanced_prompt += f" {scale_addition}"
+                # Simple fallback scale guidance without complex analysis
+                print("ℹ️ Scale analysis requested but analyzer not available - using fallback")
+                # Add basic scale guidance
+                enhanced_prompt += " ensure proper size and proportions for natural integration"
             except Exception as e:
                 print(f"⚠️ Scale analysis failed for test: {e}")
         

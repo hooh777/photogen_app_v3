@@ -19,8 +19,7 @@ def check_requirements():
         "batch_prompt_testing.py",
         "batch_test_analyzer.py", 
         "analyze_generation_result.py",
-        "core/handlers/generation_manager.py",
-        "core/handlers/scale_analyzer.py"
+        "core/handlers/generation_manager.py"
     ]
     
     print("🔍 Checking requirements...")

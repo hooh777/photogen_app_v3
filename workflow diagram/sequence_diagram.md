@@ -1,93 +1,404 @@
-# PhotoGen App v3 - Sequence Diagrams
+# PhotoGen App v3 - Current Implementation Workflows
 
 ## Overview
-This document contains sequence diagrams for the main workflows in the PhotoGen application.
+This document contains updated sequence diagrams reflecting the current PhotoGen application implementation, including multi-image upload, gallery selection, manual prompt detection, and the "Match Input + post-resize" strategy.
 
-## 1. Image-to-Image (I2I) Edit Mode Workflow
+## 1. Multi-Image Upload and Gallery Selection Workflow
 
 ```mermaid
 sequenceDiagram
     participant User
     participant UI as Gradio UI
     participant I2IHandler as I2I Handler
+    participant CanvasManager as Canvas Manager
+    participant Utils as Image Utils
+
+    Note over User, Utils: Current Multi-Image Upload System
+
+    User->>UI: Upload multiple images (background + objects)
+    UI->>I2IHandler: handle_multi_image_upload(uploaded_files)
+    
+    I2IHandler->>I2IHandler: Process uploaded files (max 10 images)
+    loop For each uploaded file
+        I2IHandler->>I2IHandler: Open and validate image
+        I2IHandler->>I2IHandler: Add to processed_images list
+    end
+    
+    I2IHandler->>I2IHandler: Store images in self.uploaded_images
+    alt Single Image Uploaded
+        I2IHandler->>I2IHandler: Set as background_state, no object_state
+        I2IHandler-->>UI: Single image ready for editing
+    else Multiple Images Uploaded
+        I2IHandler->>I2IHandler: First image = background, second = object (default)
+        I2IHandler-->>UI: Gallery preview + default states
+    end
+    
+    I2IHandler-->>UI: Return gallery preview, states, and status
+    UI-->>User: Display image gallery for selection
+    
+    Note over User, Utils: Gallery Selection Process
+    
+    User->>UI: Click on image in gallery
+    UI->>I2IHandler: handle_gallery_click(evt.index)
+    
+    I2IHandler->>I2IHandler: Get selected image from self.uploaded_images[evt.index]
+    alt Multi-image workflow
+        I2IHandler->>I2IHandler: Selected = background, others = objects
+        I2IHandler->>I2IHandler: Get first other image as object
+        I2IHandler-->>UI: Update states (background, object, canvas)
+        UI-->>User: Show selected background + object context
+    else Single image workflow
+        I2IHandler->>I2IHandler: Selected = background, no object
+        I2IHandler-->>UI: Update states (background only)
+        UI-->>User: Show selected image for editing
+    end
+```
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Gradio UI
+    participant GenManager as Generation Manager
+    participant StyleTransfer as Style Transfer
     participant Vision as Vision Model
+
+    Note over User, Vision: Prompt Analysis and Enhancement System
+
+    User->>UI: Enter prompt text
+    UI->>GenManager: _process_prompt_for_pro_model(prompt)
+    
+    GenManager->>GenManager: Check for auto-prompt indicators
+    Note right of GenManager: Search for: "based on", "analyzing", "I can see"<br/>"looking at", "appears to", "seems to be"
+    
+    alt Manual Prompt Detected (no indicators)
+        GenManager->>GenManager: is_manual_prompt = True
+        GenManager->>GenManager: Log: "Manual prompt detected, skipping enhancement"
+        GenManager-->>UI: Return original prompt unchanged
+        
+    else Auto-Generated Prompt (indicators found)
+        GenManager->>GenManager: is_manual_prompt = False
+        GenManager->>GenManager: Check style_mode setting
+        
+        alt Style Enhancement Enabled
+            GenManager->>StyleTransfer: enhance_prompt(prompt, style_mode)
+            
+            StyleTransfer->>StyleTransfer: Load style keywords from config
+            StyleTransfer->>StyleTransfer: Apply style-specific enhancements
+            alt style_mode == "style-only"
+                StyleTransfer->>StyleTransfer: Focus on artistic elements
+                StyleTransfer-->>GenManager: Enhanced style prompt
+            else style_mode == "selective"  
+                StyleTransfer->>StyleTransfer: Balance content + style
+                StyleTransfer-->>GenManager: Balanced enhanced prompt
+            else style_mode == "enhance"
+                StyleTransfer->>StyleTransfer: Full content enhancement
+                StyleTransfer-->>GenManager: Fully enhanced prompt
+            end
+            
+            GenManager->>GenManager: Log enhanced prompt details
+            GenManager-->>UI: Return style-enhanced prompt
+            
+        else Style Enhancement Disabled
+            GenManager->>GenManager: Log: "Auto-prompt without style enhancement"
+            GenManager-->>UI: Return original auto-prompt
+        end
+    end
+
+    Note over User, Vision: Vision Analysis Integration
+    
+    alt Vision Analysis Required
+        User->>UI: Click "Auto-Generate Prompt" 
+        UI->>Vision: analyze_image_region(background, object, provider)
+        
+        Vision->>Vision: Convert images to base64
+        Vision->>Qwen-VL-Max: Send analysis request with context
+        Qwen-VL-Max-->>Vision: Return analysis ("bottle on wooden surface")
+        Vision-->>GenManager: Auto-generated prompt with indicators
+        
+        GenManager->>GenManager: Detect auto-prompt indicators
+        GenManager->>GenManager: Process through style enhancement if enabled
+        GenManager-->>UI: Final processed prompt
+    end
+```
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Gradio UI
+    participant GenManager as Generation Manager
     participant Generator as FLUX Generator
     participant Utils as Image Utils
     participant Storage as Secure Storage
 
-    Note over User, Storage: Edit Mode - Object Placement Workflow
+    Note over User, Storage: Pro API Multi-Image Generation Strategy
 
-    User->>UI: Upload background image
-    User->>UI: Upload object image (optional)
-    User->>UI: Click twice to select area
-    UI->>I2IHandler: Selection coordinates (top_left, bottom_right)
-    
-    alt Auto-Generate Prompt
-        User->>UI: Click "Auto-Generate Prompt"
-        UI->>I2IHandler: auto_generate_prompt()
-        I2IHandler->>I2IHandler: Crop selection region
-        I2IHandler->>Utils: Draw selection box overlay
-        I2IHandler->>Vision: analyze_image_region(background, object, provider)
-        Vision->>Vision: Convert images to base64
-        Vision->>Qwen-VL-Max: Send analysis request
-        Qwen-VL-Max-->>Vision: Return surface type ("on wooden surface")
-        Vision-->>I2IHandler: Surface description
-        I2IHandler->>I2IHandler: Build prompt with background preservation
-        I2IHandler-->>UI: Generated prompt with surface info
-    end
-
-    User->>UI: Enter/edit prompt text
-    User->>UI: Adjust settings (steps, guidance, etc.)
+    User->>UI: Select images from gallery
+    User->>UI: Enter prompt (manual or auto-generated)
+    User->>UI: Set generation parameters
     User->>UI: Click "Generate"
     
-    UI->>I2IHandler: run_i2i(source, object, prompt, settings)
-    I2IHandler->>I2IHandler: Validate inputs and truncate prompt
-    I2IHandler->>Storage: load_api_key(FLUX_PRO_API)
-    Storage-->>I2IHandler: API key
+    UI->>GenManager: run_main_generation(images, prompt, settings)
+    GenManager->>GenManager: Validate inputs and settings
+    GenManager->>Storage: load_api_key(FLUX_PRO_API)
+    Storage-->>GenManager: API key
     
-    alt Create Mode (no background)
-        I2IHandler->>Generator: text_to_image(prompt, settings)
-        
-        alt Local Model Selected
-            Generator->>FLUX_Local: pipeline(prompt, steps=28, guidance=4.0, num_images)
-            Note right of FLUX_Local: Model: black-forest-labs/FLUX.1-Kontext-dev
-            FLUX_Local-->>Generator: Generated images
-        else Pro Model Selected
-            Generator->>FLUX_API: POST /v1/flux-kontext-pro
-            Note right of FLUX_API: Model: flux-1-kontext-pro<br/>Include: prompt, steps, guidance, num_images
-            FLUX_API-->>Generator: Generated image URLs
-            Generator->>Generator: Download images from URLs
-        end
-        
-        Generator-->>I2IHandler: Generated images
-    else Edit Mode (with background)
-        I2IHandler->>Utils: merge_multiple_images_high_quality(background, object)
-        Utils-->>I2IHandler: Merged canvas image
-        I2IHandler->>UI: update_canvas_with_merge(merged_image)
-        
-        alt Local Model Selected
-            I2IHandler->>Generator: image_to_image(merged_canvas, prompt, settings)
-            Generator->>FLUX_Local: kontext_pipeline(image, prompt, steps=28, guidance=3.0)
-            Note right of FLUX_Local: Model: FLUX.1-Kontext-dev + Nunchaku
-            FLUX_Local-->>Generator: Edited images
-        else Pro Model Selected
-            I2IHandler->>Generator: image_to_image(merged_canvas, prompt, settings)
-            Generator->>FLUX_API: POST /v1/flux-kontext-pro
-            Note right of FLUX_API: Model: flux-1-kontext-pro<br/>Include: prompt, input_image, steps, guidance
-            FLUX_API-->>Generator: Edited image URLs
-            Generator->>Generator: Download images from URLs
-        end
-        
-        Generator-->>I2IHandler: Result images
+    GenManager->>Utils: merge_images_with_smart_scaling(images)
+    Note right of Utils: Reduced gap layout: 2px spacing<br/>Better integration for FLUX Kontext
+    Utils->>Utils: Calculate optimal scaling for merged dimensions
+    Utils->>Utils: Create side-by-side layout with 2px gaps
+    Utils-->>GenManager: Merged input image
+    
+    GenManager->>GenManager: Apply "Match Input + post-resize" strategy
+    GenManager->>GenManager: Override target dimensions to match merged input
+    Note right of GenManager: Force dimensions = merged_image.size<br/>Prevents duplicate object issues
+    
+    GenManager->>Generator: generate_with_pro_api(merged_image, prompt, "Match Input")
+    Generator->>Generator: Build Pro API request
+    Generator->>FLUX_API: POST /v1/flux-kontext-pro
+    Note right of FLUX_API: Request includes:<br/>• input_image (merged)<br/>• prompt (processed)<br/>• width/height (match input)<br/>• steps, guidance, num_images
+    
+    FLUX_API-->>Generator: Generated image URL(s)
+    Generator->>Generator: Download images from URLs
+    Generator->>Generator: Validate image quality
+    
+    alt Post-Generation Resize Required
+        Generator->>Generator: Check if resize needed for target output
+        Generator->>Utils: resize_image(generated, target_size)
+        Utils-->>Generator: Resized final image
     end
     
-    I2IHandler->>Utils: save_image(result, I2I_TYPE)
-    Utils-->>I2IHandler: Saved file path
-    I2IHandler-->>UI: Display generated images
-    UI-->>User: Show results
+    Generator-->>GenManager: Final generated images
+    GenManager->>Utils: save_image(result, GENERATION_TYPE)
+    Utils-->>GenManager: Saved file path with timestamp
+    GenManager-->>UI: Display final results
+    UI-->>User: Show generated images in gallery
+
+    Note over User, Storage: Debug Logging Throughout
+    GenManager->>GenManager: Log input dimensions
+    GenManager->>GenManager: Log merged image properties  
+    GenManager->>GenManager: Log Pro API request details
+    GenManager->>GenManager: Log generation success/failure
 ```
 
-## 1a. Create Mode - Object Only Workflow
+```mermaid
+sequenceDiagram
+    participant User
+    participant Utils as Image Utils
+    participant PIL as PIL Image
+    participant Logging as Debug Logger
+
+    Note over User, Logging: Smart Scaling and Reduced Gap Layout
+
+    Utils->>Utils: merge_images_with_smart_scaling(image_list)
+    Utils->>Logging: Log input image count and dimensions
+    
+    Utils->>Utils: Calculate individual image dimensions
+    loop For each image in image_list
+        Utils->>PIL: Open and get image.size
+        Utils->>Utils: Track max_width, total_height
+    end
+    
+    Utils->>Utils: Calculate scaling factor
+    Note right of Utils: Scale to fit within reasonable bounds<br/>while preserving aspect ratios
+    Utils->>Utils: target_width = min(max_width * scale, MAX_WIDTH)
+    
+    Utils->>Utils: Create merged canvas
+    Utils->>PIL: new_image = Image.new('RGB', canvas_size, 'white')
+    
+    Utils->>Utils: Apply reduced gap layout (2px spacing)
+    Note right of Utils: Previous: 10px gaps caused integration issues<br/>Current: 2px gaps for better FLUX Kontext results
+    
+    loop For each image
+        Utils->>PIL: Resize image to calculated dimensions
+        Utils->>PIL: Paste at position with 2px vertical gap
+        Utils->>Utils: Update y_offset += scaled_height + 2
+    end
+    
+    Utils->>Logging: Log final merged dimensions
+    Utils->>Logging: Log scaling factor applied
+    Utils-->>Utils: Return optimized merged image
+
+    Note over User, Logging: Quality Validation
+    Utils->>Utils: Validate merged image quality
+    Utils->>Utils: Check for reasonable dimensions (not too large/small)
+    Utils->>Utils: Verify all images successfully merged
+```
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Gradio UI
+    participant GenManager as Generation Manager
+    participant Generator as FLUX Generator
+    participant Utils as Image Utils
+    participant Storage as Secure Storage
+    participant ErrorHandler as Error Handler
+
+    Note over User, ErrorHandler: End-to-End Generation with Comprehensive Error Handling
+
+    User->>UI: Complete generation request
+    UI->>GenManager: run_main_generation(params)
+    
+    GenManager->>GenManager: Validate all inputs
+    alt Validation Failed
+        GenManager->>ErrorHandler: Log validation error
+        GenManager-->>UI: Return error message
+        UI-->>User: Display validation error
+    end
+    
+    GenManager->>GenManager: Process prompt (manual vs auto detection)
+    GenManager->>Storage: load_api_key(selected_model)
+    alt API Key Missing
+        GenManager->>ErrorHandler: Log missing API key
+        GenManager-->>UI: Return "API key not configured" error
+        UI-->>User: Display configuration error
+    end
+    
+    GenManager->>Utils: merge_images_with_smart_scaling(images)
+    alt Image Merge Failed
+        Utils->>ErrorHandler: Log merge failure details
+        Utils-->>GenManager: Return None
+        GenManager-->>UI: Return merge error
+        UI-->>User: Display image processing error
+    end
+    
+    GenManager->>Generator: generate_images(merged_input, processed_prompt, settings)
+    
+    alt Local Model Generation
+        Generator->>Generator: Load local FLUX model
+        alt Model Load Failed
+            Generator->>ErrorHandler: Log model load error
+            Generator-->>GenManager: Return error result
+        else Model Load Success
+            Generator->>FLUX_Local: Generate with pipeline
+            alt Generation Failed
+                FLUX_Local->>ErrorHandler: Log generation error
+                FLUX_Local-->>Generator: Return None
+            else Generation Success
+                FLUX_Local-->>Generator: Return generated images
+            end
+        end
+        
+    else Pro API Generation  
+        Generator->>Generator: Build API request with "Match Input" dimensions
+        Generator->>FLUX_API: POST /v1/flux-kontext-pro
+        alt API Request Failed
+            FLUX_API->>ErrorHandler: Log HTTP error (timeout, 429, 500, etc.)
+            FLUX_API-->>Generator: Return error response
+            Generator->>Generator: Parse error details
+            Generator-->>GenManager: Return API error
+        else API Request Success
+            FLUX_API-->>Generator: Return image URLs
+            Generator->>Generator: Download images with retry logic
+            alt Download Failed
+                Generator->>ErrorHandler: Log download failure
+                Generator-->>GenManager: Return download error
+            else Download Success
+                Generator-->>GenManager: Return final images
+            end
+        end
+    end
+    
+    alt Generation Success
+        GenManager->>Utils: save_image(results, timestamp)
+        Utils->>Utils: Create outputs directory if needed
+        Utils->>Utils: Save with unique filename
+        Utils-->>GenManager: Return saved file paths
+        
+        GenManager->>GenManager: Log generation success
+        GenManager-->>UI: Return results with file paths
+        UI-->>User: Display generated images
+        
+    else Generation Failed
+        GenManager->>ErrorHandler: Log complete failure context
+        GenManager-->>UI: Return user-friendly error message
+        UI-->>User: Display error with suggested actions
+    end
+
+    Note over User, ErrorHandler: Comprehensive Debugging Context
+    ErrorHandler->>ErrorHandler: Track all error types and frequencies
+    ErrorHandler->>ErrorHandler: Provide detailed logs for troubleshooting
+    ErrorHandler->>ErrorHandler: Suggest user actions for common errors
+```
+
+```mermaid
+sequenceDiagram
+    participant UI as Gradio UI
+    participant I2IHandler as I2I Handler
+    participant GenManager as Generation Manager
+    participant CanvasManager as Canvas Manager
+    participant StyleTransfer as Style Transfer
+    participant Storage as Secure Storage
+
+    Note over UI, Storage: Streamlined Handler Architecture
+
+    UI->>I2IHandler: User interactions (uploads, clicks, generation)
+    I2IHandler->>I2IHandler: Maintain session state
+    Note right of I2IHandler: Tracks: uploaded_images, background_state<br/>object_state, canvas_state, selection_coords
+    
+    alt Multi-Image Upload Operations
+        I2IHandler->>I2IHandler: handle_multi_image_upload(files)
+        I2IHandler->>I2IHandler: handle_gallery_click(selection)
+        I2IHandler->>CanvasManager: update_canvas_states(background, object)
+        CanvasManager-->>I2IHandler: Updated canvas preview
+    end
+    
+    alt Generation Operations
+        I2IHandler->>GenManager: run_main_generation(params)
+        GenManager->>GenManager: _process_prompt_for_pro_model(prompt)
+        
+        alt Style Enhancement Required
+            GenManager->>StyleTransfer: enhance_prompt(prompt, style_mode)
+            StyleTransfer-->>GenManager: Enhanced prompt
+        end
+        
+        GenManager->>GenManager: Execute generation workflow
+        GenManager-->>I2IHandler: Generation results
+    end
+    
+    alt Configuration Management
+        I2IHandler->>Storage: load_api_key(model_type)
+        Storage-->>I2IHandler: Decrypted API key
+        I2IHandler->>Storage: save_api_key(key, model_type)
+        Storage->>Storage: Encrypt and store securely
+    end
+    
+    Note over UI, Storage: State Persistence and Memory Management
+    I2IHandler->>I2IHandler: Clean up temporary images
+    I2IHandler->>I2IHandler: Manage memory usage for large image sets
+    I2IHandler->>I2IHandler: Preserve user selections across operations
+    
+    alt Session Reset
+        I2IHandler->>I2IHandler: clear_session_state()
+        I2IHandler->>CanvasManager: reset_canvas_states()
+        I2IHandler->>I2IHandler: Clear uploaded_images cache
+    end
+```
+
+## Technical Implementation Notes
+
+### Current System Capabilities
+- **Multi-Image Upload**: Supports up to 10 images with gallery selection interface
+- **Manual Prompt Detection**: Automatically detects user-written vs AI-generated prompts
+- **Style Transfer Integration**: Optional prompt enhancement with multiple style modes
+- **Pro API Optimization**: "Match Input + post-resize" strategy for reliable multi-image generation
+- **Reduced Gap Layout**: 2px spacing for better FLUX Kontext integration
+- **Comprehensive Error Handling**: Detailed logging and user-friendly error messages
+- **Secure API Management**: Encrypted storage for API keys with automatic loading
+
+### Key Technical Decisions
+1. **Manual vs Auto-Prompt Detection**: Prevents accidental enhancement of user-written prompts
+2. **"Match Input" Dimensions**: Eliminates duplicate object issues in Pro API generation  
+3. **Reduced Gap Merging**: 2px spacing improves AI model integration vs previous 10px gaps
+4. **Handler Separation**: Focused responsibilities - I2I for UI state, GenManager for processing
+5. **Comprehensive Debugging**: Extensive logging throughout pipeline for troubleshooting
+
+### Performance Optimizations
+- Smart image scaling to prevent oversized merged images
+- Memory management for large image sets
+- Retry logic for API requests and downloads
+- Efficient state management across multi-image workflows
+- Cached processed images to avoid redundant operations
 
 ```mermaid
 sequenceDiagram

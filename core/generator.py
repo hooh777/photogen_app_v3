@@ -356,10 +356,32 @@ class Generator:
             logging.info(f"🔍 Requested dimensions: {width}×{height}, Aspect ratio setting: {aspect_ratio_setting}")
         
         # Determine optimal generation size using hybrid approach
-        if background_img is not None:
-            # Use smart dimension calculation based on background
+        is_pro_api = model_choice.startswith("Pro")
+        
+        # SPECIAL HANDLING: Pro API multi-image workflow
+        if background_img is not None and object_img is not None and is_pro_api:
+            # Store user's desired final dimensions
+            user_target_width, user_target_height = width, height
+            
+            # Always use "Match Input" strategy for generation (most reliable)
+            generation_width, generation_height = background_img.size
+            
+            logging.info(f"🎯 === PRO API MULTI-IMAGE STRATEGY ===")
+            logging.info(f"🎯 User Target: {user_target_width}×{user_target_height}")
+            logging.info(f"🎯 Generation Method: Match Input ({generation_width}×{generation_height})")
+            logging.info(f"🎯 Will resize after generation for clean results")
+            logging.info(f"🎯 === END STRATEGY ===")
+            
+            # Use background dimensions for generation
+            target_width, target_height = generation_width, generation_height
+            
+            gr.Info(f"🎯 Multi-image: Generating at background size ({target_width}×{target_height}), will resize to {user_target_width}×{user_target_height}")
+            
+        elif background_img is not None:
+            # Single image or non-Pro API - use original logic
             optimal_size = self._determine_safe_generation_size(background_img, aspect_ratio_setting, model_choice)
             target_width, target_height = optimal_size
+            user_target_width, user_target_height = target_width, target_height  # No post-resize needed
             
             # Provide user feedback about dimension choice
             if optimal_size == background_img.size:
@@ -369,6 +391,7 @@ class Generator:
         else:
             # No background info - use provided dimensions
             target_width, target_height = width, height
+            user_target_width, user_target_height = width, height  # No post-resize needed
             logging.info(f"🔍 No background - using provided dimensions: {target_width}×{target_height}")
         
         # Final dimension validation and logging
@@ -506,6 +529,39 @@ class Generator:
                 "api_key": api_key
             }
             
-            return self._call_pro_api(payload, config_key, progress)
+            # Call Pro API
+            api_result = self._call_pro_api(payload, config_key, progress)
+            
+            # POST-PROCESSING: Resize to user's target dimensions if needed
+            if (background_img and object_img and 
+                (user_target_width != target_width or user_target_height != target_height)):
+                
+                logging.info(f"📐 === POST-GENERATION RESIZE ===")
+                logging.info(f"📐 API Result: {api_result[0].size if api_result else 'None'}")
+                logging.info(f"📐 Target: {user_target_width}×{user_target_height}")
+                
+                if api_result and len(api_result) > 0:
+                    original_result = api_result[0]
+                    
+                    # High-quality resize to user's desired dimensions
+                    resized_result = original_result.resize(
+                        (user_target_width, user_target_height),
+                        Image.LANCZOS
+                    )
+                    
+                    logging.info(f"📐 Resized: {original_result.size} → {resized_result.size}")
+                    gr.Info(f"✅ Generated and resized to {user_target_width}×{user_target_height}")
+                    
+                    # Return resized result
+                    return [resized_result]
+                else:
+                    logging.warning("📐 No API result to resize")
+                    return api_result
+                    
+                logging.info(f"📐 === END POST-GENERATION RESIZE ===")
+            else:
+                # No resize needed
+                logging.info(f"📐 No post-resize needed - dimensions match")
+                return api_result
         else:
             raise ValueError(f"Invalid model choice: {model_choice}")

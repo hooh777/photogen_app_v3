@@ -106,7 +106,7 @@ class I2IHandler:
             inputs=[
                 self.ui['i2i_canvas_image_state'], self.ui['i2i_object_image_state'],
                 self.ui['i2i_pin_coords_state'], self.ui['i2i_anchor_coords_state'],
-                self.ui['i2i_prompt'], self.ui['provider_select'], self.ui['allow_human_surfaces']
+                self.ui['i2i_prompt'], self.ui['provider_select']
             ], 
             outputs=[self.ui['i2i_prompt'], self.ui['step2_status']]
         )
@@ -143,23 +143,12 @@ class I2IHandler:
             inputs=[self.ui['i2i_prompt']],
             outputs=[self.ui['step2_status']]
         )
-        
-        # Token counter (if available) with inline function
-        if 'i2i_token_counter' in self.ui:
-            def update_token_count(prompt_text):
-                return self.state_manager.update_token_count(prompt_text, self.generator)
-            
-            self.ui['i2i_prompt'].change(
-                update_token_count,
-                inputs=[self.ui['i2i_prompt']],
-                outputs=[self.ui['i2i_token_counter']]
-            )
 
     # === Essential Methods - Direct Manager Access ===
     
     # Auto-prompt generation → AutoPromptManager
-    def auto_generate_prompt(self, base_img, object_img, top_left, bottom_right, existing_prompt, provider_name, allow_human_surfaces=False):
-        return self.auto_prompt_manager.generate_auto_prompt(base_img, object_img, top_left, bottom_right, existing_prompt, provider_name, allow_human_surfaces)
+    def auto_generate_prompt(self, base_img, object_img, top_left, bottom_right, existing_prompt, provider_name):
+        return self.auto_prompt_manager.generate_auto_prompt(base_img, object_img, top_left, bottom_right, existing_prompt, provider_name)
     
     # Image generation → GenerationManager
     def run_i2i(self, source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress=gr.Progress()):

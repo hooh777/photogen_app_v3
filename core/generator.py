@@ -1,7 +1,6 @@
 import torch
 import gradio as gr
 from diffusers import FluxPipeline, FluxKontextPipeline
-from transformers import AutoTokenizer
 try:
     from nunchaku import NunchakuFluxTransformer2dModel
     from nunchaku.utils import get_precision
@@ -30,20 +29,12 @@ class Generator:
         self.config = config
         self.pipeline = None
         self.kontext_pipeline = None
-        self.tokenizer = None
         # Lazy loading - only load when actually needed for better startup time
         
         # Depth processing disabled (module removed)
         self.depth_enabled = False
         self.depth_processor = None
         logging.info("📸 Running without depth processing (basic mode)")
-
-    def _initialize_tokenizer(self):
-        if self.kontext_pipeline and hasattr(self.kontext_pipeline, 'tokenizer'):
-            self.tokenizer = self.kontext_pipeline.tokenizer
-            logging.info("✅ Tokenizer accessed from loaded pipeline.")
-        else:
-            logging.warning("⚠️ Could not access tokenizer from pipeline.")
 
     def _load_local_t2i_pipeline(self):
         if self.pipeline is None:
@@ -85,11 +76,20 @@ class Generator:
                 self.tokenizer = None
         return self.kontext_pipeline
         
-    def _determine_safe_generation_size(self, background_img, aspect_ratio_setting, model_choice):
-        """Simplified dimension selection with safety checks"""
-        if background_img is None:
+    def _determine_safe_generation_size(self, background_img, aspect_ratio_setting, model_choice, force_aspect_ratio=False):
+        """Simplified dimension selection with safety checks
+        
+        Args:
+            background_img: Background image or None
+            aspect_ratio_setting: UI aspect ratio selection
+            model_choice: Local or Pro model
+            force_aspect_ratio: If True, always use aspect_ratio_setting even with background
+        """
+        # Always use aspect ratio setting when requested or no background
+        if background_img is None or force_aspect_ratio or aspect_ratio_setting != "Match Input":
             return utils.get_dimensions(aspect_ratio_setting)
         
+        # Only use background dimensions for "Match Input" mode
         bg_size = background_img.size
         bg_pixels = bg_size[0] * bg_size[1]
         bg_ratio = bg_size[0] / bg_size[1]
@@ -378,14 +378,18 @@ class Generator:
             gr.Info(f"🎯 Multi-image: Generating at background size ({target_width}×{target_height}), will resize to {user_target_width}×{user_target_height}")
             
         elif background_img is not None:
-            # Single image or non-Pro API - use original logic
-            optimal_size = self._determine_safe_generation_size(background_img, aspect_ratio_setting, model_choice)
+            # Single image or non-Pro API - respect user's aspect ratio choice
+            # Use force_aspect_ratio=True for Text-to-Image mode to always respect UI selection
+            force_aspect = (aspect_ratio_setting != "Match Input")
+            optimal_size = self._determine_safe_generation_size(background_img, aspect_ratio_setting, model_choice, force_aspect_ratio=force_aspect)
             target_width, target_height = optimal_size
             user_target_width, user_target_height = target_width, target_height  # No post-resize needed
             
             # Provide user feedback about dimension choice
             if optimal_size == background_img.size:
                 gr.Info(f"✅ Using background dimensions: {target_width}×{target_height}")
+            elif force_aspect:
+                gr.Info(f"🎯 Using selected aspect ratio: {target_width}×{target_height} ({aspect_ratio_setting})")
             else:
                 gr.Info(f"📐 Optimized dimensions: {target_width}×{target_height} (scaled from {background_img.size[0]}×{background_img.size[1]} for performance)")
         else:

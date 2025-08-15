@@ -41,11 +41,7 @@ class PhotoGenApp:
             self._register_additional_handlers()
 
     def _register_additional_handlers(self):
-        """Register additional handlers for token counting, saving, and enhancement."""
-        # Token counting for unified Create/Edit mode
-        if 'i2i_token_counter' in self.ui:
-            self.ui['i2i_prompt'].change(fn=self.update_token_count, inputs=self.ui['i2i_prompt'], outputs=self.ui['i2i_token_counter'])
-        
+        """Register additional handlers for saving and enhancement."""
         # Simplified download button - no gallery selection needed
         if 'download_result_btn' in self.ui and 'download_output' in self.ui:
             # Simplified download method - gets state values as inputs
@@ -221,19 +217,6 @@ class PhotoGenApp:
             "**Status:** Ready for your prompt ✏️",  # step2_status - reset
             "**Status:** Ready to generate! 🎉"  # final_status - reset
         )
-
-    def update_token_count(self, prompt_text):
-        """Updates the token count display for prompts."""
-        if self.generator.tokenizer is None: 
-            return "Tokenizer not available."
-        max_length = 77 
-        if not prompt_text: 
-            return f"Tokens: 0 / {max_length}"
-        count = len(self.generator.tokenizer.encode(prompt_text))
-        message = f"Tokens: {count} / {max_length}"
-        if count > max_length: 
-            message += " ?��? **Warning:** Prompt will be truncated!"
-        return message
 
     def save_and_download_image(self, img, img_type):
         """Saves image and returns path for immediate download."""

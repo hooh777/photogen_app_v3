@@ -137,14 +137,7 @@ def create_ui():
                 """)
                 
                 with gr.Column():
-                    # Human interaction toggle with help text
-                    with gr.Row():
-                        allow_human_surfaces = gr.Checkbox(
-                            label="🤝 Allow objects on people (hands, clothing, etc.)", 
-                            value=False, 
-                            visible=True,
-                            info="Enable placement directly on people for realistic interactions."
-                        )
+                    # Human interaction toggle removed - functionality was redundant
                     
 
 
@@ -159,9 +152,6 @@ def create_ui():
                         show_copy_button=True,
                         autoscroll=False
                     )
-                    
-                    # Token counter
-                    i2i_token_counter = gr.Markdown("Tokens: 0 / 77", elem_id="token_counter")
                     
                     # Progress indicator for Step 2
                     step2_status = gr.Markdown("**Status:** Ready for composition prompt ✏️", visible=True)
@@ -270,9 +260,8 @@ def create_ui():
         # Mode containers and controls
         "canvas_mode_info": canvas_mode_info, 
         "i2i_prompt": i2i_prompt, "i2i_auto_prompt_btn": i2i_auto_prompt_btn,
-        "i2i_reset_selection_btn": i2i_reset_selection_btn, "allow_human_surfaces": allow_human_surfaces,
+        "i2i_reset_selection_btn": i2i_reset_selection_btn,
         "prompt_separator": prompt_separator,
-        "i2i_token_counter": i2i_token_counter,
         "step1_status": step1_status, "step2_status": step2_status,
         "final_status": final_status,
         

@@ -3,27 +3,6 @@ import re
 import math
 import logging
 
-def get_dimensions(aspect_ratio_setting):
-    """Get pixel dimensions for standard aspect ratios"""
-    # Default high-quality size
-    base_size = 1024
-    
-    if "Match Input" in aspect_ratio_setting:
-        return (1024, 1024)  # Default fallback
-    elif "1:1" in aspect_ratio_setting or "Square" in aspect_ratio_setting:
-        return (1024, 1024)
-    elif "16:9" in aspect_ratio_setting or "Landscape" in aspect_ratio_setting:
-        return (1024, 576)  # 16:9 ratio
-    elif "9:16" in aspect_ratio_setting or "Portrait" in aspect_ratio_setting:
-        return (576, 1024)  # 9:16 ratio  
-    elif "4:3" in aspect_ratio_setting or "Standard" in aspect_ratio_setting:
-        return (1024, 768)  # 4:3 ratio
-    elif "3:4" in aspect_ratio_setting:
-        return (768, 1024)  # 3:4 ratio
-    else:
-        # Fallback to square
-        return (1024, 1024)
-
 def merge_images_with_smart_scaling(background_img, object_img, target_size=None, preserve_object_scale=False):
     """
     Intelligently merges background and object images with proportional scaling.
@@ -208,12 +187,27 @@ def merge_multiple_images_high_quality(image_list, bg_color="black"):
     return merged_image
 
 def get_dimensions(aspect_ratio_str: str, base_resolution: int = 1024):
-    """Calculates width and height from an aspect ratio string, keeping the longest side at base_resolution."""
-    try:
-        w, h = map(int, aspect_ratio_str.split(':'))
-    except (ValueError, AttributeError):
-        # Default to square if the format is invalid or None
-        return base_resolution, base_resolution
+    """Calculates width and height from an aspect ratio string, keeping the longest side at base_resolution.
+    
+    Handles both pure ratio format (e.g., '16:9') and UI format (e.g., '16:9 (Landscape)', '1:1 (Square)')
+    """
+    
+    # Handle special UI cases first
+    if aspect_ratio_str == "Match Input":
+        return base_resolution, base_resolution  # Default fallback
+    
+    # Extract ratio from UI strings like "16:9 (Landscape)" or "1:1 (Square)"
+    import re
+    ratio_match = re.search(r'(\d+):(\d+)', aspect_ratio_str)
+    if ratio_match:
+        w, h = int(ratio_match.group(1)), int(ratio_match.group(2))
+    else:
+        # If no ratio found, try to parse as pure ratio string
+        try:
+            w, h = map(int, aspect_ratio_str.split(':'))
+        except (ValueError, AttributeError):
+            # Default to square if the format is invalid or None
+            return base_resolution, base_resolution
 
     if w > h: # Landscape
         width = base_resolution
@@ -227,7 +221,7 @@ def get_dimensions(aspect_ratio_str: str, base_resolution: int = 1024):
     # Ensure dimensions are multiples of 8 for stability with diffusion models
     width = (width // 8) * 8
     height = (height // 8) * 8
-    
+
     return width, height
 
 def parse_template(template):

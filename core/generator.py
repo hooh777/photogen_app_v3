@@ -24,7 +24,6 @@ import logging
 import math
 from core import constants as const
 from core import utils
-from core.depth_processor import DepthMapProcessor
 
 class Generator:
     def __init__(self, config):
@@ -34,19 +33,10 @@ class Generator:
         self.tokenizer = None
         # Lazy loading - only load when actually needed for better startup time
         
-        # Initialize depth processing
-        try:
-            self.depth_processor = DepthMapProcessor()
-            self.depth_enabled = self.depth_processor.depth_estimator is not None
-            if self.depth_enabled:
-                logging.info("🌊 Depth ControlNet processing enabled")
-            else:
-                logging.warning("⚠️ Depth processing unavailable - depth models failed to load")
-        except Exception as e:
-            logging.error(f"❌ Depth processing initialization failed: {e}")
-            self.depth_enabled = False
-            self.depth_processor = None
-            logging.info("📸 Running without depth processing (basic mode)")
+        # Depth processing disabled (module removed)
+        self.depth_enabled = False
+        self.depth_processor = None
+        logging.info("📸 Running without depth processing (basic mode)")
 
     def _initialize_tokenizer(self):
         if self.kontext_pipeline and hasattr(self.kontext_pipeline, 'tokenizer'):
@@ -206,13 +196,20 @@ class Generator:
         
         try:
             progress(0, desc="Sending request to Pro API...")
-            logging.info(f"🔑 Request headers: {headers}")
-            logging.info(f"🔑 Request payload keys: {list(payload.keys())}")
+            logging.info(f"🌐 === API REQUEST DEBUG ===")
+            logging.info(f"🌐 Full Endpoint: {full_endpoint}")
+            logging.info(f"🌐 Request Headers: {headers}")
+            logging.info(f"🌐 Payload Keys: {list(payload.keys())}")
+            logging.info(f"🌐 Payload Model: {payload.get('model', 'Unknown')}")
+            logging.info(f"🌐 Payload Steps: {payload.get('num_inference_steps', 'Unknown')}")
+            logging.info(f"🌐 Payload Guidance: {payload.get('guidance_scale', 'Unknown')}")
+            
             post_response = requests.post(full_endpoint, headers=headers, json=payload, timeout=120)
             post_response.raise_for_status()
             
-            logging.info(f"🔑 Response status: {post_response.status_code}")
-            logging.info(f"🔑 Response content: {post_response.text[:500]}...")  # First 500 chars
+            logging.info(f"🌐 Response Status: {post_response.status_code}")
+            logging.info(f"🌐 Response Content Preview: {post_response.text[:500]}...")
+            logging.info(f"🌐 === END API REQUEST DEBUG ===")
             
             polling_url = post_response.json().get('polling_url')
             if not polling_url:
@@ -350,35 +347,13 @@ class Generator:
         else:
             raise ValueError(f"Invalid model choice: {model_choice}")
             
-    def image_to_image(self, source_image_np, prompt, steps, guidance, model_choice, num_images, width, height, api_key="", background_img=None, object_img=None, aspect_ratio_setting="1:1", progress=gr.Progress(), use_depth_control=True, depth_strength=0.6, disable_auto_enhancement=False):
+    def image_to_image(self, source_image_np, prompt, steps, guidance, model_choice, num_images, width, height, api_key="", background_img=None, object_img=None, aspect_ratio_setting="1:1", progress=gr.Progress()):
         """Enhanced image-to-image generation with smart dimension handling and depth control"""
         
         # Debug logging for input analysis
         if background_img is not None:
             logging.info(f"🔍 Input analysis - Background: {background_img.size}, Object: {object_img.size if object_img else 'None'}")
             logging.info(f"🔍 Requested dimensions: {width}×{height}, Aspect ratio setting: {aspect_ratio_setting}")
-            logging.info(f"🌊 Depth control: {'Enabled' if use_depth_control and self.depth_enabled else 'Disabled'}")
-        
-        # Generate depth map for enhanced background replacement
-        depth_map = None
-        if use_depth_control and self.depth_enabled and background_img is not None:
-            try:
-                logging.info("🌊 Generating depth map for enhanced background replacement...")
-                if progress:
-                    progress(0.1, "Analyzing image depth...")
-                
-                depth_map = self.depth_processor.generate_depth_map(background_img)
-                if depth_map:
-                    # Enhance depth map quality
-                    depth_map = self.depth_processor.enhance_depth_map(depth_map)
-                    logging.info("✅ Depth map generated successfully")
-                    if progress:
-                        progress(0.2, "Depth analysis complete")
-                else:
-                    logging.warning("⚠️ Depth map generation failed, continuing without depth control")
-            except Exception as e:
-                logging.error(f"❌ Depth processing error: {e}")
-                depth_map = None
         
         # Determine optimal generation size using hybrid approach
         if background_img is not None:
@@ -387,11 +362,10 @@ class Generator:
             target_width, target_height = optimal_size
             
             # Provide user feedback about dimension choice
-            depth_info = " with depth control" if depth_map is not None else ""
             if optimal_size == background_img.size:
-                gr.Info(f"✅ Using background dimensions: {target_width}×{target_height}{depth_info}")
+                gr.Info(f"✅ Using background dimensions: {target_width}×{target_height}")
             else:
-                gr.Info(f"📐 Optimized dimensions: {target_width}×{target_height}{depth_info} (scaled from {background_img.size[0]}×{background_img.size[1]} for performance)")
+                gr.Info(f"📐 Optimized dimensions: {target_width}×{target_height} (scaled from {background_img.size[0]}×{background_img.size[1]} for performance)")
         else:
             # No background info - use provided dimensions
             target_width, target_height = width, height
@@ -475,7 +449,15 @@ class Generator:
                     preserve_object_scale=True  # Enhanced scaling for human placement scenarios
                 )
                 pil_img = merged_input
-                logging.info(f"🔍 Pro API - Using enhanced merged image: {merged_input.size} (Background: {background_img.size} + Object: {object_img.size}) [preserve_object_scale=True]")
+                
+                # DETAILED LOGGING for debugging
+                logging.info(f"🔍 === PRO API MULTI-IMAGE DEBUG ===")
+                logging.info(f"🔍 Background Image: {background_img.size} {background_img.mode}")
+                logging.info(f"🔍 Object Image: {object_img.size} {object_img.mode}")
+                logging.info(f"🔍 Merged Result: {merged_input.size} {merged_input.mode}")
+                logging.info(f"🔍 Target Dimensions: {target_width}×{target_height}")
+                logging.info(f"🔍 === END DEBUG ===")
+                
                 gr.Info(f"Pro API: Using enhanced merged image approach with preserved object scaling (background + object combined)")
             else:
                 # Single image for Pro API
@@ -500,215 +482,30 @@ class Generator:
             pil_img.save(buffered, format="PNG")
             img_str = base64.b64encode(buffered.getvalue()).decode()
             
-            # Enhanced prompt handling for Pro API to preserve human figures
-            enhanced_prompt = self._enhance_prompt_for_pro_api(prompt, object_img, background_img, depth_map, disable_auto_enhancement)
+            # DETAILED API PAYLOAD LOGGING
+            logging.info(f"🚀 === PRO API PAYLOAD DEBUG ===")
+            logging.info(f"🚀 Model: {self.config.get('api_models', {}).get(config_key, {}).get('model_name')}")
+            logging.info(f"🚀 Prompt: '{prompt}'")
+            logging.info(f"🚀 Prompt Length: {len(prompt)} characters")
+            logging.info(f"🚀 Steps: {int(steps)}")
+            logging.info(f"🚀 Guidance: {float(guidance)}")
+            logging.info(f"🚀 Num Images: {int(num_images)}")
+            logging.info(f"🚀 Image Size Being Sent: {pil_img.size}")
+            logging.info(f"🚀 Image Mode: {pil_img.mode}")
+            logging.info(f"🚀 Base64 Image Length: {len(img_str)} characters")
+            logging.info(f"🚀 Config Key: {config_key}")
+            logging.info(f"🚀 === END API PAYLOAD DEBUG ===")
             
-            # Add depth information to payload if available
-            if depth_map is not None:
-                # Convert depth map to base64 for API transmission
-                depth_buffer = BytesIO()
-                depth_preview = self.depth_processor.create_depth_preview(background_img, depth_map)
-                depth_preview.save(depth_buffer, format="PNG")
-                depth_str = base64.b64encode(depth_buffer.getvalue()).decode()
-                
-                payload = {
-                    "model": self.config.get('api_models', {}).get(config_key, {}).get('model_name'),
-                    "prompt": enhanced_prompt,
-                    "input_image": img_str,
-                    "depth_map": depth_str,
-                    "depth_strength": depth_strength,
-                    "num_inference_steps": int(steps),
-                    "guidance_scale": float(guidance),
-                    "num_images_per_prompt": int(num_images),
-                    "api_key": api_key
-                }
-                logging.info(f"🌊 Pro API - Including depth map with strength {depth_strength}")
-            else:
-                payload = {
-                    "model": self.config.get('api_models', {}).get(config_key, {}).get('model_name'),
-                    "prompt": enhanced_prompt,
-                    "input_image": img_str,
-                    "num_inference_steps": int(steps),
-                    "guidance_scale": float(guidance),
-                    "num_images_per_prompt": int(num_images),
-                    "api_key": api_key
-                }
+            payload = {
+                "model": self.config.get('api_models', {}).get(config_key, {}).get('model_name'),
+                "prompt": prompt,
+                "input_image": img_str,
+                "num_inference_steps": int(steps),
+                "guidance_scale": float(guidance),
+                "num_images_per_prompt": int(num_images),
+                "api_key": api_key
+            }
+            
             return self._call_pro_api(payload, config_key, progress)
         else:
             raise ValueError(f"Invalid model choice: {model_choice}")
-    
-    def _enhance_prompt_for_pro_api(self, prompt, object_img=None, background_img=None, depth_map=None, disable_auto_enhancement=False):
-        """
-        Enhance prompt for Pro API to better preserve human figures and object identity.
-        
-        Args:
-            prompt: Original user prompt
-            object_img: Object image (PIL Image) 
-            background_img: Background image (PIL Image)
-            depth_map: Generated depth map
-            disable_auto_enhancement: Skip automatic enhancement if True
-            
-        Returns:
-            Enhanced prompt with preservation instructions
-        """
-        # Skip enhancement if disabled
-        if disable_auto_enhancement:
-            logging.info("🔧 Pro API auto enhancement disabled - using original prompt")
-            return prompt
-            
-        if not object_img:
-            return prompt
-            
-        # Detect if object contains humans/people using multiple approaches
-        contains_human = self._detect_human_in_object(object_img)
-        
-        # Fallback: Check if prompt mentions human-related terms
-        human_keywords = ['girl', 'boy', 'man', 'woman', 'person', 'people', 'child', 'kid', 
-                         'lady', 'gentleman', 'figure', 'model', 'pose', 'appearance', 
-                         'facial', 'face', 'expression', 'clothing', 'dress', 'outfit']
-        
-        prompt_mentions_human = any(keyword in prompt.lower() for keyword in human_keywords)
-        
-        # Use either detection result or prompt analysis
-        is_human_content = contains_human or prompt_mentions_human
-        
-        if is_human_content:
-            # Add human preservation instructions for Pro API
-            preservation_prefix = "IMPORTANT: Preserve the exact appearance, pose, clothing, and identity of the person visible in the image. "
-            focus_instruction = "Only modify the background and environment, keeping the person completely unchanged. "
-            identity_preservation = "Do not alter the person's face, expression, pose, or any personal characteristics. "
-            
-            # Add depth-aware instructions if depth map is available
-            depth_instruction = ""
-            if depth_map is not None:
-                depth_instruction = "Maintain realistic spatial depth and lighting relationships between the person and the new background. "
-            
-            enhanced_prompt = f"{preservation_prefix}{focus_instruction}{identity_preservation}{depth_instruction}{prompt}"
-            
-            logging.info(f"🧑 Pro API - Human content detected (detection: {contains_human}, prompt: {prompt_mentions_human})")
-            logging.info(f"🧑 Original prompt: {prompt}")
-            logging.info(f"🧑 Enhanced prompt: {enhanced_prompt}")
-            
-            return enhanced_prompt
-        else:
-            # For non-human objects, add general object preservation
-            if background_img is not None:
-                object_preservation = "Preserve the main object visible in the image while modifying the background. "
-                
-                # Add depth-aware instructions for objects too
-                depth_instruction = ""
-                if depth_map is not None:
-                    depth_instruction = "Ensure realistic depth relationships and natural lighting between the object and background. "
-                
-                enhanced_prompt = f"{object_preservation}{depth_instruction}{prompt}"
-                logging.info(f"🎯 Pro API - Object preservation with depth: {enhanced_prompt}")
-                return enhanced_prompt
-            
-        return prompt
-    
-    def _detect_human_in_object(self, object_img):
-        """
-        Improved heuristic to detect if object image contains humans/people.
-        
-        This is a basic implementation that could be enhanced with proper 
-        object detection models in the future.
-        
-        Args:
-            object_img: PIL Image object
-            
-        Returns:
-            bool: True if likely contains human, False otherwise
-        """
-        if not object_img:
-            return False
-            
-        # Convert to numpy for analysis
-        import numpy as np
-        img_array = np.array(object_img)
-        
-        # Basic heuristics:
-        # 1. Check image dimensions - humans typically need reasonable height
-        height, width = img_array.shape[:2]
-        aspect_ratio = height / width
-        
-        # 2. Enhanced skin tone detection
-        if len(img_array.shape) == 3:
-            # Convert to HSV for better skin detection
-            from PIL import Image as PILImage
-            hsv_img = object_img.convert('HSV')
-            hsv_array = np.array(hsv_img)
-            
-            h = hsv_array[:,:,0]
-            s = hsv_array[:,:,1] 
-            v = hsv_array[:,:,2]
-            
-            # Enhanced skin tone detection in HSV space
-            # Skin tones typically have:
-            # - Hue: 0-25 and 160-179 (reddish/orange tones)
-            # - Saturation: 40-255 (not too gray)
-            # - Value: 60-255 (not too dark)
-            skin_mask = (
-                ((h <= 25) | (h >= 160)) &  # Reddish/orange hues
-                (s >= 40) & (s <= 255) &    # Reasonable saturation
-                (v >= 60) & (v <= 255)      # Not too dark
-            )
-            
-            skin_percentage = np.sum(skin_mask) / (height * width)
-            
-            # More stringent requirements for human detection
-            human_likelihood_skin = skin_percentage > 0.08  # At least 8% skin tone
-            
-            # Additional RGB-based check for face-like features
-            rgb_array = np.array(object_img.convert('RGB'))
-            red = rgb_array[:,:,0]
-            green = rgb_array[:,:,1] 
-            blue = rgb_array[:,:,2]
-            
-            # Check for typical human skin RGB ranges
-            skin_rgb_mask = (
-                (red >= 80) & (red <= 255) &
-                (green >= 50) & (green <= 220) &
-                (blue >= 30) & (blue <= 200) &
-                (red > green) & (green >= blue) &  # Typical skin color relationship
-                ((red - green) >= 10) & ((green - blue) >= 5)  # Color separation
-            )
-            
-            skin_rgb_percentage = np.sum(skin_rgb_mask) / (height * width)
-            human_likelihood_rgb = skin_rgb_percentage > 0.05  # At least 5% skin-like RGB
-            
-            # Aspect ratio check - humans can be in various poses
-            human_aspect_ratio = 0.2 < aspect_ratio < 5.0  # Broader range for various poses
-            
-            # Size check: image should be large enough to contain meaningful human figure
-            min_size_check = min(height, width) > 80  # At least 80px in smaller dimension
-            
-            # Edge density check - humans have more complex edges than simple objects
-            # Simple edge detection using gradient
-            gray_array = np.array(object_img.convert('L'))
-            grad_x = np.abs(np.gradient(gray_array, axis=1))
-            grad_y = np.abs(np.gradient(gray_array, axis=0))
-            edge_density = np.mean(grad_x + grad_y)
-            complex_edges = edge_density > 8  # Humans typically have more complex edge patterns
-            
-            # Combine all checks - require multiple positive indicators
-            skin_detected = human_likelihood_skin or human_likelihood_rgb
-            basic_requirements = human_aspect_ratio and min_size_check
-            
-            # Final decision: need skin + basic requirements + reasonable complexity
-            final_detection = skin_detected and basic_requirements and complex_edges
-            
-            logging.info(f"🧑 Enhanced human detection analysis:")
-            logging.info(f"   - Image size: {width}×{height}, aspect ratio: {aspect_ratio:.2f}")
-            logging.info(f"   - HSV skin percentage: {skin_percentage:.3f} ({skin_percentage*100:.1f}%)")
-            logging.info(f"   - RGB skin percentage: {skin_rgb_percentage:.3f} ({skin_rgb_percentage*100:.1f}%)")
-            logging.info(f"   - HSV skin detected: {human_likelihood_skin}")
-            logging.info(f"   - RGB skin detected: {human_likelihood_rgb}")
-            logging.info(f"   - Overall skin detected: {skin_detected}")
-            logging.info(f"   - Aspect ratio OK: {human_aspect_ratio}")
-            logging.info(f"   - Size check: {min_size_check}")
-            logging.info(f"   - Edge density: {edge_density:.2f}, complex: {complex_edges}")
-            logging.info(f"   - Final detection: {final_detection}")
-            
-            return final_detection
-            
-        return False

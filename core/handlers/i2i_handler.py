@@ -29,10 +29,16 @@ class I2IHandler:
         # Store uploaded images for gallery selection
         self.uploaded_images = []
     
+    def reset_handler_state(self):
+        """Reset all handler state to initial values"""
+        logging.info("🔄 Resetting I2I handler state completely")
+        self.uploaded_images = []
+        logging.info(f"🔄 Handler state reset - uploaded_images: {len(self.uploaded_images)}")
+    
     def register_event_handlers(self):
         """Register all UI event handlers with multi-image workflow"""
         
-        # Multi-image upload handler (new single upload point)
+        # Multi-image upload handler (simplified)
         self.ui['i2i_source_uploader'].upload(
             self.handle_multi_image_upload,
             inputs=[self.ui['i2i_source_uploader']],
@@ -40,9 +46,24 @@ class I2IHandler:
                 self.ui['uploaded_images_preview'],    # gallery
                 self.ui['i2i_canvas_image_state'],     # background state
                 self.ui['i2i_object_image_state'],     # object state
-                self.ui['i2i_interactive_canvas'],     # canvas display
+                self.ui['i2i_interactive_canvas'],     # update canvas directly
                 self.ui['step1_status'],               # status markdown
-                self.ui['i2i_auto_prompt_btn']         # button visibility
+                self.ui['canvas_mode_info'],           # update canvas info
+                self.ui['i2i_pin_coords_state'],       # clear previous selection
+                self.ui['i2i_anchor_coords_state']     # clear previous selection
+            ]
+        )
+        
+        # Gallery selection handler - show selected image in canvas
+        self.ui['uploaded_images_preview'].select(
+            self.handle_gallery_click,
+            outputs=[
+                self.ui['i2i_canvas_image_state'],     # selected image state
+                self.ui['i2i_object_image_state'],     # clear object state for single selection
+                self.ui['i2i_interactive_canvas'],     # show selected image in canvas
+                self.ui['canvas_mode_info'],           # update instructions
+                self.ui['i2i_pin_coords_state'],       # clear previous selection
+                self.ui['i2i_anchor_coords_state']     # clear previous selection
             ]
         )
         
@@ -51,48 +72,6 @@ class I2IHandler:
             lambda x: None,  # No-op, preview gallery handles display
             inputs=[self.ui['i2i_object_uploader']],
             outputs=[]
-        )
-        
-        # Gallery selection for editing mode
-        self.ui['uploaded_images_preview'].select(
-            self.handle_gallery_selection,
-            inputs=[],  # SelectData is passed automatically, no inputs needed
-            outputs=[
-                self.ui['uploaded_images_preview'],    # keep gallery updated
-                self.ui['preview_mode_container'],     # show preview mode
-                self.ui['i2i_canvas_image_state']      # update canvas state
-            ]
-        )
-        
-        # Edit selected image button
-        self.ui['edit_selected_btn'].click(
-            self.enable_editing_mode,
-            inputs=[self.ui['i2i_canvas_image_state']],
-            outputs=[
-                self.ui['i2i_interactive_canvas'],     # make canvas interactive
-                self.ui['canvas_mode_info'],           # update info text
-                self.ui['preview_mode_container'],     # hide preview mode
-                self.ui['editing_mode_container']      # show editing mode
-            ]
-        )
-        
-        # Back to composition button  
-        self.ui['back_to_compose_btn'].click(
-            self.back_to_composition_step1,  # First clear the gallery
-            outputs=[
-                self.ui['uploaded_images_preview']     # clear gallery first
-            ],
-            show_progress=False
-        ).then(
-            self.back_to_composition_step2,  # Then hide other elements and repopulate
-            outputs=[
-                self.ui['preview_mode_container'],     # hide preview mode
-                self.ui['editing_mode_container'],     # hide editing mode
-                self.ui['canvas_controls_container'],  # hide canvas controls
-                self.ui['uploaded_images_preview'],    # repopulate gallery
-                self.ui['step1_status']                # reset status message
-            ],
-            show_progress=False
         )
 
         # Single-click area selection with inline handler
@@ -149,8 +128,7 @@ class I2IHandler:
                 self.ui['i2i_canvas_image_state'], self.ui['i2i_object_image_state'], 
                 self.ui['i2i_prompt'], self.ui['aspect_ratio'], self.ui['i2i_steps'], 
                 self.ui['i2i_guidance'], self.ui['i2i_model_select'], 
-                self.ui['i2i_pin_coords_state'], self.ui['i2i_anchor_coords_state'],
-                self.ui['disable_auto_enhancement']
+                self.ui['i2i_pin_coords_state'], self.ui['i2i_anchor_coords_state']
             ], 
             outputs=[self.ui['output_gallery'], self.ui['last_generated_image_state']] if 'last_generated_image_state' in self.ui else [self.ui['output_gallery']]
         ).then(
@@ -184,12 +162,12 @@ class I2IHandler:
         return self.auto_prompt_manager.generate_auto_prompt(base_img, object_img, top_left, bottom_right, existing_prompt, provider_name, allow_human_surfaces)
     
     # Image generation → GenerationManager
-    def run_i2i(self, source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress=gr.Progress(), disable_auto_enhancement=False):
-        return self.generation_manager.run_generation(source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress, disable_auto_enhancement)
+    def run_i2i(self, source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress=gr.Progress()):
+        return self.generation_manager.run_generation(source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress)
     
-    def run_i2i_with_state_update(self, source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress=gr.Progress(), disable_auto_enhancement=False):
+    def run_i2i_with_state_update(self, source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress=gr.Progress()):
         """Wrapper for run_i2i that also returns the last generated image for state tracking."""
-        result_list = self.run_i2i(source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress, disable_auto_enhancement)
+        result_list = self.run_i2i(source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress)
         
         # Return both gallery list and the single image for last_generated_image_state
         last_image = result_list[0] if result_list else None
@@ -217,7 +195,7 @@ class I2IHandler:
         
         if not uploaded_files:
             # No files uploaded - reset state
-            return [], None, None, None, "**Status:** Ready to upload images 📁", gr.update(visible=False)
+            return [], None, None, None, "**Status:** Ready to upload images 📁", "**Upload images above to start editing**", None, None
         
         # Process uploaded files (max 10 images)
         processed_images = []
@@ -240,158 +218,87 @@ class I2IHandler:
                 continue
         
         if not processed_images:
-            return [], None, None, None, "**Status:** Error processing images ❌", gr.update(visible=False)
+            return [], None, None, None, "**Status:** Error processing images ❌", "**Upload valid images to start**", None, None
         
-        # Set up states but don't show canvas automatically
+        # Set up states but don't show canvas automatically - user must select from gallery
         if len(processed_images) == 1:
-            # Single image - ready for editing
+            # Single image - ready for selection
             background_state = processed_images[0]
             object_state = None
-            status_msg = f"**Status:** 1 image uploaded - Click image above to start editing 🖼️"
-            auto_prompt_visible = gr.update(visible=True)
+            status_msg = f"**Status:** 1 image uploaded - Click the image below to edit! 🎯"
+            canvas_info = "**Select an image from the gallery above to start editing**"
             
         else:
-            # Multiple images - ready for composition
-            background_state = processed_images[0]
+            # Multiple images - ready for selection
+            background_state = processed_images[0]  # Default background
             object_state = processed_images[1] if len(processed_images) > 1 else None
-            status_msg = f"**Status:** {len(processed_images)} images uploaded - Ready for composition 🎨"
-            auto_prompt_visible = gr.update(visible=True)
+            status_msg = f"**Status:** {len(processed_images)} images uploaded - Click any image below to edit! 🎨"
+            canvas_info = f"**Select an image from the gallery above to start editing**"
         
-        # Don't show canvas automatically - user must select image first
+        # Don't show image in canvas automatically - wait for gallery selection
         canvas_image = None
         
         # Store images for gallery selection
         self.uploaded_images = processed_images
         
         logging.info(f"✅ Multi-image upload: {len(processed_images)} images processed")
+        logging.info(f"✅ Uploaded images stored: {[type(img) for img in self.uploaded_images]}")
         
         return (
             preview_images,           # uploaded_images_preview
             background_state,         # i2i_canvas_image_state  
             object_state,            # i2i_object_image_state
-            canvas_image,            # i2i_interactive_canvas
+            canvas_image,            # i2i_interactive_canvas - None until selection
             status_msg,              # step1_status
-            auto_prompt_visible      # i2i_auto_prompt_btn visibility
+            canvas_info,             # canvas_mode_info - instructions
+            None,                    # i2i_pin_coords_state - clear previous selection
+            None                     # i2i_anchor_coords_state - clear previous selection
         )
-    
-    def handle_gallery_selection(self, evt: gr.SelectData):
-        """Handle when user clicks on an image in the preview gallery"""
+
+    def handle_gallery_click(self, evt: gr.SelectData):
+        """Handle when user clicks on an image in the gallery - set as background, keep others as objects"""
         try:
+            logging.info(f"🖼️ Gallery click: Index {evt.index}")
+            
             if self.uploaded_images and len(self.uploaded_images) > evt.index:
                 selected_image = self.uploaded_images[evt.index]
                 
-                logging.info(f"🖼️ Gallery selection: Index {evt.index}, Total images: {len(self.uploaded_images)}, Type: {type(selected_image)}")
-                
-                # Keep all images in gallery but highlight the selected one
-                gallery_update = gr.update(value=self.uploaded_images, selected_index=evt.index)
-                logging.info("🖼️ Updating gallery to show all images with selection")
-                
-                return (
-                    gallery_update,                                           # keep full gallery with selection
-                    gr.update(visible=True),                                  # preview_mode_container
-                    selected_image                                            # i2i_canvas_image_state
-                )
+                # For multi-image workflow: selected image becomes background, others become objects
+                if len(self.uploaded_images) > 1:
+                    # Get the other images as potential objects (excluding selected background)
+                    other_images = [img for i, img in enumerate(self.uploaded_images) if i != evt.index]
+                    object_image = other_images[0] if other_images else None  # Use first other image as object
+                    
+                    logging.info(f"🖼️ Multi-image mode: Background={evt.index}, Object={'Available' if object_image else 'None'}")
+                    
+                    return (
+                        selected_image,                                           # i2i_canvas_image_state - selected as background
+                        object_image,                                             # i2i_object_image_state - first other image as object
+                        selected_image,                                           # i2i_interactive_canvas - show background in canvas
+                        "**Click areas on the image to place the object**",      # canvas_mode_info - multi-image instructions
+                        None,                                                     # i2i_pin_coords_state - clear pin coords
+                        None                                                      # i2i_anchor_coords_state - clear anchor coords
+                    )
+                else:
+                    # Single image mode
+                    logging.info(f"🖼️ Single image mode: {evt.index}")
+                    
+                    return (
+                        selected_image,                                           # i2i_canvas_image_state - selected image  
+                        None,                                                     # i2i_object_image_state - no object for single image
+                        selected_image,                                           # i2i_interactive_canvas - show selected image in canvas
+                        "**Click areas on the image to select for editing**",    # canvas_mode_info - single image instructions
+                        None,                                                     # i2i_pin_coords_state - clear pin coords
+                        None                                                      # i2i_anchor_coords_state - clear anchor coords
+                    )
             else:
-                logging.warning(f"Gallery selection index {evt.index} out of range or no uploaded images")
-                return gr.update(), gr.update(visible=False), None
+                logging.warning(f"Gallery click index {evt.index} out of range")
+                return None, None, None, "**No image selected**", None, None
+                
         except Exception as e:
-            logging.error(f"Gallery selection error: {e}")
-            return gr.update(), gr.update(visible=False), None
-    
-    def enable_editing_mode(self, canvas_image):
-        """Enable interactive editing mode for the selected image"""
-        if canvas_image is None:
-            return gr.update(), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
-        
-        return (
-            gr.update(value=canvas_image, interactive=True, visible=True),    # make canvas interactive
-            gr.update(value="**Editing Mode** - Click on image areas for targeted editing 🎯", visible=True),  # canvas_mode_info
-            gr.update(visible=False),                                         # hide preview mode
-            gr.update(visible=True)                                           # show editing mode
-        )
-    
-    def back_to_composition(self):
-        """Return to composition view, reset selection back to initial upload state"""
-        # Debug: Check what we have in uploaded_images
-        logging.info(f"🔙 Back to composition - uploaded_images count: {len(self.uploaded_images)}")
-        
-        # Try aggressive gallery reset - completely recreate the component state
-        if self.uploaded_images:
-            # Use a dictionary update to force complete refresh
-            gallery_update = gr.update(
-                value=list(self.uploaded_images),
-                selected_index=None,
-                visible=True,
-                interactive=False,  # Ensure it's non-interactive for selection
-                allow_preview=True,
-                columns=3,
-                height=200
-            )
-            logging.info("🔙 Aggressive gallery reset with complete component state")
-        else:
-            gallery_update = gr.update(
-                value=[],
-                selected_index=None,
-                visible=True,
-                interactive=False,
-                allow_preview=True,
-                columns=3,
-                height=200
-            )
-            logging.info("🔙 No uploaded images to show")
-        
-        # Reset status message based on number of uploaded images
-        if len(self.uploaded_images) == 1:
-            status_msg = "**Status:** 1 image uploaded - Click image above to start editing 🖼️"
-        elif len(self.uploaded_images) > 1:
-            status_msg = f"**Status:** {len(self.uploaded_images)} images uploaded - Click any image above to start editing 🎨"
-        else:
-            status_msg = "**Status:** Upload images to start 📸"
-        
-        return (
-            gr.update(visible=False),                                         # hide canvas completely
-            gr.update(visible=False),                                         # hide info
-            gr.update(visible=False),                                         # hide preview mode
-            gr.update(visible=False),                                         # hide editing mode
-            gallery_update,                                                   # reset gallery selection
-            status_msg                                                        # reset status message
-        )
-    
-    def back_to_composition_step1(self):
-        """Step 1: Clear the gallery to force refresh"""
-        logging.info("🔙 Step 1: Clearing gallery")
-        return gr.update(value=[], selected_index=None)
-    
-    def back_to_composition_step2(self):
-        """Step 2: Hide elements and repopulate gallery"""
-        logging.info(f"🔙 Step 2: Repopulating gallery with {len(self.uploaded_images)} images")
-        
-        # Repopulate gallery with uploaded images
-        if self.uploaded_images:
-            gallery_update = gr.update(
-                value=list(self.uploaded_images),
-                selected_index=None,
-                visible=True,
-                interactive=False,
-                allow_preview=True,
-                columns=3,
-                height=200
-            )
-        else:
-            gallery_update = gr.update(value=[], selected_index=None, visible=True)
-        
-        # Reset status message
-        if len(self.uploaded_images) == 1:
-            status_msg = "**Status:** 1 image uploaded - Click image above to start editing 🖼️"
-        elif len(self.uploaded_images) > 1:
-            status_msg = f"**Status:** {len(self.uploaded_images)} images uploaded - Click any image above to start editing 🎨"
-        else:
-            status_msg = "**Status:** Upload images to start 📸"
-        
-        return (
-            gr.update(visible=False),                                         # hide preview mode
-            gr.update(visible=False),                                         # hide editing mode
-            gr.update(visible=False),                                         # hide canvas controls
-            gallery_update,                                                   # repopulate gallery
-            status_msg                                                        # reset status message
-        )
+            logging.error(f"Gallery click error: {e}")
+            return None, None, None, "**Error loading image**", None, None
+
+
+
+

@@ -133,8 +133,6 @@ def create_ui():
                 gr.Markdown("### ✍️ Step 2: Compose Your Scene")
                 gr.Markdown("""
                 **Intelligent Scene Composition:**
-                - Single image: Direct editing/enhancement
-                - Multiple images: AI-powered composition with context understanding
                 - Click canvas to select areas for targeted editing (if needed)
                 """)
                 
@@ -189,59 +187,36 @@ def create_ui():
                     clear_all_btn = gr.Button("🗑️ Clear All", variant="stop")
                     download_output = gr.DownloadButton(label="Download Image", visible=False)
                 
-                # Canvas controls and workspace
+                # Always visible interactive canvas - no mode switching
+                gr.Markdown("### 🎨 Interactive Canvas")
+                canvas_instructions = gr.Markdown("**🎯 Click and drag on the image** to select areas for targeted editing:", visible=True)
                 
-                # Preview Mode: Show selected image with edit button
-                preview_mode_container = gr.Column(visible=False)
-                with preview_mode_container:
-                    preview_instructions = gr.Markdown("**✨ Ready to edit this image?** Click the button below to start area selection:", visible=True)
-                    with gr.Row(variant="panel"):
-                        edit_selected_btn = gr.Button("🖼️ Edit Selected Image", variant="primary", size="lg", visible=True, elem_classes="pulse-button")
-                
-                # Editing Mode: Interactive canvas with controls
-                editing_mode_container = gr.Column(visible=False)
-                with editing_mode_container:
-                    canvas_instructions = gr.Markdown("**🎯 Click and drag on the image** to select areas for targeted editing:", visible=True)
-                    
-                    i2i_interactive_canvas = gr.Image(
-                        type="pil", 
-                        label="🎨 Interactive Canvas", 
-                        visible=True, 
-                        height=600, 
-                        interactive=True, 
-                        sources=[],
-                        elem_classes="interactive-canvas",
-                        container=True,
-                        show_label=True
-                    )
-                    
-                    with gr.Row():
-                        back_to_compose_btn = gr.Button("🔙 Back to Composition", variant="stop", size="lg")
-                        i2i_auto_prompt_btn = gr.Button("🤖 Generate Smart Prompt", variant="primary", size="lg", visible=False)
-                        canvas_mode_info = gr.Markdown("**Select an area first to unlock prompt generation**", visible=True)
-                
-                # Legacy canvas (hidden by default, kept for compatibility)
-                i2i_interactive_canvas_legacy = gr.Image(
+                i2i_interactive_canvas = gr.Image(
                     type="pil", 
-                    label="🎨 Image Editor: Click areas for targeted editing", 
-                    visible=False, 
+                    label="🎨 Interactive Canvas", 
+                    visible=True, 
                     height=600, 
                     interactive=True, 
-                    sources=[]
+                    sources=[],
+                    elem_classes="interactive-canvas",
+                    container=True,
+                    show_label=True
                 )
+                
+                with gr.Row():
+                    i2i_auto_prompt_btn = gr.Button("🤖 Generate Smart Prompt", variant="primary", size="lg", visible=False)
+                    canvas_mode_info = gr.Markdown("**Upload images first to start editing**", visible=True)
 
             # --- RIGHT PANEL (GENERATION & OUTPUT SETTINGS) ---
             with gr.Column(scale=2, min_width=280):
-                # Canvas Controls (only visible in editing mode)
-                canvas_controls_container = gr.Column(visible=False)
-                with canvas_controls_container:
-                    gr.Markdown("### 🎯 Canvas Controls")
-                    canvas_help_text = gr.Markdown("💡 **Select an area first**, then use the tools below:", visible=True)
-                    
-                    with gr.Column():
-                        i2i_reset_selection_btn = gr.Button("🔄 Reset Selection", variant="secondary", visible=False)
-                    
-                    gr.Markdown("---")  # Separator
+                # Canvas Controls (always visible)
+                gr.Markdown("### 🎯 Canvas Controls")
+                canvas_help_text = gr.Markdown("💡 **Select an area on the canvas**, then use the tools below:", visible=True)
+                
+                with gr.Column():
+                    i2i_reset_selection_btn = gr.Button("🔄 Reset Selection", variant="secondary", visible=True)
+                
+                gr.Markdown("---")  # Separator
                 
                 # Step 3: Generate Your Image (moved from left panel)
                 gr.Markdown("### 🚀 Step 3: Generate Your Image")
@@ -278,36 +253,6 @@ def create_ui():
                         value="Pro (GRS AI)",
                         info="Choose between local processing or Pro API providers"
                     )
-                    
-                    # Depth Control Settings
-                    gr.Markdown("#### 🌊 Depth Enhancement")
-                    with gr.Row():
-                        use_depth_control = gr.Checkbox(
-                            label="Enable Depth Control", 
-                            value=True,
-                            interactive=True,
-                            info="Analyze image depth for better background replacement"
-                        )
-                    with gr.Row():
-                        depth_strength = gr.Slider(
-                            label="Depth Strength", 
-                            minimum=0.1, 
-                            maximum=1.0, 
-                            value=0.6, 
-                            step=0.1,
-                            interactive=True,
-                            info="Control how much depth information influences generation"
-                        )
-                    
-                    # Prompt Enhancement Control
-                    gr.Markdown("#### 🔧 Prompt Control")
-                    with gr.Row():
-                        disable_auto_enhancement = gr.Checkbox(
-                            label="Disable Auto Prompt Enhancement", 
-                            value=True,
-                            interactive=True,
-                            info="Turn off automatic preservation instructions (for manual testing)"
-                        )
 
                 i2i_generate_btn = gr.Button("🚀 Generate", variant="primary", visible=True, size="lg")
 
@@ -323,10 +268,7 @@ def create_ui():
         "uploaded_images_preview": uploaded_images_preview,
         
         # Mode containers and controls
-        "preview_mode_container": preview_mode_container,
-        "editing_mode_container": editing_mode_container, 
-        "canvas_controls_container": canvas_controls_container,
-        "canvas_mode_info": canvas_mode_info, "edit_selected_btn": edit_selected_btn, "back_to_compose_btn": back_to_compose_btn,
+        "canvas_mode_info": canvas_mode_info, 
         "i2i_prompt": i2i_prompt, "i2i_auto_prompt_btn": i2i_auto_prompt_btn,
         "i2i_reset_selection_btn": i2i_reset_selection_btn, "allow_human_surfaces": allow_human_surfaces,
         "prompt_separator": prompt_separator,
@@ -340,9 +282,6 @@ def create_ui():
         "i2i_steps": i2i_steps,
         "i2i_guidance": i2i_guidance, 
         "i2i_model_select": i2i_model_select, 
-        "use_depth_control": use_depth_control,
-        "depth_strength": depth_strength,
-        "disable_auto_enhancement": disable_auto_enhancement,
         "i2i_generate_btn": i2i_generate_btn,
 
         "i2i_canvas_image_state": i2i_canvas_image_state, "i2i_object_image_state": i2i_object_image_state,

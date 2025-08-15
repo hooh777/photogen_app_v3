@@ -107,14 +107,15 @@ class PhotoGenApp:
                     self.ui['uploaded_images_preview'],
                     self.ui['i2i_interactive_canvas'],
                     self.ui['canvas_mode_info'],
-                    self.ui['edit_selected_btn'],
-                    self.ui['back_to_compose_btn'],
                     self.ui['selected_gallery_image_state'],
                     self.ui['last_generated_image_state'],
                     self.ui['i2i_canvas_image_state'],
                     self.ui['i2i_object_image_state'],
+                    self.ui['i2i_pin_coords_state'],
+                    self.ui['i2i_anchor_coords_state'],
                     self.ui['step1_status'],
-                    self.ui['step2_status']
+                    self.ui['step2_status'],
+                    self.ui['final_status']
                 ]
             )
 
@@ -194,14 +195,14 @@ class PhotoGenApp:
         return gr.update(label=label, value=saved_key)
 
     def clear_all(self):
-        """Clear gallery, prompt, and uploaded images while preserving API keys and settings."""
-        logging.info("🗑️ Clearing all: gallery, prompt, and uploaded images")
+        """Clear all state and reset the app to initial state."""
+        logging.info("🗑️ Clearing all: resetting app state completely")
         
         # Clear uploaded images from i2i_handler
         if hasattr(self.i2i_handler, 'uploaded_images'):
             self.i2i_handler.uploaded_images = []
         
-        gr.Info("Cleared gallery, prompt, and uploaded images!")
+        gr.Info("�️ All data cleared! Upload new images to start fresh.")
         
         return (
             [],  # output_gallery - empty list
@@ -209,15 +210,16 @@ class PhotoGenApp:
             None,  # i2i_source_uploader - clear files
             [],  # uploaded_images_preview - empty gallery
             None,  # i2i_interactive_canvas - clear image
-            gr.update(visible=False),  # canvas_mode_info - hide
-            gr.update(visible=False),  # edit_selected_btn - hide
-            gr.update(visible=False),  # back_to_compose_btn - hide
+            "**Upload images above to start editing**",  # canvas_mode_info - update message
             None,  # selected_gallery_image_state - clear state
             None,  # last_generated_image_state - clear state
             None,  # i2i_canvas_image_state - clear state
             None,  # i2i_object_image_state - clear state
+            None,  # i2i_pin_coords_state - clear selection coords
+            None,  # i2i_anchor_coords_state - clear selection coords
             "**Status:** Upload images to start 📸",  # step1_status - reset
-            "**Status:** Ready for your prompt ✏️"  # step2_status - reset
+            "**Status:** Ready for your prompt ✏️",  # step2_status - reset
+            "**Status:** Ready to generate! 🎉"  # final_status - reset
         )
 
     def update_token_count(self, prompt_text):

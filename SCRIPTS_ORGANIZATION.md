@@ -1,117 +1,68 @@
 # PhotoGen Scripts Organization
 
-This document explains the organization of scripts in the PhotoGen application.
+**Note**: The scripts directory has been cleaned up. All testing and utility scripts have been removed to simplify the project structure.
 
-## Folder Structure
+## Current Project Structure
 
-### `/tests/` - Core Testing Scripts
-**Purpose**: Main testing functionality and unit tests
-- `batch_prompt_testing.py` - Main scientific batch testing system with AI vision analysis
-- `test_api_keys.py` - API key validation tests
-
-### `/scripts/testing/` - Testing Utilities & Validation
-**Purpose**: Helper scripts for testing setup and validation
-- `quick_start_batch_testing.py` - Quick start guide for batch testing
-- `verify_ai_vision_integration.py` - Verifies AI vision integration changes
-
-### `/scripts/analysis/` - Analysis & Reporting Tools
-**Purpose**: Scripts for analyzing test results and generating reports
-- `batch_test_analyzer.py` - Advanced batch test analysis with matplotlib/pandas
-- `simple_batch_analyzer.py` - Text-based batch test analysis (no dependencies)
-- `example_post_generation_analysis.py` - Example usage of post-generation analysis
-- `view_post_generation_analysis.py` - Log viewer for post-generation analysis
-- `view_scale_analysis.py` - Log viewer for scale analysis
-
-### `/scripts/` - Utility Scripts
-**Purpose**: Standalone tools and utilities
-- `vision_tester.py` - **NEW**: Comprehensive vision model testing tool
-- `test_vision_setup.py` - Vision tester setup verification
-- `show_organization.py` - Display script organization
-- `VISION_TESTER_GUIDE.md` - Complete usage guide for vision testing
-
-### `/reports/` - Core Analysis Classes
-**Purpose**: Core analysis functionality used by other scripts
-- `analyze_generation_result.py` - Main post-generation analysis class
-- `OBJECT_DUPLICATION_FIX.md` - Documentation for duplication fixes
+### Core Application Files
+- `app.py` - Main application entry point
+- `config.yaml` - Configuration file
+- `requirements.txt` - Python dependencies
 
 ### `/core/` - Application Core
 **Purpose**: Core application logic and handlers
 - Main application functionality
-- UI handlers
-- Generation managers
-- Vision analysis modules
+- UI handlers (`ui.py`)
+- Generation managers (`generator.py`)
+- Vision analysis modules (`vision_streamlined.py`)
+- Secure storage (`secure_storage.py`)
+- Image enhancement (`enhancer.py`)
+- Utility functions (`utils.py`)
 
-## Usage Examples
+### `/assets/` - Static Assets
+**Purpose**: Background images and static resources
 
-### Running Batch Tests
-```bash
-# Main batch testing with AI vision analysis
-python tests/batch_prompt_testing.py --api-key YOUR_API_KEY --provider bfl
+### `/test_images/` - Test Data
+**Purpose**: Test images for development and validation (preserved)
 
-# Quick start guide
-python scripts/testing/quick_start_batch_testing.py
-```
+### `/outputs/` - Generated Images
+**Purpose**: Directory for saved generated images
 
-### Analyzing Results
-```bash
-# Advanced analysis with plots
-python scripts/analysis/batch_test_analyzer.py /path/to/test/results
+### `/workflow diagram/` - Documentation
+**Purpose**: Technical documentation and workflow diagrams
 
-# Simple text-based analysis
-python scripts/analysis/simple_batch_analyzer.py /path/to/test/results
+## Removed Components
 
-# View specific analysis logs
-python scripts/analysis/view_post_generation_analysis.py
-python scripts/analysis/view_scale_analysis.py
-```
-
-### Testing & Validation
-```bash
-# Validate setup
-python scripts/testing/test_image_loading.py
-python scripts/testing/validate_enhancement_levels.py
-
-# Verify AI vision integration
-python scripts/testing/verify_ai_vision_integration.py
-```
-
-## Key Features
-
-### AI Vision Integration
-The batch testing system now uses real AI vision analysis instead of static templates:
-- Analyzes actual background and object images
-- Generates contextual prompts based on visual content
-- Considers placement coordinates and human surface detection
-- Maintains style/length testing framework with AI enhancement
-
-### Comprehensive Analysis
-Multiple analysis tools for different needs:
-- **Advanced**: Full statistical analysis with visualizations
-- **Simple**: Text-based analysis with no external dependencies
-- **Logs**: Detailed log viewers for debugging and insights
-
-### Testing Framework
-Scientific approach to prompt effectiveness:
-- 4 enhancement levels (minimal/detailed × natural/technical)
-- Balanced test case generation
-- Reproducible results with fixed seeds
-- Comprehensive success metrics
+The following directories and scripts have been removed during cleanup:
+- `/scripts/` - All utility and testing scripts
+- `/tests/` - All test files and batch testing systems  
+- `/vision_test_results/` - Test result data
+- Empty placeholder files in `/core/`
+- Style transfer modules and scripts
+- Depth processing modules
+- Scale analysis tools
 
 ## Dependencies
 
-### Core Requirements
+### Core Requirements (from requirements.txt)
 - Python 3.8+
+- gradio
+- torch
 - PIL (Pillow)
 - OpenAI client
 - PyYAML
+- Other dependencies as specified in requirements.txt
 
-### Optional for Advanced Analysis
-- matplotlib
-- pandas
-- seaborn
+## Usage
 
-### Test Data Requirements
-- Organized test images in `test_images/` folder
-- API keys configured in secure storage
-- Background images in `test_images/background/pure background/` and `test_images/background/with model/`
-- Object images in `test_images/object/`
+To run the application:
+```bash
+python app.py
+```
+
+The application provides a web interface for:
+- Multi-image upload and composition
+- AI-powered prompt generation
+- Image generation using Pro APIs (Black Forest Labs, GRS AI)
+- Interactive canvas for targeted editing
+- Direct download of generated images

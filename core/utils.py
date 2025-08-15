@@ -126,11 +126,25 @@ def merge_images_with_smart_scaling(background_img, object_img, target_size=None
     
     object_scaled = object_img.resize((new_obj_width, new_obj_height), Image.LANCZOS)
     
-    # Create side-by-side merged image with better proportions
-    # Reduce gap between background and object
-    gap = min(10, target_width // 50)  # Small gap, proportional to image size
+    # DETAILED MERGING DEBUG LOGGING
+    logging.info(f"🖼️ === IMAGE MERGING DEBUG ===")
+    logging.info(f"🖼️ Original Background: {background_img.size}")
+    logging.info(f"🖼️ Original Object: {object_img.size}")
+    logging.info(f"🖼️ Target Size: {target_size}")
+    logging.info(f"🖼️ Background Scaled: {background_scaled.size}")
+    logging.info(f"🖼️ Object Scaled: {object_scaled.size}")
+    logging.info(f"🖼️ Scale Factor Applied: {scale_factor:.3f}" if 'scale_factor' in locals() else "🖼️ No scale factor available")
+    logging.info(f"🖼️ Preserve Object Scale: {preserve_object_scale}")
+    
+    # Create side-by-side merged image with REDUCED GAP for better FLUX Kontext integration
+    # FLUX Kontext works better with more compact layouts where objects are closer together
+    gap = min(2, target_width // 200)  # Much smaller gap: 2px max instead of 10px, proportional scaling reduced
     merged_width = target_width + new_obj_width + gap
     merged_height = max(target_height, new_obj_height)
+    
+    logging.info(f"🖼️ Gap Size: {gap}px (REDUCED for better integration)")
+    logging.info(f"🖼️ Final Merged Size: {merged_width}×{merged_height}")
+    logging.info(f"🖼️ Compactness Ratio: {merged_width/target_width:.2f}x width (closer = better for FLUX Kontext)")
     
     merged_image = Image.new('RGB', (merged_width, merged_height), color='white')
     
@@ -140,6 +154,10 @@ def merge_images_with_smart_scaling(background_img, object_img, target_size=None
     # Paste object on the right with small gap, vertically centered
     obj_y_offset = max(0, (merged_height - new_obj_height) // 2)
     merged_image.paste(object_scaled, (target_width + gap, obj_y_offset))
+    
+    logging.info(f"🖼️ Background Position: (0, 0)")
+    logging.info(f"🖼️ Object Position: ({target_width + gap}, {obj_y_offset})")
+    logging.info(f"🖼️ === END IMAGE MERGING DEBUG ===")
     
     return merged_image
 

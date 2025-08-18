@@ -17,7 +17,7 @@ nunchaku @ git+https://github.com/mit-han-lab/nunchaku.git
 # --- Web UI Framework ---
 gradio==5.41.1
 gradio-client==1.11.0
-fastapi==0.110.0
+fastapi==0.116.1
 uvicorn[standard]==0.29.0
 
 # --- API Clients & Web Services ---

@@ -1,6 +1,6 @@
 # PhotoGen App v3 - Clean Sequence Diagrams
 
-## 📋 Table of Contents
+## Table of Contents
 1. [Main User Workflow](#main-user-workflow)
 2. [API Call Sequences](#api-call-sequences)
 3. [Mode-Specific Flows](#mode-specific-flows)
@@ -52,7 +52,7 @@
     end
 
     %% Phase 4: Generation
-    User->>UI: Click "🚀 Generate"
+    User->>UI: Click "Generate"
     UI->>GenMgr: run_generation(images, prompt, settings)
     
     GenMgr->>GenMgr: Determine mode and dimensions

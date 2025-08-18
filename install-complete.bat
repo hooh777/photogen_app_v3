@@ -6,7 +6,7 @@ echo ==========================================
 echo   PhotoGen App v3 - COMPLETE INSTALLER
 echo ==========================================
 echo.
-echo 🚀 This will automatically:
+echo This will automatically:
 echo - Install Python if needed (with your choice)
 echo - Detect your system capabilities
 echo - Install all dependencies
@@ -29,9 +29,9 @@ echo ====================================
 REM Check if Python is installed
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo ❌ Python not found on your system
+    echo ERROR: Python not found on your system
     echo.
-    echo 🐍 Python Installation Options:
+    echo Python Installation Options:
     echo.
     echo [1] Auto-install Python 3.11 (Recommended)
     echo     - Downloads and installs automatically
@@ -72,7 +72,7 @@ if errorlevel 1 (
     python --version >nul 2>&1
     if errorlevel 1 (
         echo.
-        echo ❌ Python still not found!
+        echo ERROR: Python still not found!
         echo Please restart this installer after Python is installed.
         echo.
         pause
@@ -81,24 +81,30 @@ if errorlevel 1 (
 )
 
 for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VER=%%i
-echo ✅ Python %PYTHON_VER% found
+echo Python %PYTHON_VER% found
 
 echo.
 echo [2/7] Checking system capabilities...
 echo ===================================
 
 REM Check GPU and determine installation type automatically
+echo Checking for NVIDIA GPU...
+set GPU_DETECTED=0
 nvidia-smi >nul 2>&1
-if errorlevel 1 (
-    echo ℹ️ No NVIDIA GPU detected - using CPU installation
-    set INSTALL_TYPE=CPU
-    set TYPE_NAME=CPU (API-Only)
-    echo ✅ CPU installation selected: Lightweight, fast, works on any hardware
-) else (
-    echo ✅ NVIDIA GPU detected - using GPU installation  
+if %errorlevel% == 0 (
+    set GPU_DETECTED=1
+)
+
+if %GPU_DETECTED% == 1 (
+    echo NVIDIA GPU detected - using GPU installation  
     set INSTALL_TYPE=GPU
     set TYPE_NAME=GPU (Local + API)
-    echo ✅ GPU installation selected: Local processing + API features
+    echo GPU installation selected: Local processing + API features
+) else (
+    echo No NVIDIA GPU detected - using CPU installation
+    set INSTALL_TYPE=CPU
+    set TYPE_NAME=CPU (API-Only)
+    echo CPU installation selected: Lightweight, fast, works on any hardware
 )
 
 echo.
@@ -119,24 +125,24 @@ if exist venv (
 
 python -m venv venv
 if errorlevel 1 (
-    echo ❌ Failed to create virtual environment!
+    echo ERROR: Failed to create virtual environment!
     echo.
     echo Try running as Administrator or check Python installation.
     pause
     exit /b 1
 )
-echo ✅ Virtual environment created
+echo Virtual environment created
 
 echo.
 echo [5/7] Activating environment...
 echo ==============================
 call venv\Scripts\activate.bat
 if errorlevel 1 (
-    echo ❌ Failed to activate virtual environment!
+    echo ERROR: Failed to activate virtual environment!
     pause
     exit /b 1
 )
-echo ✅ Environment activated
+echo Environment activated
 
 echo.
 echo [6/7] Installing dependencies...
@@ -165,7 +171,7 @@ if "%INSTALL_TYPE%"=="GPU" (
 
 if errorlevel 1 (
     echo.
-    echo ❌ Installation failed!
+    echo Installation failed!
     echo.
     echo Common solutions:
     echo 1. Check internet connection
@@ -176,7 +182,7 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-echo ✅ All dependencies installed
+echo All dependencies installed
 
 echo.
 echo [7/7] Final setup and testing...
@@ -189,14 +195,14 @@ echo call venv\Scripts\activate.bat >> run-photogen.bat
 echo python app.py >> run-photogen.bat
 echo pause >> run-photogen.bat
 
-echo ✅ Launch shortcut created
+echo Launch shortcut created
 
 echo Testing installation...
-python -c "import torch, gradio, fastapi; print('✅ Core dependencies working')"
+python -c "import torch, gradio, fastapi; print('Core dependencies working')"
 if errorlevel 1 (
-    echo ⚠️ Warning: Some dependencies may have issues, but installation completed
+    echo Warning: Some dependencies may have issues, but installation completed
 ) else (
-    echo ✅ Installation test passed
+    echo Installation test passed
 )
 
 if "%INSTALL_TYPE%"=="GPU" (
@@ -215,48 +221,48 @@ echo oLink.Description = "PhotoGen App v3 - AI Image Generation" >> create_short
 echo oLink.Save >> create_shortcut.vbs
 cscript create_shortcut.vbs >nul 2>&1
 del create_shortcut.vbs >nul 2>&1
-echo ✅ Desktop shortcut created
+echo Desktop shortcut created
 
 echo.
 echo ==========================================
-echo        INSTALLATION COMPLETE! 🎉
+echo        INSTALLATION COMPLETE!
 echo ==========================================
 echo.
 echo Python Version: %PYTHON_VER%
 echo Installation Type: %TYPE_NAME%
 echo.
 if "%INSTALL_TYPE%"=="GPU" (
-    echo 🚀 GPU Features Available:
+    echo GPU Features Available:
     echo - Local FLUX model processing
     echo - Privacy-focused generation
     echo - Plus all API features
 ) else (
-    echo 💻 CPU Features Available:
+    echo CPU Features Available:
     echo - Professional API processing
     echo - Works on any hardware
     echo - Fast and reliable
 )
 echo.
-echo 🎯 LAUNCH OPTIONS:
+echo LAUNCH OPTIONS:
 echo 1. Double-click: "PhotoGen App" on your Desktop
 echo 2. Double-click: run-photogen.bat (in this folder)
 echo 3. Run: python app.py (from this folder)
 echo.
-echo 🔑 FIRST TIME SETUP:
+echo FIRST TIME SETUP:
 echo 1. Launch PhotoGen App
-echo 2. Go to "⚙️ AI Vision / Enhancer Settings"
+echo 2. Go to "Settings" for AI Vision / Enhancer Settings
 echo 3. Add your API keys (get free keys from providers)
 echo 4. Start creating amazing images!
 echo.
-echo 📚 Need help? Check README.md
-echo 🐛 Issues? Visit: github.com/hooh777/photogen_app_v3/issues
+echo Need help? Check README.md
+echo Issues? Visit: github.com/hooh777/photogen_app_v3/issues
 echo.
 pause
 exit /b 0
 
 :install_python
 echo.
-echo 🔄 Installing Python %~1...
+echo Installing Python %~1...
 echo =============================
 set PYTHON_VERSION=%~1
 set PYTHON_URL=https://www.python.org/ftp/python/%PYTHON_VERSION%/python-%PYTHON_VERSION%-amd64.exe
@@ -265,39 +271,39 @@ echo Downloading Python %PYTHON_VERSION%...
 powershell -Command "& {[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri '%PYTHON_URL%' -OutFile 'python-installer.exe'}"
 
 if not exist python-installer.exe (
-    echo ❌ Failed to download Python installer
+    echo ERROR: Failed to download Python installer
     echo.
     echo Falling back to manual installation...
     call :manual_python_guide
     goto :eof
 )
 
-echo ✅ Download complete
+echo Download complete
 echo Installing Python (this may take a few minutes)...
-echo ⚠️ Please wait - installer window may appear
+echo WARNING: Please wait - installer window may appear
 
 python-installer.exe /quiet InstallAllUsers=0 PrependPath=1 Include_test=0
 if errorlevel 1 (
     echo.
-    echo ❌ Python installation failed or was cancelled
+    echo ERROR: Python installation failed or was cancelled
     echo.
     echo Trying alternative installation method...
     python-installer.exe /passive InstallAllUsers=0 PrependPath=1 Include_test=0
     
     if errorlevel 1 (
-        echo ❌ Alternative installation also failed
+        echo ERROR: Alternative installation also failed
         echo.
         call :manual_python_guide
         goto :eof
     )
 )
 
-echo ✅ Python %PYTHON_VERSION% installed successfully
+echo Python %PYTHON_VERSION% installed successfully
 echo Cleaning up installer...
 del python-installer.exe >nul 2>&1
 
 echo.
-echo ⚠️ IMPORTANT: Restarting installer to use new Python...
+echo IMPORTANT: Restarting installer to use new Python...
 echo Press any key to continue with PhotoGen installation...
 pause >nul
 
@@ -308,14 +314,14 @@ goto :eof
 
 :manual_python_guide
 echo.
-echo 📋 Manual Python Installation Guide:
+echo Manual Python Installation Guide:
 echo ==================================
 echo.
 echo 1. Open your web browser
 echo 2. Go to: https://www.python.org/downloads/
 echo 3. Click "Download Python" (latest version)
 echo 4. Run the downloaded installer
-echo 5. ✅ IMPORTANT: Check "Add Python to PATH"
+echo 5. IMPORTANT: Check "Add Python to PATH"
 echo 6. Click "Install Now"
 echo 7. Restart this installer when done
 echo.

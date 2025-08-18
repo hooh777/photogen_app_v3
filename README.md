@@ -1,10 +1,17 @@
-# 📸 PhotoGen App v3
+# PhotoGen App v3
 
-**Advanced AI-Powered Image Generation & Editing Platform**
+**Adva### **Smart Installation System**
+- **Intelligent Detection**: Automatically analyzes CPU, GPU, CUDA, RAM, and disk space
+- **Hardware Analysis**: Detailed compatibility assessment with recommendations
+- **Automatic Dependencies**: Resolves version conflicts and handles all packages
+- **Error Prevention**: Comprehensive checks with actionable error solutions
+- **Dual Requirements**: Optimized `requirements-gpu.txt` and `requirements-cpu.txt`
+- **One-Click Setup**: Complete automation from detection to launch shortcuts
+- **Launch Scripts**: Ready-to-use `run-photogen.bat` created automaticallyPowered Image Generation & Editing Platform**
 
 PhotoGen is a sophisticated image creation and editing application that combines multiple AI technologies to help you generate, edit, and compose high-quality images using both local processing and cloud APIs.
 
-## 🌟 Key Features
+## Key Features
 
 ### **Multi-Modal Image Generation**
 - **Text-to-Image (T2I)**: Create stunning images from text descriptions
@@ -23,72 +30,72 @@ PhotoGen is a sophisticated image creation and editing application that combines
 - **CPU-Compatible**: Full API functionality without GPU requirements
 - **Smart Detection**: Automatic hardware detection and optimization
 
-## 🆕 What's New in v3
+## What's New in v3
 
 ### **Smart Installation System**
 - **🤖 Intelligent Detection**: Automatically analyzes CPU, GPU, CUDA, RAM, and disk space
 - **� Hardware Analysis**: Detailed compatibility assessment with recommendations
-- **🔧 Automatic Dependencies**: Resolves version conflicts and handles all packages
-- **🛡️ Error Prevention**: Comprehensive checks with actionable error solutions
+- **Automatic Dependencies**: Resolves version conflicts and handles all packages
+- **Error Prevention**: Comprehensive checks with actionable error solutions
 - **📦 Dual Requirements**: Optimized `requirements-gpu.txt` and `requirements-cpu.txt`
-- **⚡ One-Click Setup**: Complete automation from detection to launch shortcuts
-- **🚀 Launch Scripts**: Ready-to-use `run-photogen.bat` created automatically
+- **One-Click Setup**: Complete automation from detection to launch shortcuts
+- **Launch Scripts**: Ready-to-use `run-photogen.bat` created automatically
 
 ### **Enhanced CPU Compatibility**
-- **💻 Universal Support**: Works on any hardware - no GPU required
-- **🌐 Full API Access**: Complete feature set via cloud processing
-- **⚡ Lightweight Install**: Minimal dependencies for CPU-only users
-- **🛡️ Graceful Fallbacks**: Smart CUDA detection prevents compatibility issues
-- **📡 API-First Design**: Optimized for cloud processing with local processing as bonus
+- **Universal Support**: Works on any hardware - no GPU required
+- **Full API Access**: Complete feature set via cloud processing
+- **Lightweight Install**: Minimal dependencies for CPU-only users
+- **Graceful Fallbacks**: Smart CUDA detection prevents compatibility issues
+- **API-First Design**: Optimized for cloud processing with local processing as bonus
 
 ### **Improved User Experience**
-- **🎯 Streamlined UI**: Better button placement and cleaner interface
-- **📱 Responsive Design**: Optimized layout for all screen sizes
-- **💬 Clear Messaging**: Helpful error messages and status indicators
-- **⚙️ Smart Defaults**: Optimized settings for better out-of-box experience
+- **Streamlined UI**: Better button placement and cleaner interface
+- **Responsive Design**: Optimized layout for all screen sizes
+- **Clear Messaging**: Helpful error messages and status indicators
+- **Smart Defaults**: Optimized settings for better out-of-box experience
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation Options
 
-#### **🚀 One-Click Installation (Windows Users)**
-*Complete automated setup - installs Python if needed + everything else*
+#### **One-Click Installation (Windows Users)**
+*The only installer you need - handles everything automatically*
 
 ```bash
 # Clone the repository
 git clone https://github.com/hooh777/photogen_app_v3.git
 cd photogen_app_v3
 
-# Run the complete installer (handles everything automatically)
+# Run the complete installer (installs Python + everything else)
 install-complete.bat
 ```
 
-**🧠 What the Complete Installer Does:**
-- **Python Check**: Automatically installs Python if missing (your choice of version)
-- **Smart Detection**: Detects NVIDIA GPU automatically
-- **Automatic Setup**: If no GPU → CPU installation, If GPU → GPU installation
-- **Full Installation**: Handles virtual environment, dependencies, configuration
+**What the Complete Installer Does:**
+- **Python Installation**: Automatically installs Python if missing (your choice of version)
+- **Smart Hardware Detection**: Detects NVIDIA GPU automatically
+- **Automatic Setup**: No GPU → CPU installation, GPU detected → GPU installation
+- **Complete Installation**: Handles virtual environment, dependencies, configuration
 - **Desktop Integration**: Creates desktop shortcut and launch scripts
-- **Complete Testing**: Verifies everything works before finishing
+- **Verification Testing**: Verifies everything works before finishing
 
-**🚀 Python Installation Options:**
+**Python Installation Options:**
 - **Auto-install Python 3.11** (Recommended - most compatible)
 - **Auto-install Python 3.12** (Latest version)
 - **Manual guidance** (opens Python website with instructions)
 - **Skip** (if Python installed elsewhere)
 
-**🎯 Installation Logic:**
+**Installation Logic:**
 - **No NVIDIA GPU detected** → Lightweight CPU installation (API-only, 2 minutes)
 - **NVIDIA GPU detected** → Full GPU installation (Local processing + API, 5-10 minutes)
 
-**🎯 Installation Features:**
+**Installation Features:**
 - **Hardware Detection**: Automatic GPU/CUDA capability analysis
 - **Dependency Management**: Resolves version conflicts automatically  
 - **Progress Tracking**: Real-time feedback during installation
 - **Error Handling**: Comprehensive troubleshooting with solutions
 - **Verification Testing**: Confirms all components work correctly
 
-**🔧 Manual Installation (Advanced Users)**
+**Manual Installation (Advanced Users)**
 *For users who prefer manual control or non-Windows systems*
 
 ##### **Option 1: GPU Users (Local + API Support)**
@@ -133,11 +140,11 @@ python app.py
 
 1. **Launch the app**: Run `python app.py` and open the provided URL
 2. **Configure API Keys**: 
-   - Go to "⚙️ AI Vision / Enhancer Settings" for vision analysis
-   - Go to "⚙️ Pro Model Settings" for image generation APIs
+   - Go to "AI Vision / Enhancer Settings" for vision analysis
+   - Go to "Pro Model Settings" for image generation APIs
 3. **Start Creating**: Upload images and begin generating!
 
-## 📋 System Requirements
+## System Requirements
 
 ### **GPU Installation (Local + API)**
 - **OS**: Windows 10/11, Linux, macOS
@@ -147,7 +154,7 @@ python app.py
 - **Storage**: 10GB+ free space for models
 - **Features**: Full local processing + all API capabilities
 
-**✅ Perfect for:** Power users, privacy-focused workflows, high-volume generation
+**Perfect for:** Power users, privacy-focused workflows, high-volume generation
 
 ### **CPU Installation (API-Only)**
 - **OS**: Windows 10/11, Linux, macOS  
@@ -157,9 +164,9 @@ python app.py
 - **Internet**: Stable connection for API calls
 - **Features**: Full AI vision analysis and image generation via APIs
 
-**✅ Perfect for:** Laptops, older computers, cloud instances, users prioritizing cost-effectiveness
+**Perfect for:** Laptops, older computers, cloud instances, users prioritizing cost-effectiveness
 
-## 🔑 API Configuration
+## API Configuration
 
 ### **Required API Keys**
 
@@ -182,20 +189,20 @@ python app.py
 - Keys are stored locally in encrypted format
 - Never transmitted in plain text
 
-## 🎨 How to Use PhotoGen
+## How to Use PhotoGen
 
 ### **Basic Workflow**
 
-1. **📸 Step 1: Upload Images**
+1. **Step 1: Upload Images**
    - Drag & drop or browse to upload up to 10 images
    - Supported formats: PNG, JPG, JPEG, WEBP
 
-2. **✍️ Step 2: Compose Your Scene**
+2. **Step 2: Compose Your Scene**
    - Select images from the gallery to work with
    - Click areas on the Interactive Canvas for targeted editing
    - Use AI-generated prompts or write your own
 
-3. **🚀 Step 3: Generate**
+3. **Step 3: Generate**
    - Choose between Local or Pro API processing
    - Adjust advanced settings if needed
    - Click "Generate" and watch the magic happen!
@@ -217,7 +224,7 @@ python app.py
 - Visual feedback with selection boxes
 - Reset selections anytime
 
-## ⚙️ Configuration
+## Configuration
 
 ### **Model Selection**
 - **Local**: Uses downloaded FLUX.1 models (GPU required)
@@ -233,17 +240,17 @@ python app.py
 - **Inference Steps**: 1-50 (higher = better quality, slower)
 - **Guidance Scale**: 0-10 (higher = more prompt adherence)
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### **Common Issues**
 
-#### **🚀 Quick Solutions (Use the Complete Installer)**
+#### **Quick Solutions (Use the Complete Installer)**
 ```bash
 # For complete zero-setup installation:
 install-complete.bat   # Handles everything automatically
 ```
 
-#### **⚠️ Installation Problems**
+#### **Installation Problems**
 The enhanced installers now handle most issues automatically:
 
 **Issue**: `Cannot import FluxKontextPipeline` or similar import errors
@@ -279,14 +286,16 @@ install-complete.bat
 **Issue**: CUDA/GPU detection problems
 **Solution**: Enhanced GPU verification and fallback
 ```bash
-# GPU installer now:
-# - Checks NVIDIA drivers
+# The complete installer now:
+# - Checks NVIDIA drivers automatically
 # - Verifies CUDA installation  
 # - Tests GPU accessibility
 # - Provides specific error guidance
+# - Falls back to CPU installation if needed
+install-complete.bat
 ```
 
-#### **🔧 Manual Troubleshooting (If Installers Fail)**
+#### **Manual Troubleshooting (If Complete Installer Fails)**
 ```bash
 # Check CUDA installation (for GPU users)
 nvidia-smi
@@ -299,26 +308,26 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 python -c "import torch; print('CUDA Available:', torch.cuda.is_available())"
 ```
 
-#### **🌐 API Connection Issues**
+#### **API Connection Issues**
 - Verify API keys are correctly entered and saved
 - Check internet connection and firewall settings
 - Ensure API quotas/credits are available  
 - Try switching between API providers (Black Forest Labs vs GRS AI)
 
-#### **🔋 Performance Optimization**
-- **� CPU Users**: API-only mode provides best performance and reliability
-- **🎮 GPU Users**: Ensure CUDA drivers and toolkit are up to date
-- **🚀 All Users**: Close unnecessary applications before generation
-- **🎯 Pro Tip**: Cloud API processing is often faster and more reliable than local
+#### **Performance Optimization**
+- **CPU Users**: API-only mode provides best performance and reliability
+- **GPU Users**: Ensure CUDA drivers and toolkit are up to date
+- **All Users**: Close unnecessary applications before generation
+- **Pro Tip**: Cloud API processing is often faster and more reliable than local
 
-### **🛠️ Getting Help**
-- **Smart Installer Issues**: Re-run `install.bat` - it handles most problems automatically
+### **Getting Help**
+- **Installation Issues**: Re-run `install-complete.bat` - it handles most problems automatically
 - **GitHub Issues**: Check [Issues](https://github.com/hooh777/photogen_app_v3/issues) for known problems
 - **Configuration**: Review `config.yaml` for model and API settings
 - **Debug Mode**: Enable debug logging in app settings for detailed error information
 - **Community**: Join discussions in the GitHub repository
 
-## 📚 Technical Details
+## Technical Details
 
 ### **Architecture**
 - **Frontend**: Gradio-based web interface
@@ -345,28 +354,5 @@ photogen_app_v3/
 └── outputs/               # Generated images storage
 ```
 
-## 🤝 Contributing
 
-We welcome contributions! Please see our contributing guidelines for:
-- Code style and formatting
-- Testing procedures
-- Pull request process
-- Issue reporting
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Black Forest Labs** - FLUX.1 models
-- **Alibaba Cloud** - Qwen-VL-Max vision model
-- **MIT HAN Lab** - Nunchaku optimization
-- **Hugging Face** - Diffusers library
-- **Gradio** - Web interface framework
-
----
-
-**Made with ❤️ by the PhotoGen Team**
-
-*Transform your ideas into stunning visuals with the power of AI*

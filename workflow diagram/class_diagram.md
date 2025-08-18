@@ -1,6 +1,6 @@
 # PhotoGen App v3 - Comprehensive Class Diagrams
 
-## 📋 Table of Contents
+## Table of Contents
 1. [Core Architecture Classes](#core-architecture-classes)
 2. [Handler and Manager Classes](#handler-and-manager-classes)
 3. [Vision and Enhancement Classes](#vision-and-enhancement-classes)

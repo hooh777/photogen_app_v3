@@ -1,9 +1,13 @@
 # PhotoGen App v3 - C4 Architecture Model
 
-## 📋 Table of Contents
+## Table of Contents
 1. [Level 1: System Context](#level-1-system-context)
-2. [Level 2: Container Architecture](#level-2-container-architecture)
-3. [Level 3: Component Overview](#level-3-component-overview)
+2. [Level 2: Container Architecture](#level-2-container-architecture├── C4 Context Diagram          (Who + Why)
+├── C4 Container Diagram        (What + How)
+├── Component Diagram            (Components + Responsibilities)
+├── Class Diagram               (Code Structure + Methods)
+└── Sequence Diagram            (Dynamic Interactions)
+└── Data Flow Diagram           (Information Flow)[Level 3: Component Overview](#level-3-component-overview)
 4. [Integration with Existing Diagrams](#integration-with-existing-diagrams)
 
 ---

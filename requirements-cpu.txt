@@ -10,9 +10,9 @@ torchvision>=0.15.0
 torchaudio>=2.0.0
 
 # --- Core Libraries (API Mode Only) ---
-# Note: diffusers and transformers are optional for CPU-only API usage
-# but included for potential future compatibility
-# diffusers>=0.24.0
+# Note: diffusers and transformers included for compatibility with conditional imports
+# but models won't be loaded on CPU-only systems without CUDA
+# diffusers @ git+https://github.com/huggingface/diffusers.git@425a715e35479338c06b2a68eb3a95790c1db3c5
 # transformers>=4.35.0
 
 # --- Web UI Framework ---

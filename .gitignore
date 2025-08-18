@@ -1,7 +1,7 @@
 /venv
-/core
 /debug
 /debug
 /outputs
 /debug
 /core/__pycache__
+/core/handlers/__pycache__

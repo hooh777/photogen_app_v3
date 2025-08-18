@@ -7,7 +7,7 @@
 torch>=2.0.0
 torchvision>=0.15.0
 torchaudio>=2.0.0
-diffusers>=0.24.0
+diffusers @ git+https://github.com/huggingface/diffusers.git@425a715e35479338c06b2a68eb3a95790c1db3c5
 transformers>=4.35.0
 accelerate>=0.24.0
 

@@ -18,32 +18,59 @@ PhotoGen is a sophisticated image creation and editing application that combines
 - **Contextual Understanding**: Intelligent object placement and scene composition
 
 ### **Flexible Processing Options**
-- **Local Processing**: Privacy-focused on-device generation (GPU required)
-- **Pro API Integration**: High-quality cloud processing (CPU-friendly)
-- **Multiple Providers**: Black Forest Labs, GRS AI, and more
+- **Local Processing**: Privacy-focused on-device generation (GPU with CUDA required)
+- **Pro API Integration**: High-quality cloud processing (works on any hardware)
+- **CPU-Compatible**: Full API functionality without GPU requirements
+- **Smart Detection**: Automatic hardware detection and optimization
+
+## 🆕 What's New in v3
+
+### **Smart Installation System**
+- **🔍 Hardware Auto-Detection**: Automatically detects GPU/CUDA capabilities
+- **📦 Dual Requirements**: Separate `requirements-gpu.txt` and `requirements-cpu.txt`
+- **⚡ One-Click Setup**: Intelligent installers handle everything automatically
+- **🚀 Launch Scripts**: Simple `run-photogen.bat` for easy startup
+
+### **Enhanced CPU Compatibility**
+- **💻 Universal Support**: Works on any hardware - no GPU required
+- **🌐 Full API Access**: Complete feature set via cloud processing
+- **⚡ Lightweight Install**: Minimal dependencies for CPU-only users
+- **🛡️ Graceful Fallbacks**: Smart detection prevents compatibility issues
+
+### **Improved User Experience**
+- **🎯 Streamlined UI**: Better button placement and cleaner interface
+- **📱 Responsive Design**: Optimized layout for all screen sizes
+- **💬 Clear Messaging**: Helpful error messages and status indicators
+- **⚙️ Smart Defaults**: Optimized settings for better out-of-box experience
 
 ## 🚀 Quick Start
 
 ### Installation Options
 
 #### **🚀 Easy Installation (Windows Users)**
-*Recommended for most users - automated setup with system detection*
+*Recommended for most users - automated setup with intelligent system detection*
 
 ```bash
 # Clone the repository
 git clone https://github.com/hooh777/photogen_app_v3.git
 cd photogen_app_v3
 
-# Run the smart installer (detects your hardware automatically)
+# Run the intelligent installer (automatically detects your hardware)
 install.bat
 
-# Or choose specific installation:
-install-gpu.bat    # For users with NVIDIA GPUs
-install-cpu.bat    # For users without GPU (API-only)
+# Or choose specific installation type:
+install-gpu.bat    # For users with NVIDIA GPUs (full local processing)
+install-cpu.bat    # For users without GPU (API-only, lightweight)
 
 # Launch PhotoGen anytime
 run-photogen.bat
 ```
+
+**🎯 Installation Features:**
+- **Automatic Hardware Detection**: Detects GPU/CUDA availability
+- **Virtual Environment Setup**: Creates isolated Python environment  
+- **Dependency Management**: Installs only what you need
+- **One-Click Launch**: Simple batch files for easy startup
 
 #### **⚙️ Manual Installation**
 
@@ -99,14 +126,21 @@ python app.py
 - **OS**: Windows 10/11, Linux, macOS
 - **GPU**: NVIDIA GPU with 8GB+ VRAM (RTX 3070/4060 or better recommended)
 - **CUDA**: Version 12.1 or higher
-- **RAM**: 16GB+ system RAM
+- **RAM**: 16GB+ system RAM recommended
 - **Storage**: 10GB+ free space for models
+- **Features**: Full local processing + all API capabilities
+
+**✅ Perfect for:** Power users, privacy-focused workflows, high-volume generation
 
 ### **CPU Installation (API-Only)**
 - **OS**: Windows 10/11, Linux, macOS  
-- **RAM**: 4GB+ system RAM
+- **Hardware**: Any CPU (GPU not required)
+- **RAM**: 4GB+ system RAM recommended
 - **Storage**: 2GB+ free space
 - **Internet**: Stable connection for API calls
+- **Features**: Full AI vision analysis and image generation via APIs
+
+**✅ Perfect for:** Laptops, older computers, cloud instances, users prioritizing cost-effectiveness
 
 ## 🔑 API Configuration
 
@@ -186,6 +220,26 @@ python app.py
 
 ### **Common Issues**
 
+#### **Installation Problems**
+```bash
+# For ImportError issues - choose the right installation:
+install-gpu.bat    # If you have NVIDIA GPU + CUDA
+install-cpu.bat    # If you want API-only mode
+
+# Check your installation type:
+python -c "import torch; print('CUDA Available:', torch.cuda.is_available())"
+```
+
+#### **"Cannot import FluxKontextPipeline" Error**
+This typically means you installed CPU-only dependencies but tried to use local models:
+```bash
+# Solution 1: Switch to API-only mode (recommended for most users)
+install-cpu.bat
+
+# Solution 2: Install full GPU requirements (if you have NVIDIA GPU)
+install-gpu.bat
+```
+
 #### **GPU Installation Problems**
 ```bash
 # Check CUDA installation
@@ -207,10 +261,11 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 - Close other GPU-intensive applications
 - Consider using CPU-only installation instead
 
-#### **Slow Performance**
-- **GPU Users**: Ensure CUDA is properly installed
-- **CPU Users**: Use API-only mode for faster results
-- **All Users**: Close unnecessary browser tabs/applications
+#### **Performance Optimization**
+- **🖥️ CPU Users**: Use API-only mode for best performance and reliability
+- **🎮 GPU Users**: Ensure CUDA is properly installed and up to date
+- **⚡ All Users**: Close unnecessary browser tabs and applications
+- **🎯 Smart Choice**: API processing is often faster than local for most users
 
 ### **Getting Help**
 - Check the [Issues](https://github.com/hooh777/photogen_app_v3/issues) page
@@ -229,17 +284,21 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 ### **File Structure**
 ```
 photogen_app_v3/
-├── app.py                 # Main application entry
-├── config.yaml           # Model and API configuration
-├── requirements-gpu.txt   # GPU installation dependencies
-├── requirements-cpu.txt   # CPU-only dependencies
+├── app.py                    # Main application entry
+├── config.yaml              # Model and API configuration
+├── requirements-gpu.txt      # GPU installation dependencies
+├── requirements-cpu.txt      # CPU-only dependencies
+├── install.bat               # Smart installer (auto-detects hardware)
+├── install-gpu.bat          # GPU installation script
+├── install-cpu.bat          # CPU-only installation script  
+├── run-photogen.bat         # Launch script
 ├── core/
-│   ├── generator.py       # Image generation logic
-│   ├── ui.py             # User interface components
-│   ├── vision_streamlined.py  # AI vision analysis
-│   └── handlers/         # Event handling and workflows
-├── assets/               # Demo images and backgrounds
-└── outputs/             # Generated images storage
+│   ├── generator.py         # Image generation logic (CPU/GPU compatible)
+│   ├── ui.py               # User interface components
+│   ├── vision_streamlined.py # AI vision analysis
+│   └── handlers/           # Event handling and workflows
+├── assets/                 # Demo images and backgrounds
+└── outputs/               # Generated images storage
 ```
 
 ## 🤝 Contributing

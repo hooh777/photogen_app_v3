@@ -1,10 +1,49 @@
-import torch
 import gradio as gr
-from diffusers import FluxPipeline, FluxKontextPipeline
+
+# Conditional imports for GPU/local processing dependencies
+TORCH_AVAILABLE = False
+DIFFUSERS_AVAILABLE = False
+CUDA_AVAILABLE = False
+LOCAL_PROCESSING_AVAILABLE = False
+
+try:
+    import torch
+    TORCH_AVAILABLE = True
+    CUDA_AVAILABLE = torch.cuda.is_available()
+    print(f"✅ PyTorch available - GPU processing {'possible' if CUDA_AVAILABLE else 'not available (CPU-only)'}")
+except ImportError as e:
+    print(f"⚠️ PyTorch not available: {e}")
+    torch = None
+
+# Conditional imports for local FLUX pipelines (only needed for GPU/local processing)
+try:
+    from diffusers import FluxPipeline, FluxKontextPipeline
+    DIFFUSERS_AVAILABLE = True
+    print("✅ Diffusers with FLUX pipelines available")
+except ImportError as e:
+    print(f"⚠️ FLUX pipelines not available: {e}")
+    print("🔄 Running in API-only mode - Local processing disabled")
+    DIFFUSERS_AVAILABLE = False
+    # Placeholder classes for API-only mode
+    class FluxPipeline:
+        pass
+    class FluxKontextPipeline:
+        pass
+
+# Local processing is only available if we have both torch with CUDA and diffusers
+LOCAL_PROCESSING_AVAILABLE = TORCH_AVAILABLE and DIFFUSERS_AVAILABLE and CUDA_AVAILABLE
+
+if LOCAL_PROCESSING_AVAILABLE:
+    print("🚀 Local GPU processing enabled")
+else:
+    print("📡 Running in API-only mode")
+
+# Conditional imports for Nunchaku optimization (only needed for GPU processing)
 try:
     from nunchaku import NunchakuFluxTransformer2dModel
     from nunchaku.utils import get_precision
     NUNCHAKU_AVAILABLE = True
+    print("✅ Nunchaku optimization available")
 except ImportError as e:
     print(f"⚠️ Nunchaku not available: {e}")
     NUNCHAKU_AVAILABLE = False
@@ -32,6 +71,10 @@ class Generator:
         # Lazy loading - only load when actually needed for better startup time
 
     def _load_local_t2i_pipeline(self):
+        if not LOCAL_PROCESSING_AVAILABLE:
+            logging.error("🚫 Local FLUX pipelines not available - API-only mode (no GPU/CUDA support)")
+            return None
+            
         if self.pipeline is None:
             logging.info("Loading FLUX.1 (Text-to-Image) pipeline...")
             DTYPE = torch.bfloat16
@@ -43,6 +86,10 @@ class Generator:
         return self.pipeline
 
     def _load_local_i2i_pipeline(self):
+        if not LOCAL_PROCESSING_AVAILABLE:
+            logging.error("🚫 Local FLUX pipelines not available - API-only mode (no GPU/CUDA support)")
+            return None
+            
         if self.kontext_pipeline is None:
             logging.info("Loading FLUX.1 Kontext (Image-to-Image) pipeline...")
             try:
@@ -304,9 +351,12 @@ class Generator:
 
     def text_to_image(self, prompt, steps, guidance, model_choice, num_images, width, height, api_key="", progress=gr.Progress(track_tqdm=True)):
         if model_choice == const.LOCAL_MODEL:
+            if not LOCAL_PROCESSING_AVAILABLE:
+                raise gr.Error("🚫 Local processing not available in API-only mode. Missing GPU/CUDA support. Please use 'Pro' models or install GPU requirements: pip install -r requirements-gpu.txt")
+                
             pipeline = self._load_local_t2i_pipeline()
             if pipeline is None:
-                raise gr.Error("Local Text-to-Image pipeline could not be loaded.")
+                raise gr.Error("Local Text-to-Image pipeline could not be loaded. Try using 'Pro' models for API-based generation.")
             with torch.inference_mode():
                 images = pipeline(
                     prompt=prompt, 
@@ -395,6 +445,9 @@ class Generator:
         logging.info(f"🎯 Final generation dimensions: {target_width}×{target_height} ({target_width * target_height:,} pixels)")
         
         if model_choice == const.LOCAL_MODEL:
+            if not LOCAL_PROCESSING_AVAILABLE:
+                raise gr.Error("Local model processing is not available. Missing GPU/CUDA support. Please use API mode or install the full requirements with: pip install -r requirements-gpu.txt")
+                
             kontext_pipeline = self._load_local_i2i_pipeline()
             if kontext_pipeline is None:
                 raise gr.Error("Local Image-to-Image pipeline could not be loaded.")

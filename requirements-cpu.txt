@@ -5,9 +5,9 @@
 # --- Lightweight PyTorch for CPU (API compatibility) ---
 # CPU-only PyTorch for basic tensor operations
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch>=2.0.0+cpu
-torchvision>=0.15.0+cpu
-torchaudio>=2.0.0+cpu
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
 
 # --- Core Libraries (API Mode Only) ---
 # Note: diffusers and transformers are optional for CPU-only API usage

@@ -1,16 +1,5 @@
 # PhotoGen App v3
 
-### **Smart Installation System**
-- **Intelligent Detection**: Automatically analyzes CPU, GPU, CUDA, RAM, and disk space
-- **Hardware Analysis**: Detailed compatibility assessment with recommendations
-- **Automatic Dependencies**: Resolves version conflicts and handles all packages
-- **Error Prevention**: Comprehensive checks with actionable error solutions
-- **Dual Requirements**: Optimized `requirements-gpu.txt` and `requirements-cpu.txt`
-- **One-Click Setup**: Complete automation from detection to launch shortcuts
-- **Launch Scripts**: Ready-to-use `run-photogen.bat` created automaticallyPowered Image Generation & Editing Platform**
-
-PhotoGen is a sophisticated image creation and editing application that combines multiple AI technologies to help you generate, edit, and compose high-quality images using both local processing and cloud APIs.
-
 ## Key Features
 
 ### **Multi-Modal Image Generation**
@@ -29,30 +18,6 @@ PhotoGen is a sophisticated image creation and editing application that combines
 - **Pro API Integration**: High-quality cloud processing (works on any hardware)
 - **CPU-Compatible**: Full API functionality without GPU requirements
 - **Smart Detection**: Automatic hardware detection and optimization
-
-## What's New in v3
-
-### **Smart Installation System**
-- **Intelligent Detection**: Automatically analyzes CPU, GPU, CUDA, RAM, and disk space
-- **Hardware Analysis**: Detailed compatibility assessment with recommendations
-- **Automatic Dependencies**: Resolves version conflicts and handles all packages
-- **Error Prevention**: Comprehensive checks with actionable error solutions
-- **Dual Requirements**: Optimized `requirements-gpu.txt` and `requirements-cpu.txt`
-- **One-Click Setup**: Complete automation from detection to launch shortcuts
-- **Launch Scripts**: Ready-to-use `run-photogen.bat` created automatically
-
-### **Enhanced CPU Compatibility**
-- **Universal Support**: Works on any hardware - no GPU required
-- **Full API Access**: Complete feature set via cloud processing
-- **Lightweight Install**: Minimal dependencies for CPU-only users
-- **Graceful Fallbacks**: Smart CUDA detection prevents compatibility issues
-- **API-First Design**: Optimized for cloud processing with local processing as bonus
-
-### **Improved User Experience**
-- **Streamlined UI**: Better button placement and cleaner interface
-- **Responsive Design**: Optimized layout for all screen sizes
-- **Clear Messaging**: Helpful error messages and status indicators
-- **Smart Defaults**: Optimized settings for better out-of-box experience
 
 ## Quick Start
 

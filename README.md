@@ -51,25 +51,39 @@ PhotoGen is a sophisticated image creation and editing application that combines
 
 ### Installation Options
 
-#### **🤖 Intelligent Installation (Windows Users)**
-*Recommended for everyone - fully automated setup with smart hardware detection*
+#### **🤖 Complete Auto-Installation (Windows Users)**
+*Recommended for everyone - installs Python if needed + fully automated setup*
 
 ```bash
 # Clone the repository
 git clone https://github.com/hooh777/photogen_app_v3.git
 cd photogen_app_v3
 
-# Run the intelligent installer (analyzes your system automatically)
-install.bat
+# Run the complete installer (installs Python + everything else automatically)
+install-complete.bat
 ```
 
-**🧠 What the Smart Installer Does:**
-- **System Analysis**: Detects Python, NVIDIA GPU, CUDA, RAM, disk space
-- **Compatibility Check**: Verifies all requirements and dependencies
-- **Smart Recommendation**: Suggests optimal installation type for your hardware
-- **Automatic Setup**: Handles virtual environment, dependencies, and configuration
-- **Error Recovery**: Provides clear solutions when issues are detected
-- **Launch Ready**: Creates shortcuts and verifies installation
+#### **🔧 Quick Installation (if you have Python)**
+*For users who already have Python installed*
+
+```bash
+# Run the smart installer (analyzes your system automatically)  
+install-auto.bat
+```
+
+**🧠 What the Complete Installer Does:**
+- **Python Check**: Automatically installs Python if missing (your choice of version)
+- **System Analysis**: Detects NVIDIA GPU, CUDA, RAM, disk space
+- **User Choice**: Lets you pick installation type even with auto-detection
+- **Smart Setup**: Handles virtual environment, dependencies, and configuration
+- **Desktop Integration**: Creates desktop shortcut and launch scripts
+- **Full Testing**: Verifies everything works before finishing
+
+**🚀 Python Installation Options:**
+- **Auto-install Python 3.11** (Recommended - most compatible)
+- **Auto-install Python 3.12** (Latest version)
+- **Manual guidance** (opens Python website with instructions)
+- **Skip** (if Python installed elsewhere)
 
 **🎯 Installation Features:**
 - **Hardware Detection**: Automatic GPU/CUDA capability analysis
@@ -78,9 +92,10 @@ install.bat
 - **Error Handling**: Comprehensive troubleshooting with solutions
 - **Verification Testing**: Confirms all components work correctly
 
-**🔧 Manual Installation Options:**
+**🔧 Other Installation Options:**
 ```bash
-# Or choose specific installation type:
+# Manual choice installers (require Python already installed):
+install.bat        # Smart detection with user confirmation
 install-gpu.bat    # For users with NVIDIA GPUs (full local processing)
 install-cpu.bat    # For users without GPU (API-only, lightweight)
 
@@ -238,12 +253,15 @@ python app.py
 
 #### **🚀 Quick Solutions (Use Enhanced Installers)**
 ```bash
-# For any installation issues - use the smart installer:
-install.bat        # Detects your system and recommends best option
+# For complete zero-setup installation (includes Python):
+install-complete.bat   # Installs Python if needed + everything else
+
+# For systems with Python already installed:
+install-auto.bat       # Detects your system and recommends best option
 
 # Or choose specific type if you know what you need:
-install-gpu.bat    # NVIDIA GPU users (local processing)
-install-cpu.bat    # CPU users or API-only preference
+install-gpu.bat        # NVIDIA GPU users (local processing)
+install-cpu.bat        # CPU users or API-only preference
 ```
 
 #### **⚠️ Installation Problems**
@@ -252,11 +270,23 @@ The enhanced installers now handle most issues automatically:
 **Issue**: `Cannot import FluxKontextPipeline` or similar import errors
 **Solution**: The installers now detect CPU vs GPU and install correct dependencies
 ```bash
-# The smart installer prevents this by:
-# 1. Detecting your hardware capabilities
-# 2. Installing compatible versions only  
-# 3. Testing installation before completion
-install.bat
+# The complete installer prevents this by:
+# 1. Installing Python if needed
+# 2. Detecting your hardware capabilities
+# 3. Installing compatible versions only  
+# 4. Testing installation before completion
+install-complete.bat
+```
+
+**Issue**: "Python not found" or "Python not installed"
+**Solution**: Use the complete installer that handles Python installation
+```bash
+# Complete installer will:
+# - Check if Python is installed
+# - Offer to auto-install Python 3.11 or 3.12
+# - Guide manual installation if needed
+# - Continue with PhotoGen setup
+install-complete.bat
 ```
 
 **Issue**: Version conflicts (Gradio, FastAPI, PyTorch)
@@ -325,7 +355,9 @@ photogen_app_v3/
 ├── config.yaml              # Model and API configuration
 ├── requirements-gpu.txt      # GPU installation dependencies
 ├── requirements-cpu.txt      # CPU-only dependencies
-├── install.bat               # Smart installer (auto-detects hardware)
+├── install-complete.bat      # Complete installer (Python + everything)
+├── install-auto.bat         # Smart installer (requires Python)
+├── install.bat               # Interactive smart installer
 ├── install-gpu.bat          # GPU installation script
 ├── install-cpu.bat          # CPU-only installation script  
 ├── run-photogen.bat         # Launch script

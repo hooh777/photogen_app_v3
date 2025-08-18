@@ -100,7 +100,7 @@ python app.py
 
 ### First Launch Setup
 
-1. **Launch the app**: Run `python app.py` and open the provided URL
+1. **Launch the app**: Run `python app.py` or run-photogen.bat, and open the provided URL
 2. **Configure API Keys**: 
    - Go to "AI Vision / Enhancer Settings" for vision analysis
    - Go to "Pro Model Settings" for image generation APIs

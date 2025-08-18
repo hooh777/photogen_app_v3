@@ -97,7 +97,7 @@ def create_ui():
                 gr.Markdown("### 🎨 PhotoGen - Create & Edit Mode")
                 
                 # Step 1: Upload Images
-                gr.Markdown("### 📸 Step 1: Upload Your Images")
+                gr.Markdown("### 📸 Step 1: Upload Your Images (Skip it if doing text2img)")
                 gr.Markdown("""
                 **Multi-Image Upload:**
                 - Support up to 10 images for complex scenes
@@ -141,7 +141,7 @@ def create_ui():
                     
 
 
-                    prompt_separator = gr.Markdown("## Adjust Your Prompt", visible=True, elem_id="prompt_separator")
+                    prompt_separator = gr.Markdown("## Write or Adjust Your Prompt", visible=True, elem_id="prompt_separator")
 
                     # Manual prompt writing
                     i2i_prompt = gr.Textbox(
@@ -179,7 +179,7 @@ def create_ui():
                 
                 # Always visible interactive canvas - no mode switching
                 gr.Markdown("### 🎨 Interactive Canvas")
-                canvas_instructions = gr.Markdown("**🎯 Click and drag on the image** to select areas for targeted editing:", visible=True)
+                canvas_instructions = gr.Markdown("**🎯 Click on the image** to select areas for targeted editing:", visible=True)
                 
                 i2i_interactive_canvas = gr.Image(
                     type="pil", 
@@ -187,26 +187,22 @@ def create_ui():
                     visible=True, 
                     height=600, 
                     interactive=True, 
-                    sources=[],
+                    sources=None,  # Explicitly disable all upload sources
                     elem_classes="interactive-canvas",
                     container=True,
                     show_label=True
                 )
                 
+                # Both buttons in the same row under the canvas
                 with gr.Row():
-                    i2i_auto_prompt_btn = gr.Button("🤖 Generate Smart Prompt", variant="primary", size="lg", visible=False)
-                    canvas_mode_info = gr.Markdown("**Upload images first to start editing**", visible=True)
+                    i2i_reset_selection_btn = gr.Button("🔄 Reset Selection", variant="secondary", visible=True)
+                    i2i_auto_prompt_btn = gr.Button("🤖 Generate Smart Prompt", variant="primary", visible=False)
+                
+                # Canvas info (for upload instructions when no image)
+                canvas_mode_info = gr.Markdown("**Upload images first to start selecting area**", visible=True)
 
             # --- RIGHT PANEL (GENERATION & OUTPUT SETTINGS) ---
             with gr.Column(scale=2, min_width=280):
-                # Canvas Controls (always visible)
-                gr.Markdown("### 🎯 Canvas Controls")
-                canvas_help_text = gr.Markdown("💡 **Select an area on the canvas**, then use the tools below:", visible=True)
-                
-                with gr.Column():
-                    i2i_reset_selection_btn = gr.Button("🔄 Reset Selection", variant="secondary", visible=True)
-                
-                gr.Markdown("---")  # Separator
                 
                 # Step 3: Generate Your Image (moved from left panel)
                 gr.Markdown("### 🚀 Step 3: Generate Your Image")
@@ -229,9 +225,10 @@ def create_ui():
                 
                 aspect_ratio = gr.Dropdown(
                     choices=dimension_options,
-                    value="1:1 (Square)", 
+                    value="Match Input", 
                     label="📐 Image Dimensions",
-                    info="Standard ratios or high-quality print dimensions for product mood shots"
+                    info="Temporarily disabled - dimension selection not working properly",
+                    interactive=False
                 )
 
                 with gr.Accordion("Advanced Settings", open=False):

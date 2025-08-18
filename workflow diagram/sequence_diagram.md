@@ -133,31 +133,30 @@ sequenceDiagram
 flowchart TD
     Start([User starts generation]) --> Upload{Upload images?}
     
-    Upload -->|Skip background| CreateMode[Create Mode Activated]
-    Upload -->|Upload background| EditMode[Edit Mode Activated]
+    Upload -->|No images uploaded| CreateMode[Create Mode Activated]
+    Upload -->|Images uploaded| ProcessImages[Process and display in gallery]
     
-    CreateMode --> ObjectCheck{Upload object?}
-    ObjectCheck -->|Yes| ObjectPreview[Show object preview]
-    ObjectCheck -->|No| TextOnly[Text-only generation]
+    ProcessImages --> UserSelect[User clicks image from gallery]
+    UserSelect --> EditMode[Edit Mode Activated]
     
-    ObjectPreview --> Prompt1[Enter scene description]
-    TextOnly --> Prompt1
-    Prompt1 --> Generate1[Text-to-Image Generation]
-    Generate1 --> Results1[Show results]
+    CreateMode --> T2IPrompt[Enter text prompt]
+    T2IPrompt --> T2IGenerate[Text-to-Image Generation]
+    T2IGenerate --> T2IResults[Show results]
     
-    EditMode --> MultiCheck{Multiple images?}
-    MultiCheck -->|Yes| Gallery[Show gallery selection]
-    MultiCheck -->|No| SingleEdit[Single image editing]
+    EditMode --> CanvasSelection{Click canvas area?}
+    CanvasSelection -->|Yes| ShowAutoPrompt[Show "🤖 Auto-Prompt" button]
+    CanvasSelection -->|No| ManualPrompt[Enter manual prompt]
     
-    Gallery --> Selection[User selects images]
-    Selection --> Merge[Merge background + object]
-    SingleEdit --> Merge
-    Merge --> Prompt2[Enter editing prompt]
-    Prompt2 --> Generate2[Image-to-Image Generation]
-    Generate2 --> Results2[Show results]
+    ShowAutoPrompt --> AutoPromptClick[User clicks "🤖 Auto-Prompt"]
+    AutoPromptClick --> VisionAPI[Call Vision API for analysis]
+    VisionAPI --> EnhancedPrompt[Return enhanced prompt]
     
-    Results1 --> End([Complete])
-    Results2 --> End
+    EnhancedPrompt --> I2IGenerate[Image-to-Image Generation]
+    ManualPrompt --> I2IGenerate
+    I2IGenerate --> I2IResults[Show results]
+    
+    T2IResults --> End([Complete])
+    I2IResults --> End
 ```
 
 ### Error Handling Flow

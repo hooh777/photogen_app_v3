@@ -30,11 +30,6 @@ class Generator:
         self.pipeline = None
         self.kontext_pipeline = None
         # Lazy loading - only load when actually needed for better startup time
-        
-        # Depth processing disabled (module removed)
-        self.depth_enabled = False
-        self.depth_processor = None
-        logging.info("📸 Running without depth processing (basic mode)")
 
     def _load_local_t2i_pipeline(self):
         if self.pipeline is None:
@@ -69,11 +64,9 @@ class Generator:
                 )
                 self.kontext_pipeline.enable_model_cpu_offload()
                 logging.info("✅ FLUX.1 Kontext I2I pipeline configured.")
-                self._initialize_tokenizer()
             except Exception:
                 logging.error("🔥 FATAL ERROR: Could not load local models.", exc_info=True)
                 self.kontext_pipeline = None
-                self.tokenizer = None
         return self.kontext_pipeline
         
     def _determine_safe_generation_size(self, background_img, aspect_ratio_setting, model_choice, force_aspect_ratio=False):

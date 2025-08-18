@@ -53,7 +53,6 @@ class I2IHandler:
                 self.ui['i2i_anchor_coords_state']     # clear previous selection
             ]
         )
-        
         # Gallery selection handler - show selected image in canvas
         self.ui['uploaded_images_preview'].select(
             self.handle_gallery_click,
@@ -67,13 +66,6 @@ class I2IHandler:
             ]
         )
         
-        # Legacy object uploader - now deprecated but kept for compatibility
-        self.ui['i2i_object_uploader'].change(
-            lambda x: None,  # No-op, preview gallery handles display
-            inputs=[self.ui['i2i_object_uploader']],
-            outputs=[]
-        )
-
         # Single-click area selection with inline handler
         def handle_click_with_prompt_button(base_img, obj_img, top_left, bottom_right, evt: gr.SelectData):
             # Get the canvas update from the canvas manager
@@ -102,7 +94,7 @@ class I2IHandler:
         
         # Auto-prompt generation (optimized for 90% usage)
         self.ui['i2i_auto_prompt_btn'].click(
-            self.auto_generate_prompt, 
+            self.auto_prompt_manager.generate_auto_prompt, 
             inputs=[
                 self.ui['i2i_canvas_image_state'], self.ui['i2i_object_image_state'],
                 self.ui['i2i_pin_coords_state'], self.ui['i2i_anchor_coords_state'],
@@ -146,17 +138,9 @@ class I2IHandler:
 
     # === Essential Methods - Direct Manager Access ===
     
-    # Auto-prompt generation → AutoPromptManager
-    def auto_generate_prompt(self, base_img, object_img, top_left, bottom_right, existing_prompt, provider_name):
-        return self.auto_prompt_manager.generate_auto_prompt(base_img, object_img, top_left, bottom_right, existing_prompt, provider_name)
-    
-    # Image generation → GenerationManager
-    def run_i2i(self, source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress=gr.Progress()):
-        return self.generation_manager.run_generation(source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress)
-    
     def run_i2i_with_state_update(self, source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress=gr.Progress()):
         """Wrapper for run_i2i that also returns the last generated image for state tracking."""
-        result_list = self.run_i2i(source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress)
+        result_list = self.generation_manager.run_generation(source_image, object_image, prompt, aspect_ratio, steps, guidance, model_choice, top_left, bottom_right, progress)
         
         # Return both gallery list and the single image for last_generated_image_state
         last_image = result_list[0] if result_list else None
@@ -264,7 +248,7 @@ class I2IHandler:
                         selected_image,                                           # i2i_canvas_image_state - selected as background
                         object_image,                                             # i2i_object_image_state - first other image as object
                         selected_image,                                           # i2i_interactive_canvas - show background in canvas
-                        "**Click areas on the image to place the object**",      # canvas_mode_info - multi-image instructions
+                        "",                                                       # canvas_mode_info - no instruction text
                         None,                                                     # i2i_pin_coords_state - clear pin coords
                         None                                                      # i2i_anchor_coords_state - clear anchor coords
                     )
@@ -276,7 +260,7 @@ class I2IHandler:
                         selected_image,                                           # i2i_canvas_image_state - selected image  
                         None,                                                     # i2i_object_image_state - no object for single image
                         selected_image,                                           # i2i_interactive_canvas - show selected image in canvas
-                        "**Click areas on the image to select for editing**",    # canvas_mode_info - single image instructions
+                        "",                                                       # canvas_mode_info - no instruction text
                         None,                                                     # i2i_pin_coords_state - clear pin coords
                         None                                                      # i2i_anchor_coords_state - clear anchor coords
                     )

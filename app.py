@@ -10,10 +10,6 @@ from core.generator import Generator
 from core.ui import create_ui
 from core.secure_storage import SecureStorage
 from core.handlers.i2i_handler import I2IHandler
-from core.enhancer import get_enhancer
-from core.vision_streamlined import (
-    generate_comprehensive_auto_prompt
-)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -277,13 +273,6 @@ class PhotoGenApp:
             logging.error(f"💾 Failed to save image: {e}")
             gr.Error(f"Failed to save image: {e}")
             return None
-
-    def save_image(self, img, img_type):
-        """Legacy save method that shows the download button."""
-        filepath = self.save_and_download_image(img, img_type)
-        if filepath:
-            return gr.update(value=filepath, visible=True)
-        return None
 
     def launch(self):
         self.demo.launch()

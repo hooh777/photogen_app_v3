@@ -1,0 +1,35 @@
+# PhotoGen App - CPU Requirements (API-Only Support)
+# For users without GPU who want to use API services only
+# Much lighter installation - no local model processing
+
+# --- Lightweight PyTorch for CPU (API compatibility) ---
+# CPU-only PyTorch for basic tensor operations
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.0.0+cpu
+torchvision>=0.15.0+cpu
+torchaudio>=2.0.0+cpu
+
+# --- Core Libraries (API Mode Only) ---
+# Note: diffusers and transformers are optional for CPU-only API usage
+# but included for potential future compatibility
+diffusers>=0.24.0
+transformers>=4.35.0
+
+# --- Web UI Framework ---
+gradio>=4.0.0
+fastapi==0.110.0
+uvicorn[standard]==0.29.0
+
+# --- API Clients & Web Services ---
+requests>=2.31.0
+python-dotenv>=1.0.0
+openai>=1.0.0  # For OpenAI-compatible APIs (Qwen, etc.)
+
+# --- Core Utilities ---
+PyYAML>=6.0.0
+cryptography>=41.0.0
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# Note: Local model processing (Nunchaku, accelerate, xformers) excluded
+# This installation only supports API-based image generation

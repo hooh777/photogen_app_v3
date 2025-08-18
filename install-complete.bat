@@ -1,6 +1,7 @@
 @echo off
 title PhotoGen App - Complete Auto-Installer
 color 0A
+cls
 echo.
 echo ==========================================
 echo   PhotoGen App v3 - COMPLETE INSTALLER
@@ -8,7 +9,7 @@ echo ==========================================
 echo.
 echo This will automatically:
 echo - Install Python if needed (with your choice)
-echo - Detect your system capabilities
+echo - Detect your system capabilities  
 echo - Install all dependencies
 echo - Create launch shortcuts
 echo - Test everything
@@ -22,32 +23,42 @@ if /I "%choice%" NEQ "Y" (
     exit /b 0
 )
 
+cls
 echo.
-echo [1/7] Checking Python installation...
-echo ====================================
+echo ==========================================
+echo   PhotoGen App v3 - INSTALLATION
+echo ==========================================
+echo.
+
+REM Progress bar function
+call :show_progress "Checking Python installation" 1 7
 
 REM Check if Python is installed
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo ERROR: Python not found on your system
+    cls
+    echo.
+    echo ==========================================
+    echo   PhotoGen App v3 - PYTHON SETUP
+    echo ==========================================
+    echo.
+    echo Python not found on your system.
     echo.
     echo Python Installation Options:
     echo.
     echo [1] Auto-install Python 3.11 (Recommended)
     echo     - Downloads and installs automatically
-    echo     - Configures PATH correctly
     echo     - Takes 2-3 minutes
     echo.
-    echo [2] Auto-install Python 3.12 (Latest)
+    echo [2] Auto-install Python 3.12 (Latest)  
     echo     - Most recent version
-    echo     - Downloads and installs automatically
     echo     - Takes 2-3 minutes
     echo.
     echo [3] Manual installation
     echo     - I'll guide you to download Python
-    echo     - You install it yourself
     echo.
     echo [4] Skip (if Python is installed elsewhere)
+    echo.
     echo     - Continue without auto-installation
     echo.
     
@@ -71,6 +82,11 @@ if errorlevel 1 (
     :check_python_again
     python --version >nul 2>&1
     if errorlevel 1 (
+        cls
+        echo.
+        echo ==========================================
+        echo   PhotoGen App v3 - ERROR
+        echo ==========================================
         echo.
         echo ERROR: Python still not found!
         echo Please restart this installer after Python is installed.
@@ -81,14 +97,9 @@ if errorlevel 1 (
 )
 
 for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VER=%%i
-echo Python %PYTHON_VER% found
-
-echo.
-echo [2/7] Checking system capabilities...
-echo ===================================
+call :show_progress "Python %PYTHON_VER% ready" 2 7
 
 REM Check GPU and determine installation type automatically
-echo Checking for NVIDIA GPU...
 set GPU_DETECTED=0
 nvidia-smi >nul 2>&1
 if %errorlevel% == 0 (
@@ -96,15 +107,13 @@ if %errorlevel% == 0 (
 )
 
 if %GPU_DETECTED% == 1 (
-    echo NVIDIA GPU detected - using GPU installation  
     set INSTALL_TYPE=GPU
     set TYPE_NAME=GPU (Local + API)
-    echo GPU installation selected: Local processing + API features
+    call :show_progress "NVIDIA GPU detected - GPU installation selected" 2 7
 ) else (
-    echo No NVIDIA GPU detected - using CPU installation
     set INSTALL_TYPE=CPU
     set TYPE_NAME=CPU (API-Only)
-    echo CPU installation selected: Lightweight, fast, works on any hardware
+    call :show_progress "No GPU detected - CPU installation selected" 2 7
 )
 
 echo.
@@ -118,76 +127,75 @@ timeout /t 3 >nul
 
 echo [4/7] Creating virtual environment...
 echo =====================================
+timeout /t 1 >nul
+call :show_progress "Creating virtual environment" 3 7
+
 if exist venv (
-    echo Removing old environment...
     rmdir /s /q venv >nul 2>&1
 )
 
-python -m venv venv
+python -m venv venv >nul 2>&1
 if errorlevel 1 (
-    echo ERROR: Failed to create virtual environment!
+    cls
     echo.
+    echo ==========================================
+    echo   PhotoGen App v3 - ERROR
+    echo ==========================================
+    echo.
+    echo ERROR: Failed to create virtual environment!
     echo Try running as Administrator or check Python installation.
+    echo.
     pause
     exit /b 1
 )
-echo Virtual environment created
 
-echo.
-echo [5/7] Activating environment...
-echo ==============================
-call venv\Scripts\activate.bat
+call :show_progress "Activating environment" 4 7
+call venv\Scripts\activate.bat >nul 2>&1
 if errorlevel 1 (
+    cls
+    echo.
+    echo ==========================================
+    echo   PhotoGen App v3 - ERROR
+    echo ==========================================
+    echo.
     echo ERROR: Failed to activate virtual environment!
+    echo.
     pause
     exit /b 1
 )
-echo Environment activated
 
-echo.
-echo [6/7] Installing dependencies...
-echo ==============================
-echo This may take several minutes - please wait...
-echo.
-
-python -m pip install --upgrade pip --quiet
+call :show_progress "Installing dependencies - this may take 5-10 minutes" 5 7
+python -m pip install --upgrade pip --quiet >nul 2>&1
 
 if "%INSTALL_TYPE%"=="GPU" (
-    echo Installing GPU dependencies...
-    echo - PyTorch with CUDA support
-    echo - Diffusers and Transformers
-    echo - FLUX models support
-    echo - All other requirements
-    echo.
-    pip install -r requirements-gpu.txt --no-cache-dir
+    call :show_progress "Installing GPU dependencies (PyTorch, CUDA, FLUX)" 5 7
+    pip install -r requirements-gpu.txt --no-cache-dir >nul 2>&1
 ) else (
-    echo Installing CPU dependencies...
-    echo - PyTorch (CPU version)
-    echo - Gradio and FastAPI
-    echo - All other requirements
-    echo.
-    pip install -r requirements-cpu.txt --no-cache-dir
+    call :show_progress "Installing CPU dependencies (PyTorch, Gradio)" 5 7
+    pip install -r requirements-cpu.txt --no-cache-dir >nul 2>&1
 )
 
 if errorlevel 1 (
+    cls
+    echo.
+    echo ==========================================
+    echo   PhotoGen App v3 - INSTALLATION FAILED
+    echo ==========================================
     echo.
     echo Installation failed!
     echo.
     echo Common solutions:
     echo 1. Check internet connection
-    echo 2. Run as Administrator
+    echo 2. Run as Administrator  
     echo 3. Try again (temporary server issues)
-    echo 4. Use different installation type
     echo.
     pause
     exit /b 1
 )
-echo All dependencies installed
 
-echo.
-echo [7/7] Final setup and testing...
-echo ===============================
-echo Creating launch shortcut...
+call :show_progress "Creating launch shortcuts" 6 7
+
+REM Create launch shortcut
 echo @echo off > run-photogen.bat
 echo title PhotoGen App v3 >> run-photogen.bat
 echo cd /d "%%~dp0" >> run-photogen.bat
@@ -195,23 +203,17 @@ echo call venv\Scripts\activate.bat >> run-photogen.bat
 echo python app.py >> run-photogen.bat
 echo pause >> run-photogen.bat
 
-echo Launch shortcut created
+call :show_progress "Testing installation" 7 7
 
-echo Testing installation...
-python -c "import torch, gradio, fastapi; print('Core dependencies working')"
+REM Test installation
+python -c "import torch, gradio, fastapi" >nul 2>&1
 if errorlevel 1 (
-    echo Warning: Some dependencies may have issues, but installation completed
+    set TEST_RESULT=Warning: Some dependencies may have issues
 ) else (
-    echo Installation test passed
-)
-
-if "%INSTALL_TYPE%"=="GPU" (
-    echo Testing GPU capabilities...
-    python -c "import torch; print('CUDA Available:', torch.cuda.is_available())"
+    set TEST_RESULT=Installation test passed
 )
 
 REM Create desktop shortcut
-echo Creating desktop shortcut...
 echo Set oWS = WScript.CreateObject("WScript.Shell") > create_shortcut.vbs
 echo sLinkFile = oWS.SpecialFolders("Desktop") ^& "\PhotoGen App.lnk" >> create_shortcut.vbs
 echo Set oLink = oWS.CreateShortcut(sLinkFile) >> create_shortcut.vbs
@@ -221,58 +223,84 @@ echo oLink.Description = "PhotoGen App v3 - AI Image Generation" >> create_short
 echo oLink.Save >> create_shortcut.vbs
 cscript create_shortcut.vbs >nul 2>&1
 del create_shortcut.vbs >nul 2>&1
-echo Desktop shortcut created
 
+cls
 echo.
 echo ==========================================
 echo        INSTALLATION COMPLETE!
 echo ==========================================
 echo.
+echo Installation Progress: [████████████████████] 100%%
+echo.
 echo Python Version: %PYTHON_VER%
 echo Installation Type: %TYPE_NAME%
+echo Test Result: %TEST_RESULT%
 echo.
 if "%INSTALL_TYPE%"=="GPU" (
-    echo GPU Features Available:
-    echo - Local FLUX model processing
-    echo - Privacy-focused generation
-    echo - Plus all API features
+    echo Features Available:
+    echo • Local FLUX model processing
+    echo • Privacy-focused generation  
+    echo • Plus all API features
 ) else (
-    echo CPU Features Available:
-    echo - Professional API processing
-    echo - Works on any hardware
-    echo - Fast and reliable
+    echo Features Available:
+    echo • Professional API processing
+    echo • Works on any hardware
+    echo • Fast and reliable
 )
 echo.
 echo LAUNCH OPTIONS:
 echo 1. Double-click: "PhotoGen App" on your Desktop
 echo 2. Double-click: run-photogen.bat (in this folder)
-echo 3. Run: python app.py (from this folder)
 echo.
 echo FIRST TIME SETUP:
 echo 1. Launch PhotoGen App
-echo 2. Go to "Settings" for AI Vision / Enhancer Settings
-echo 3. Add your API keys (get free keys from providers)
-echo 4. Start creating amazing images!
+echo 2. Add your API keys in Settings
+echo 3. Start creating amazing images!
 echo.
-echo Need help? Check README.md
-echo Issues? Visit: github.com/hooh777/photogen_app_v3/issues
-echo.
-pause
+echo Press any key to finish...
+pause >nul
 exit /b 0
 
+REM Progress bar function
+:show_progress
+cls
+echo.
+echo ==========================================
+echo   PhotoGen App v3 - INSTALLATION
+echo ==========================================
+echo.
+echo Current Step: %~1
+echo.
+set /a progress=%~2*100/%~3
+set /a bars=%~2*20/%~3
+set "progressbar="
+for /L %%i in (1,1,%bars%) do set "progressbar=!progressbar!█"
+for /L %%i in (%bars%,1,19) do set "progressbar=!progressbar!░"
+setlocal enabledelayedexpansion
+echo Progress: [!progressbar!] %progress%%%
+echo.
+echo Step %~2 of %~3
+endlocal
+timeout /t 2 >nul
+goto :eof
+
 :install_python
+cls
+echo.
+echo ==========================================
+echo   PhotoGen App v3 - INSTALLING PYTHON
+echo ==========================================
 echo.
 echo Installing Python %~1...
-echo =============================
+echo.
 set PYTHON_VERSION=%~1
 set PYTHON_URL=https://www.python.org/ftp/python/%PYTHON_VERSION%/python-%PYTHON_VERSION%-amd64.exe
 
 echo Downloading Python %PYTHON_VERSION%...
-powershell -Command "& {[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri '%PYTHON_URL%' -OutFile 'python-installer.exe'}"
+powershell -Command "& {[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri '%PYTHON_URL%' -OutFile 'python-installer.exe'}" >nul 2>&1
 
 if not exist python-installer.exe (
     echo ERROR: Failed to download Python installer
-    echo.
     echo Falling back to manual installation...
     call :manual_python_guide
     goto :eof

@@ -58,8 +58,7 @@ PhotoGen is a sophisticated image creation and editing application that combines
 
 ### Installation Options
 
-#### **One-Click Installation (Windows Users)**
-*The only installer you need - handles everything automatically*
+#### **Option 1: One-Click Installation (Windows Users)**
 
 ```bash
 # Clone the repository
@@ -98,8 +97,7 @@ install-complete.bat
 **Manual Installation (Advanced Users)**
 *For users who prefer manual control or non-Windows systems*
 
-##### **Option 1: GPU Users (Local + API Support)**
-*For users with NVIDIA GPUs who want full local processing capabilities*
+##### **Option 2: GPU Users (Local + API Support)**
 
 ```bash
 # Clone the repository
@@ -117,7 +115,7 @@ pip install -r requirements-gpu.txt
 python app.py
 ```
 
-##### **Option 2: CPU Users (API-Only Support)**
+##### **Option 3: CPU Users (API-Only Support)**
 *For users without GPU who want to use API services only*
 
 ```bash
@@ -343,15 +341,34 @@ photogen_app_v3/
 ├── config.yaml              # Model and API configuration
 ├── requirements-gpu.txt      # GPU installation dependencies
 ├── requirements-cpu.txt      # CPU-only dependencies
-├── install-complete.bat      # Complete one-click installer
+├── install-complete.bat      # Complete one-click installer (Windows)
+├── install.sh               # Installation script (Linux/macOS)
 ├── run-photogen.bat         # Launch script (created by installer)
-├── core/
+├── api_keys.json.enc        # Encrypted API keys storage
+├── secret.key               # Encryption key for API storage
+├── test_cpu_compatibility.py # CPU compatibility test script
+├── verify_installation.py   # Installation verification script
+├── .env.example             # Environment variables template
+├── core/                    # Core application modules
+│   ├── __init__.py
+│   ├── constants.py         # Application constants
+│   ├── enhancer.py          # Image enhancement logic
 │   ├── generator.py         # Image generation logic (CPU/GPU compatible)
+│   ├── secure_storage.py    # Encrypted API key management
 │   ├── ui.py               # User interface components
+│   ├── utils.py            # Utility functions
 │   ├── vision_streamlined.py # AI vision analysis
 │   └── handlers/           # Event handling and workflows
-├── assets/                 # Demo images and backgrounds
-└── outputs/               # Generated images storage
+│       ├── auto_prompt_manager.py  # Automatic prompt generation
+│       ├── canvas_manager.py       # Interactive canvas management
+│       ├── generation_manager.py   # Image generation coordination
+│       ├── i2i_handler.py          # Image-to-image processing
+│       ├── i2i_handler_new.py      # Enhanced I2I processing
+│       └── state_manager.py        # Application state management
+├── test_images/             # Test images and reference materials
+├── outputs/                # Generated images storage
+├── workflow diagram/       # Technical documentation and diagrams
+└── venv/                   # Virtual environment (created by installer)
 ```
 
 

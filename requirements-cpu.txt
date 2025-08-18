@@ -12,8 +12,8 @@ torchaudio>=2.0.0
 # --- Core Libraries (API Mode Only) ---
 # Note: diffusers and transformers are optional for CPU-only API usage
 # but included for potential future compatibility
-diffusers>=0.24.0
-transformers>=4.35.0
+# diffusers>=0.24.0
+# transformers>=4.35.0
 
 # --- Web UI Framework ---
 gradio>=4.0.0

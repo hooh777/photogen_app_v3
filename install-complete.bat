@@ -87,59 +87,18 @@ echo.
 echo [2/7] Checking system capabilities...
 echo ===================================
 
-REM Check GPU and determine installation type
+REM Check GPU and determine installation type automatically
 nvidia-smi >nul 2>&1
 if errorlevel 1 (
-    echo ℹ️ No NVIDIA GPU detected
-    echo.
-    echo 💻 Installation Options:
-    echo.
-    echo [1] CPU-Only Installation (Recommended for your system)
-    echo     - Lightweight and fast
-    echo     - Uses professional cloud APIs
-    echo     - Works on any hardware
-    echo     - 2-minute installation
-    echo.
-    echo [2] Try GPU Installation anyway
-    echo     - May work if you have compatible GPU
-    echo     - Larger download (5-10 minutes)
-    echo     - Falls back to API if GPU not usable
-    echo.
-    
-    set /p install_choice="Choose installation type (1-2): "
-    if "%install_choice%"=="2" (
-        set INSTALL_TYPE=GPU
-        set TYPE_NAME=GPU (Attempting Local + API)
-        echo ⚠️ Note: Will fall back to API-only if GPU incompatible
-    ) else (
-        set INSTALL_TYPE=CPU
-        set TYPE_NAME=CPU (API-Only)
-    )
+    echo ℹ️ No NVIDIA GPU detected - using CPU installation
+    set INSTALL_TYPE=CPU
+    set TYPE_NAME=CPU (API-Only)
+    echo ✅ CPU installation selected: Lightweight, fast, works on any hardware
 ) else (
-    echo ✅ NVIDIA GPU detected
-    echo.
-    echo 🎮 GPU Installation Options:
-    echo.
-    echo [1] Full GPU Installation (Recommended for your system)
-    echo     - Local FLUX model processing
-    echo     - Privacy-focused generation
-    echo     - Plus all API features
-    echo     - 5-10 minute installation
-    echo.
-    echo [2] CPU-Only Installation (Lighter)
-    echo     - Skip local models
-    echo     - API-only processing
-    echo     - 2-minute installation
-    echo.
-    
-    set /p install_choice="Choose installation type (1-2): "
-    if "%install_choice%"=="2" (
-        set INSTALL_TYPE=CPU
-        set TYPE_NAME=CPU (API-Only)
-    ) else (
-        set INSTALL_TYPE=GPU
-        set TYPE_NAME=GPU (Local + API)
-    )
+    echo ✅ NVIDIA GPU detected - using GPU installation  
+    set INSTALL_TYPE=GPU
+    set TYPE_NAME=GPU (Local + API)
+    echo ✅ GPU installation selected: Local processing + API features
 )
 
 echo.

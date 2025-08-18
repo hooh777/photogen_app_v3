@@ -16,7 +16,8 @@ torchaudio>=2.0.0
 # transformers>=4.35.0
 
 # --- Web UI Framework ---
-gradio>=4.0.0
+gradio==5.41.1
+gradio-client==1.11.0
 fastapi==0.110.0
 uvicorn[standard]==0.29.0
 

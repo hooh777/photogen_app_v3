@@ -1,6 +1,6 @@
 # PhotoGen App v3
 
-**Adva### **Smart Installation System**
+### **Smart Installation System**
 - **Intelligent Detection**: Automatically analyzes CPU, GPU, CUDA, RAM, and disk space
 - **Hardware Analysis**: Detailed compatibility assessment with recommendations
 - **Automatic Dependencies**: Resolves version conflicts and handles all packages
@@ -33,11 +33,11 @@ PhotoGen is a sophisticated image creation and editing application that combines
 ## What's New in v3
 
 ### **Smart Installation System**
-- **🤖 Intelligent Detection**: Automatically analyzes CPU, GPU, CUDA, RAM, and disk space
-- **� Hardware Analysis**: Detailed compatibility assessment with recommendations
+- **Intelligent Detection**: Automatically analyzes CPU, GPU, CUDA, RAM, and disk space
+- **Hardware Analysis**: Detailed compatibility assessment with recommendations
 - **Automatic Dependencies**: Resolves version conflicts and handles all packages
 - **Error Prevention**: Comprehensive checks with actionable error solutions
-- **📦 Dual Requirements**: Optimized `requirements-gpu.txt` and `requirements-cpu.txt`
+- **Dual Requirements**: Optimized `requirements-gpu.txt` and `requirements-cpu.txt`
 - **One-Click Setup**: Complete automation from detection to launch shortcuts
 - **Launch Scripts**: Ready-to-use `run-photogen.bat` created automatically
 
@@ -116,7 +116,6 @@ python app.py
 ```
 
 ##### **Option 3: CPU Users (API-Only Support)**
-*For users without GPU who want to use API services only*
 
 ```bash
 # Clone the repository

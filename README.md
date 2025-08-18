@@ -193,7 +193,7 @@ python app.py
 - **Pro (Black Forest Labs)**: Premium cloud API
 - **Pro (GRS AI)**: Cost-effective cloud alternative
 
-### **Image Dimensions**
+### **Image Dimensions (Not available currently)** 
 - Match Input: Uses source image dimensions
 - Standard ratios: 1:1, 16:9, 9:16, 4:3, 3:4
 - Automatic optimization for quality and performance

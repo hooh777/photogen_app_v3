@@ -65,7 +65,7 @@ if errorlevel 1 (
     echo.
     echo.
     timeout /t 1 /nobreak >nul
-    timeout /t 1 /nobreak >nul
+    echo    Choose how you want to install Python:
     echo    [1] Auto-install Python 3.11 (Recommended)
     echo        - Downloads and installs automatically
     echo        - Takes 2-3 minutes

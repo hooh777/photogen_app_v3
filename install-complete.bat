@@ -63,6 +63,7 @@ if errorlevel 1 (
     echo    Python Installation Options
     echo ==========================================
     echo.
+    echo.
     timeout /t 1 /nobreak >nul
     timeout /t 1 /nobreak >nul
     echo    [1] Auto-install Python 3.11 (Recommended)
@@ -82,11 +83,7 @@ if errorlevel 1 (
     echo    [4] Skip (if Python is installed elsewhere)
     echo        - Continue without auto-installation
     echo.
-    echo.
-    echo ==========================================
-    echo.
-    echo ==========================================
-    echo.
+ 
     
     )
     echo.

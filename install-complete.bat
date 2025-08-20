@@ -7,6 +7,14 @@ echo ==========================================
 echo   PhotoGen App v3 - COMPLETE INSTALLER
 echo ==========================================
 echo.
+echo This installer is designed for USERS who want to:
+echo - Use PhotoGen for image generation
+echo - Have everything installed automatically
+echo - Not worry about technical details
+echo.
+echo DEVELOPERS: Please use manual installation instead
+echo See README.md for UV/pip installation instructions
+echo.
 echo This will automatically:
 echo - Install Python if needed (with your choice)
 echo - Detect your system capabilities  
@@ -16,7 +24,7 @@ echo - Test everything
 echo.
 echo No technical knowledge required!
 echo.
-set /p choice="Install PhotoGen completely automatically? (Y/N): "
+set /p choice="Proceed with user installation? (Y/N): "
 if /I "%choice%" NEQ "Y" (
     echo Installation cancelled.
     pause
@@ -195,12 +203,55 @@ if errorlevel 1 (
 
 call :show_progress "Creating launch shortcuts" 6 7
 
-REM Create launch shortcut
+REM Create enhanced launch shortcut
 echo @echo off > run-photogen.bat
 echo title PhotoGen App v3 >> run-photogen.bat
+echo color 0A >> run-photogen.bat
+echo cls >> run-photogen.bat
+echo. >> run-photogen.bat
+echo ========================================== >> run-photogen.bat
+echo    PhotoGen App v3 - Starting... >> run-photogen.bat
+echo ========================================== >> run-photogen.bat
+echo. >> run-photogen.bat
+echo Starting PhotoGen App... >> run-photogen.bat
+echo Please wait while we initialize everything... >> run-photogen.bat
+echo. >> run-photogen.bat
 echo cd /d "%%~dp0" >> run-photogen.bat
-echo call venv\Scripts\activate.bat >> run-photogen.bat
-echo python app.py >> run-photogen.bat
+echo if not exist venv^\ ^( >> run-photogen.bat
+echo     echo ERROR: Virtual environment not found! >> run-photogen.bat
+echo     echo Please run install-complete.bat first. >> run-photogen.bat
+echo     pause >> run-photogen.bat
+echo     exit /b 1 >> run-photogen.bat
+echo ^) >> run-photogen.bat
+echo. >> run-photogen.bat
+echo call venv\Scripts\activate.bat ^>nul 2^>^&1 >> run-photogen.bat
+echo. >> run-photogen.bat
+echo echo Loading AI models and starting web server... >> run-photogen.bat
+echo echo The web interface will open automatically in 5 seconds. >> run-photogen.bat
+echo echo. >> run-photogen.bat
+echo echo Manual URL: http://localhost:7860 >> run-photogen.bat
+echo echo. >> run-photogen.bat
+echo. >> run-photogen.bat
+echo REM Start Python app in background >> run-photogen.bat
+echo start /B python app.py >> run-photogen.bat
+echo. >> run-photogen.bat
+echo REM Wait 5 seconds for app to fully start >> run-photogen.bat
+echo timeout /t 5 /nobreak ^>nul >> run-photogen.bat
+echo. >> run-photogen.bat
+echo REM Open browser >> run-photogen.bat
+echo echo Opening PhotoGen in your web browser... >> run-photogen.bat
+echo start http://localhost:7860 >> run-photogen.bat
+echo. >> run-photogen.bat
+echo echo ========================================== >> run-photogen.bat
+echo echo    PhotoGen App v3 - RUNNING >> run-photogen.bat
+echo echo ========================================== >> run-photogen.bat
+echo echo. >> run-photogen.bat
+echo echo ^• Web Interface: http://localhost:7860 >> run-photogen.bat
+echo echo ^• Status: Running in background >> run-photogen.bat
+echo echo ^• To stop: Close this window or press Ctrl+C >> run-photogen.bat
+echo echo. >> run-photogen.bat
+echo echo App is ready! Check your web browser. >> run-photogen.bat
+echo echo. >> run-photogen.bat
 echo pause >> run-photogen.bat
 
 call :show_progress "Testing installation" 7 7

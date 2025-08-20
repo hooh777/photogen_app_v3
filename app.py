@@ -275,7 +275,23 @@ class PhotoGenApp:
             return None
 
     def launch(self):
-        self.demo.launch()
+        print("=" * 50)
+        print("🚀 PhotoGen App v3 Starting...")
+        print("=" * 50)
+        print("⚡ Loading AI models and initializing...")
+        print("🌐 Starting web interface...")
+        print("📱 The app will be available at: http://localhost:7860")
+        print("=" * 50)
+        
+        self.demo.launch(
+            server_name="0.0.0.0",
+            server_port=7860,
+            inbrowser=False,  # Don't auto-open here, let run-photogen.bat handle it
+            share=False,
+            show_error=True,
+            quiet=False,
+            show_api=False
+        )
 
 if __name__ == "__main__":
     app = PhotoGenApp()

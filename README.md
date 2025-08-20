@@ -1,5 +1,9 @@
 # PhotoGen App v3
 
+> **🎯 Quick Navigation:**  
+> **👥 Just want to use PhotoGen?** → [For Users](#👥-for-users-just-want-to-use-photogen)  
+> **🛠️ Want to develop/modify code?** → [For Developers](#🛠️-for-developers-want-to-modifycontribute)
+
 ## Key Features
 
 ### **Multi-Modal Image Generation**
@@ -21,48 +25,87 @@
 
 ## Quick Start
 
-### Installation Options
+---
 
-#### **Option 1: One-Click Installation (Windows Users)**
+## 👥 For Users (Just Want to Use PhotoGen)
+
+**If you just want to use PhotoGen for image generation, this is for you!**
+
+### **Windows Installation (Recommended)**
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/hooh777/photogen_app_v3.git
 cd photogen_app_v3
 
-# Run the complete installer (installs Python + everything else)
+# 2. Double-click or run the installer
 install-complete.bat
 ```
 
-**What the Complete Installer Does:**
-- **Python Installation**: Automatically installs Python if missing (your choice of version)
-- **Smart Hardware Detection**: Detects NVIDIA GPU automatically
-- **Automatic Setup**: No GPU → CPU installation, GPU detected → GPU installation
-- **Complete Installation**: Handles virtual environment, dependencies, configuration
-- **Desktop Integration**: Creates desktop shortcut and launch scripts
-- **Verification Testing**: Verifies everything works before finishing
+**What the installer does automatically:**
+- ✅ **Installs Python** if you don't have it (your choice of version)
+- ✅ **Detects your hardware** (NVIDIA GPU or CPU-only)
+- ✅ **Installs everything** needed for PhotoGen
+- ✅ **Creates shortcuts** for easy launching
+- ✅ **Tests installation** to make sure it works
 
-**Python Installation Options:**
-- **Auto-install Python 3.11** (Recommended - most compatible)
-- **Auto-install Python 3.12** (Latest version)
-- **Manual guidance** (opens Python website with instructions)
-- **Skip** (if Python installed elsewhere)
+**That's it! No technical knowledge required.**
 
-**Installation Logic:**
-- **No NVIDIA GPU detected** → Lightweight CPU installation (API-only, 2 minutes)
-- **NVIDIA GPU detected** → Full GPU installation (Local processing + API, 5-10 minutes)
+### **After Installation:**
+- **Double-click** the desktop shortcut, OR
+- **Double-click** `run-photogen.bat` in the PhotoGen folder
+- **Web interface opens automatically** at http://localhost:7860
 
-**Installation Features:**
-- **Hardware Detection**: Automatic GPU/CUDA capability analysis
-- **Dependency Management**: Resolves version conflicts automatically  
-- **Progress Tracking**: Real-time feedback during installation
-- **Error Handling**: Comprehensive troubleshooting with solutions
-- **Verification Testing**: Confirms all components work correctly
+---
 
-**Manual Installation (Advanced Users)**
-*For users who prefer manual control or non-Windows systems*
+## 🛠️ For Developers (Want to Modify/Contribute)
 
-##### **Option 2: GPU Users (Local + API Support)**
+**If you want to develop, modify, or contribute to PhotoGen:**
+
+### **Method 1: UV (Recommended - Much Faster)**
+
+```bash
+# Clone the repository
+git clone https://github.com/hooh777/photogen_app_v3.git
+cd photogen_app_v3
+
+# Install UV if not already installed.
+pip install uv
+
+## Or follow the guide to install it
+https://docs.astral.sh/uv/getting-started/installation/#__tabbed_1_2
+
+
+# Create virtual environment
+uv venv venv
+call venv\Scripts\activate.bat  # Windows
+# source venv/bin/activate      # Linux/macOS
+
+# Choose your installation type:
+
+# GPU development (local + API processing)
+uv pip install -e ".[gpu]"
+
+# CPU development (API-only)  
+uv pip install -e "."
+
+# Full development (includes testing/linting tools)
+uv pip install -e ".[dev]"
+
+# Everything (GPU + all dev tools)
+uv pip install -e ".[all]"
+
+# Run PhotoGen
+python app.py
+```
+
+**UV Benefits for Developers:**
+- ⚡ **10-100x faster** dependency installation (2-3 min vs 8-12 min)
+- 🔧 **Better dependency resolution** - handles conflicts intelligently  
+- 💾 **Intelligent caching** - reuses downloads across projects
+- 🚀 **Modern Python tooling** built for development workflows
+
+### **Method 2: pip (Traditional Fallback)**
 
 ```bash
 # Clone the repository
@@ -71,32 +114,50 @@ cd photogen_app_v3
 
 # Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+call venv\Scripts\activate.bat  # Windows
+# source venv/bin/activate      # Linux/macOS
 
-# Install GPU requirements
+# GPU development
 pip install -r requirements-gpu.txt
 
-# Run the application
-python app.py
-```
-
-##### **Option 3: CPU Users (API-Only Support)**
-
-```bash
-# Clone the repository
-git clone https://github.com/hooh777/photogen_app_v3.git
-cd photogen_app_v3
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install CPU requirements (much faster installation)
+# OR CPU development  
 pip install -r requirements-cpu.txt
 
-# Run the application
+# Run PhotoGen
 python app.py
 ```
+
+### **Developer Resources:**
+- 📖 **[DEVELOPER_GUIDE_UV.md](DEVELOPER_GUIDE_UV.md)** - Complete UV usage guide
+- 🧪 **Testing**: `pytest` (if installed with `[dev]` extras)
+- 🎨 **Code formatting**: `black .` (if installed with `[dev]` extras)
+- 🔍 **Linting**: `flake8 .` (if installed with `[dev]` extras)
+
+---
+
+## Installation Files Overview
+
+### **Files for Users (Simple .bat Installation)**
+- **`install-complete.bat`**: **THE installer for users**
+  - Only installation method recommended for users
+  - Handles Python installation, dependency management, shortcuts
+  - No technical knowledge required
+
+### **Files for Developers (Manual Installation)**
+
+**Modern Approach (Recommended):**
+- **`pyproject.toml`**: Modern Python project configuration
+  - `uv pip install -e ".[gpu]"` - GPU development
+  - `uv pip install -e ".[dev]"` - Development tools  
+  - `uv pip install -e ".[all]"` - Everything
+  - Contains all dependencies - no separate requirements files needed
+
+**Traditional pip Approach (Fallback):**
+- **`requirements-gpu.txt`**: GPU dependencies for traditional pip
+- **`requirements-cpu.txt`**: CPU dependencies for traditional pip
+
+**Developer Resources:**
+- **`DEVELOPER_GUIDE_UV.md`**: Complete UV usage guide
 
 ### First Launch Setup
 
@@ -108,17 +169,19 @@ python app.py
 
 ## System Requirements
 
-### **GPU Installation (Local + API)**
+*These requirements apply whether you use the simple `.bat` installer (users) or manual installation (developers)*
+
+### **GPU Setup (Local + API Processing)**
 - **OS**: Windows 10/11, Linux, macOS
 - **GPU**: NVIDIA GPU with 8GB+ VRAM (RTX 3070/4060 or better recommended)
-- **CUDA**: Version 12.1 or higher
+- **CUDA**: Version 12.1 or higher (automatically handled by installer)
 - **RAM**: 16GB+ system RAM recommended
-- **Storage**: 10GB+ free space for models
+- **Storage**: 10GB+ free space for AI models
 - **Features**: Full local processing + all API capabilities
 
-**Perfect for:** Power users, privacy-focused workflows, high-volume generation
+**Perfect for:** Privacy-focused workflows, high-volume generation, offline usage
 
-### **CPU Installation (API-Only)**
+### **CPU Setup (API-Only Processing)**
 - **OS**: Windows 10/11, Linux, macOS  
 - **Hardware**: Any CPU (GPU not required)
 - **RAM**: 4GB+ system RAM recommended
@@ -126,7 +189,7 @@ python app.py
 - **Internet**: Stable connection for API calls
 - **Features**: Full AI vision analysis and image generation via APIs
 
-**Perfect for:** Laptops, older computers, cloud instances, users prioritizing cost-effectiveness
+**Perfect for:** Laptops, older computers, budget setups, cloud instances
 
 ## API Configuration
 

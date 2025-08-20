@@ -162,10 +162,18 @@ echo Installing UV package manager (for ultra-fast dependency installation)...
 python -m pip install uv --quiet --disable-pip-version-check >nul 2>&1
 if errorlevel 1 (
     echo Warning: UV installation failed, will use traditional pip...
+    echo Error details: UV could not be installed globally
     set USE_UV=0
 ) else (
     echo UV installed successfully! This will make installation much faster.
-    set USE_UV=1
+    echo Verifying UV installation...
+    uv --version
+    if errorlevel 1 (
+        echo Warning: UV installed but not working, using pip fallback
+        set USE_UV=0
+    ) else (
+        set USE_UV=1
+    )
 )
 
 call :show_progress "Creating virtual environment" 4 8
@@ -215,17 +223,39 @@ call :show_progress "Installing dependencies - this may take 1-3 minutes" 6 8
 
 if "%USE_UV%"=="1" (
     echo Using UV for ultra-fast dependency installation...
+    echo Checking UV installation...
+    uv --version >nul 2>&1
+    if errorlevel 1 (
+        echo UV not available in virtual environment, installing...
+        python -m pip install uv --quiet >nul 2>&1
+    )
+    
     if "%INSTALL_TYPE%"=="GPU" (
         echo Installing GPU dependencies with UV...
-        uv pip install -r requirements-gpu.txt >nul 2>&1
+        echo Current directory: %CD%
+        if exist requirements-gpu.txt (
+            echo Requirements file found, installing...
+            uv pip install -r requirements-gpu.txt --verbose
+        ) else (
+            echo ERROR: requirements-gpu.txt not found!
+            pause
+        )
     ) else (
         echo Installing CPU dependencies with UV...
-        uv pip install -r requirements-cpu.txt >nul 2>&1
+        echo Current directory: %CD%
+        if exist requirements-cpu.txt (
+            echo Requirements file found, installing...
+            uv pip install -r requirements-cpu.txt --verbose
+        ) else (
+            echo ERROR: requirements-cpu.txt not found!
+            pause
+        )
     )
     
     if errorlevel 1 (
         echo UV installation failed, falling back to pip...
-        echo.
+        echo Error level: %errorlevel%
+        echo Trying pip installation instead...
         call :install_with_pip
         if errorlevel 1 (
             echo ERROR: Both UV and pip installation failed!
@@ -242,7 +272,7 @@ if "%USE_UV%"=="1" (
     if errorlevel 1 (
         echo ERROR: Pip installation failed!
         echo.
-        pause
+        pause  
         exit /b 1
     )
 )
@@ -515,17 +545,34 @@ exit /b 0
 :install_with_pip
 REM Fallback to traditional pip installation
 echo Using traditional pip installation...
+echo Upgrading pip...
 python -m pip install --upgrade pip --quiet >nul 2>&1
 
 if "%INSTALL_TYPE%"=="GPU" (
     echo Installing GPU dependencies with pip...
-    pip install -r requirements-gpu.txt --no-cache-dir --disable-pip-version-check --prefer-binary >nul 2>&1
+    echo Current directory: %CD%
+    if exist requirements-gpu.txt (
+        echo Requirements file found, installing with pip...
+        pip install -r requirements-gpu.txt --no-cache-dir --disable-pip-version-check --prefer-binary --verbose
+    ) else (
+        echo ERROR: requirements-gpu.txt not found!
+        exit /b 1
+    )
 ) else (
     echo Installing CPU dependencies with pip...
-    pip install -r requirements-cpu.txt --no-cache-dir --disable-pip-version-check --prefer-binary >nul 2>&1
+    echo Current directory: %CD%
+    if exist requirements-cpu.txt (
+        echo Requirements file found, installing with pip...
+        pip install -r requirements-cpu.txt --no-cache-dir --disable-pip-version-check --prefer-binary --verbose
+    ) else (
+        echo ERROR: requirements-cpu.txt not found!
+        exit /b 1
+    )
 )
 
 if errorlevel 1 (
+    echo Pip installation failed with error level: %errorlevel%
+    pause
     exit /b 1
 )
 

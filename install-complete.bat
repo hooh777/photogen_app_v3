@@ -42,6 +42,8 @@ REM Check if Python is installed first
 echo [1/7] Checking Python installation...
 python --version >nul 2>&1
 if errorlevel 1 (
+    echo Python not detected. Setting up Python installation...
+    timeout /t 3 >nul
     cls
     echo.
     echo ==========================================
@@ -117,9 +119,13 @@ if errorlevel 1 (
     
     REM If we get here, Python is working
     goto :python_ready
+) else (
+    REM Python is already installed
+    echo Python found! Continuing with installation...
+    timeout /t 2 >nul
+    goto :python_ready
+)
     
-:python_ready
-
 :python_ready
 for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VER=%%i
 echo.

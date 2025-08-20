@@ -48,41 +48,53 @@ if errorlevel 1 (
     echo   PhotoGen App v3 - PYTHON SETUP
     echo ==========================================
     echo.
-    echo  Python not found on your system.
-    echo  We need to install Python first.
+    echo   Python not found on your system.
+    echo   We need to install Python first.
     echo.
-    echo  Press any key to see installation options...
+    echo   Press any key to see installation options...
     echo.
     pause >nul
     cls
+    
+    REM Use a here document approach for cleaner output
+    (
     echo.
     echo.
     echo ==========================================
-    echo   Python Installation Options
+    echo    Python Installation Options
     echo ==========================================
     echo.
     echo.
-    echo   [1] Auto-install Python 3.11 (Recommended)
-    echo       * Downloads and installs automatically
-    echo       * Takes 2-3 minutes
+    echo    [1] Auto-install Python 3.11 (Recommended^)
+    echo        - Downloads and installs automatically
+    echo        - Takes 2-3 minutes
     echo.
-    echo   [2] Auto-install Python 3.12 (Latest)
-    echo       * Most recent version  
-    echo       * Takes 2-3 minutes
+    echo    [2] Auto-install Python 3.12 (Latest^)
+    echo        - Most recent version
+    echo        - Takes 2-3 minutes
     echo.
-    echo   [3] Manual installation
-    echo       * I'll guide you to download Python
+    echo    [3] Manual installation
+    echo        - I'll guide you to download Python
     echo.
-    echo   [4] Skip (if Python is installed elsewhere)
-    echo       * Continue without auto-installation
+    echo    [4] Skip (if Python is installed elsewhere^)
+    echo        - Continue without auto-installation
     echo.
+    echo.
+    echo ==========================================
+    echo.
+    )
     echo.
     echo ==========================================
     echo.
     echo ==========================================
     echo.
     
-    set /p python_choice="  Choose option (1-4): "
+    )
+    echo.
+    echo ==========================================
+    echo.
+    
+    set /p python_choice="    Choose option (1-4): "
     
     if "%python_choice%"=="1" (
         echo.

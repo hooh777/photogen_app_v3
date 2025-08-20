@@ -50,7 +50,7 @@ if errorlevel 1 (
     echo Python not found on your system.
     echo We need to install Python first.
     echo.
-    timeout /t 3 >nul
+    timeout /t 1 >nul
     cls
     echo.
     echo ==========================================
@@ -118,7 +118,6 @@ python --version >nul 2>&1
 ) else (
     REM Python is already installed
     echo Python found! Continuing with installation...
-    timeout /t 2 >nul
     goto :python_ready
 )
 
@@ -137,9 +136,6 @@ exit /b 1
     
 :python_ready
 for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VER=%%i
-echo.
-echo Python %PYTHON_VER% is ready!
-timeout /t 2 >nul
 call :show_progress "Python %PYTHON_VER% ready" 2 8
 
 REM Check GPU and determine installation type automatically
@@ -160,7 +156,6 @@ if %GPU_DETECTED% == 1 (
 )
 
 call :show_progress "Installation plan ready" 3 8
-timeout /t 2 >nul
 
 call :show_progress "Creating virtual environment" 4 8
 
@@ -198,16 +193,35 @@ if errorlevel 1 (
     exit /b 1
 )
 
-call :show_progress "Installing dependencies - this may take 5-10 minutes" 6 8
-python -m pip install --upgrade pip --quiet >nul 2>&1
+call :show_progress "Installing dependencies - this may take 1-3 minutes" 6 8
 
-if "%INSTALL_TYPE%"=="GPU" (
-    call :show_progress "Installing GPU dependencies (PyTorch, CUDA, FLUX)" 6 8
-    pip install -r requirements-gpu.txt --no-cache-dir >nul 2>&1
-) else (
-    call :show_progress "Installing CPU dependencies (PyTorch, Gradio)" 6 8
-    pip install -r requirements-cpu.txt --no-cache-dir >nul 2>&1
+REM Install UV package manager for ultra-fast installation
+echo Installing UV package manager...
+python -m pip install uv --quiet >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: Failed to install UV package manager
+    echo Falling back to traditional pip...
+    call :install_with_pip
+    goto :after_install
 )
+
+REM Use UV for super-fast dependency installation
+if "%INSTALL_TYPE%"=="GPU" (
+    echo Installing GPU dependencies with UV (ultra-fast)...
+    uv pip install -r requirements-gpu.txt --system >nul 2>&1
+) else (
+    echo Installing CPU dependencies with UV (ultra-fast)...
+    uv pip install -r requirements-cpu.txt --system >nul 2>&1
+)
+
+if errorlevel 1 (
+    echo UV installation failed, trying pip fallback...
+    call :install_with_pip
+) else (
+    echo Dependencies installed successfully with UV!
+)
+
+:after_install
 
 if errorlevel 1 (
     cls
@@ -359,7 +373,7 @@ echo.
 echo Step %~2 of %~3
 echo.
 endlocal
-timeout /t 2 >nul
+timeout /t 1 >nul
 goto :eof
 
 :install_python
@@ -416,7 +430,7 @@ REM Refresh environment variables
 call :refresh_env
 
 REM Wait a moment for PATH to update
-timeout /t 3 >nul
+timeout /t 2 >nul
 
 exit /b 0
 
@@ -447,3 +461,49 @@ for /f "skip=2 tokens=3*" %%a in ('reg query HKCU\Environment /v PATH') do set "
 for /f "skip=2 tokens=3*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PATH') do set "system_path=%%b"
 set "PATH=%system_path%;%user_path%"
 goto :eof
+
+:install_with_uv
+REM Try to install UV first
+echo Installing UV package manager (10x faster than pip)...
+python -m pip install uv --quiet --disable-pip-version-check >nul 2>&1
+if errorlevel 1 (
+    echo UV installation failed, falling back to pip...
+    exit /b 1
+)
+
+REM Use UV to install dependencies (much faster)
+if "%INSTALL_TYPE%"=="GPU" (
+    echo Installing GPU dependencies with UV (ultra-fast)...
+    uv pip install -r requirements-gpu.txt --system --no-cache >nul 2>&1
+) else (
+    echo Installing CPU dependencies with UV (ultra-fast)...
+    uv pip install -r requirements-cpu.txt --system --no-cache >nul 2>&1
+)
+
+if errorlevel 1 (
+    echo UV installation failed, falling back to pip...
+    exit /b 1
+)
+
+echo Dependencies installed successfully with UV (much faster)!
+exit /b 0
+
+:install_with_pip
+REM Fallback to traditional pip installation
+echo Using traditional pip installation...
+python -m pip install --upgrade pip --quiet >nul 2>&1
+
+if "%INSTALL_TYPE%"=="GPU" (
+    echo Installing GPU dependencies with pip...
+    pip install -r requirements-gpu.txt --no-cache-dir --disable-pip-version-check --prefer-binary >nul 2>&1
+) else (
+    echo Installing CPU dependencies with pip...
+    pip install -r requirements-cpu.txt --no-cache-dir --disable-pip-version-check --prefer-binary >nul 2>&1
+)
+
+if errorlevel 1 (
+    exit /b 1
+)
+
+echo Dependencies installed successfully with pip!
+exit /b 0

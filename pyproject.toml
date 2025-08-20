@@ -5,6 +5,15 @@ build-backend = "hatchling.build"
 [tool.hatch.metadata]
 allow-direct-references = true
 
+[tool.hatch.build.targets.wheel]
+packages = ["core"]
+include = [
+    "app.py",
+    "config.yaml",
+    "verify_installation.py",
+    "test_cpu_compatibility.py",
+]
+
 [project]
 name = "photogen-app"
 version = "3.0.0"
@@ -92,9 +101,6 @@ Homepage = "https://github.com/hooh777/photogen_app_v3"
 Repository = "https://github.com/hooh777/photogen_app_v3"
 Documentation = "https://github.com/hooh777/photogen_app_v3#readme"
 Issues = "https://github.com/hooh777/photogen_app_v3/issues"
-
-[project.scripts]
-photogen = "app:main"
 
 [tool.black]
 line-length = 88

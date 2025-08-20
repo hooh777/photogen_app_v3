@@ -212,6 +212,28 @@ allow-direct-references = true
 
 This allows installation of packages directly from Git repositories (like diffusers and nunchaku).
 
+### Build Configuration Error (Hatchling)
+If you get an error about "Unable to determine which files to ship inside the wheel":
+
+```
+ValueError: Unable to determine which files to ship inside the wheel using the following heuristics
+The most likely cause of this is that there is no directory that matches the name of your project (photogen_app).
+```
+
+**Solution**: This is already fixed in the project's `pyproject.toml` with proper build configuration:
+```toml
+[tool.hatch.build.targets.wheel]
+packages = ["core"]
+include = [
+    "app.py",
+    "config.yaml", 
+    "verify_installation.py",
+    "test_cpu_compatibility.py",
+]
+```
+
+This tells hatchling to include the `core/` package and important standalone files.
+
 ## Advanced Configuration
 
 ### pyproject.toml Customization

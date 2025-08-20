@@ -73,23 +73,37 @@ if errorlevel 1 (
     set /p python_choice="Choose option (1-4): "
     
     if "%python_choice%"=="1" (
+        echo.
+        echo Installing Python 3.11.9...
         call :install_python "3.11.9"
+        if errorlevel 1 goto :python_install_failed
     ) else if "%python_choice%"=="2" (
+        echo.
+        echo Installing Python 3.12.5...
         call :install_python "3.12.5"
+        if errorlevel 1 goto :python_install_failed
     ) else if "%python_choice%"=="3" (
         call :manual_python_guide
-        goto :check_python_again
+        goto :python_install_failed
     ) else if "%python_choice%"=="4" (
+        echo.
         echo Continuing with existing Python installation...
-        goto :check_python_again
+        goto :continue_installation
     ) else (
+        echo.
         echo Invalid choice. Defaulting to Python 3.11...
         call :install_python "3.11.9"
+        if errorlevel 1 goto :python_install_failed
     )
+    
+    :continue_installation
+    echo.
+    echo Verifying Python installation...
     
     :check_python_again
     python --version >nul 2>&1
     if errorlevel 1 (
+        :python_install_failed
         cls
         echo.
         echo ==========================================
@@ -102,8 +116,13 @@ if errorlevel 1 (
         pause
         exit /b 1
     )
-)
+    
+    REM If we get here, Python is working
+    goto :python_ready
+    
+:python_ready
 
+:python_ready
 for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VER=%%i
 call :show_progress "Python %PYTHON_VER% ready" 2 7
 
@@ -354,7 +373,7 @@ if not exist python-installer.exe (
     echo ERROR: Failed to download Python installer
     echo Falling back to manual installation...
     call :manual_python_guide
-    goto :eof
+    exit /b 1
 )
 
 echo Download complete
@@ -373,7 +392,8 @@ if errorlevel 1 (
         echo ERROR: Alternative installation also failed
         echo.
         call :manual_python_guide
-        goto :eof
+        del python-installer.exe >nul 2>&1
+        exit /b 1
     )
 )
 
@@ -382,14 +402,15 @@ echo Cleaning up installer...
 del python-installer.exe >nul 2>&1
 
 echo.
-echo IMPORTANT: Restarting installer to use new Python...
-echo Press any key to continue with PhotoGen installation...
-pause >nul
+echo Python installation complete. Continuing with PhotoGen setup...
 
 REM Refresh environment variables
 call :refresh_env
 
-goto :eof
+REM Wait a moment for PATH to update
+timeout /t 3 >nul
+
+exit /b 0
 
 :manual_python_guide
 echo.

@@ -38,10 +38,8 @@ echo   PhotoGen App v3 - INSTALLATION
 echo ==========================================
 echo.
 
-REM Progress bar function
-call :show_progress "Checking Python installation" 1 7
-
-REM Check if Python is installed
+REM Check if Python is installed first
+echo [1/7] Checking Python installation...
 python --version >nul 2>&1
 if errorlevel 1 (
     cls
@@ -124,6 +122,9 @@ if errorlevel 1 (
 
 :python_ready
 for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VER=%%i
+echo.
+echo Python %PYTHON_VER% is ready!
+timeout /t 2 >nul
 call :show_progress "Python %PYTHON_VER% ready" 2 7
 
 REM Check GPU and determine installation type automatically
@@ -334,6 +335,7 @@ exit /b 0
 REM Progress bar function
 :show_progress
 cls
+setlocal enabledelayedexpansion
 echo.
 echo ==========================================
 echo   PhotoGen App v3 - INSTALLATION
@@ -346,10 +348,10 @@ set /a bars=%~2*20/%~3
 set "progressbar="
 for /L %%i in (1,1,%bars%) do set "progressbar=!progressbar!█"
 for /L %%i in (%bars%,1,19) do set "progressbar=!progressbar!░"
-setlocal enabledelayedexpansion
 echo Progress: [!progressbar!] %progress%%%
 echo.
 echo Step %~2 of %~3
+echo.
 endlocal
 timeout /t 2 >nul
 goto :eof

@@ -275,9 +275,9 @@ echo echo ========================================== >> run-photogen.bat
 echo echo    PhotoGen App v3 - RUNNING >> run-photogen.bat
 echo echo ========================================== >> run-photogen.bat
 echo echo. >> run-photogen.bat
-echo echo ^• Web Interface: http://localhost:7860 >> run-photogen.bat
-echo echo ^• Status: Running in background >> run-photogen.bat
-echo echo ^• To stop: Close this window or press Ctrl+C >> run-photogen.bat
+echo echo ^- Web Interface: http://localhost:7860 >> run-photogen.bat
+echo echo ^- Status: Running in background >> run-photogen.bat
+echo echo ^- To stop: Close this window or press Ctrl+C >> run-photogen.bat
 echo echo. >> run-photogen.bat
 echo echo App is ready! Check your web browser. >> run-photogen.bat
 echo echo. >> run-photogen.bat
@@ -310,7 +310,7 @@ echo ==========================================
 echo        INSTALLATION COMPLETE!
 echo ==========================================
 echo.
-echo Installation Progress: [████████████████████] 100%%
+echo Installation Progress: [####################] 100%%
 echo.
 echo Python Version: %PYTHON_VER%
 echo Installation Type: %TYPE_NAME%
@@ -318,14 +318,14 @@ echo Test Result: %TEST_RESULT%
 echo.
 if "%INSTALL_TYPE%"=="GPU" (
     echo Features Available:
-    echo • Local FLUX model processing
-    echo • Privacy-focused generation  
-    echo • Plus all API features
+    echo - Local FLUX model processing
+    echo - Privacy-focused generation  
+    echo - Plus all API features
 ) else (
     echo Features Available:
-    echo • Professional API processing
-    echo • Works on any hardware
-    echo • Fast and reliable
+    echo - Professional API processing
+    echo - Works on any hardware
+    echo - Fast and reliable
 )
 echo.
 echo LAUNCH OPTIONS:
@@ -355,8 +355,8 @@ echo.
 set /a progress=%~2*100/%~3
 set /a bars=%~2*20/%~3
 set "progressbar="
-for /L %%i in (1,1,%bars%) do set "progressbar=!progressbar!█"
-for /L %%i in (%bars%,1,19) do set "progressbar=!progressbar!░"
+for /L %%i in (1,1,%bars%) do set "progressbar=!progressbar!#"
+for /L %%i in (%bars%,1,19) do set "progressbar=!progressbar!-"
 echo Progress: [!progressbar!] %progress%%%
 echo.
 echo Step %~2 of %~3

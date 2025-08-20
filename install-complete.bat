@@ -157,13 +157,31 @@ if %GPU_DETECTED% == 1 (
 
 call :show_progress "Installation plan ready" 3 8
 
+REM Install UV package manager globally BEFORE creating venv
+echo Installing UV package manager (for ultra-fast dependency installation)...
+python -m pip install uv --quiet --disable-pip-version-check >nul 2>&1
+if errorlevel 1 (
+    echo Warning: UV installation failed, will use traditional pip...
+    set USE_UV=0
+) else (
+    echo UV installed successfully! This will make installation much faster.
+    set USE_UV=1
+)
+
 call :show_progress "Creating virtual environment" 4 8
 
 if exist venv (
     rmdir /s /q venv >nul 2>&1
 )
 
-python -m venv venv >nul 2>&1
+if "%USE_UV%"=="1" (
+    echo Creating virtual environment with UV...
+    uv venv venv >nul 2>&1
+) else (
+    echo Creating virtual environment with Python...
+    python -m venv venv >nul 2>&1
+)
+
 if errorlevel 1 (
     cls
     echo.
@@ -195,33 +213,39 @@ if errorlevel 1 (
 
 call :show_progress "Installing dependencies - this may take 1-3 minutes" 6 8
 
-REM Install UV package manager for ultra-fast installation
-echo Installing UV package manager...
-python -m pip install uv --quiet >nul 2>&1
-if errorlevel 1 (
-    echo ERROR: Failed to install UV package manager
-    echo Falling back to traditional pip...
-    call :install_with_pip
-    goto :after_install
-)
-
-REM Use UV for super-fast dependency installation
-if "%INSTALL_TYPE%"=="GPU" (
-    echo Installing GPU dependencies with UV (ultra-fast)...
-    uv pip install -r requirements-gpu.txt --system >nul 2>&1
+if "%USE_UV%"=="1" (
+    echo Using UV for ultra-fast dependency installation...
+    if "%INSTALL_TYPE%"=="GPU" (
+        echo Installing GPU dependencies with UV...
+        uv pip install -r requirements-gpu.txt >nul 2>&1
+    ) else (
+        echo Installing CPU dependencies with UV...
+        uv pip install -r requirements-cpu.txt >nul 2>&1
+    )
+    
+    if errorlevel 1 (
+        echo UV installation failed, falling back to pip...
+        echo.
+        call :install_with_pip
+        if errorlevel 1 (
+            echo ERROR: Both UV and pip installation failed!
+            echo.
+            pause
+            exit /b 1
+        )
+    ) else (
+        echo Dependencies installed successfully with UV!
+    )
 ) else (
-    echo Installing CPU dependencies with UV (ultra-fast)...
-    uv pip install -r requirements-cpu.txt --system >nul 2>&1
-)
-
-if errorlevel 1 (
-    echo UV installation failed, trying pip fallback...
+    echo Using traditional pip installation...
     call :install_with_pip
-) else (
-    echo Dependencies installed successfully with UV!
+    if errorlevel 1 (
+        echo ERROR: Pip installation failed!
+        echo.
+        pause
+        exit /b 1
+    )
 )
-
-:after_install
 
 if errorlevel 1 (
     cls

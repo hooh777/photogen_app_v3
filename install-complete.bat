@@ -55,6 +55,8 @@ if errorlevel 1 (
     echo.
     echo Python Installation Options:
     echo.
+    echo.
+    echo.
     echo [1] Auto-install Python 3.11 (Recommended)
     echo     - Downloads and installs automatically
     echo     - Takes 2-3 minutes

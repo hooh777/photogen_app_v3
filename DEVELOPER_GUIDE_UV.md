@@ -234,6 +234,20 @@ include = [
 
 This tells hatchling to include the `core/` package and important standalone files.
 
+### Browser Connection Error (0.0.0.0 Address)
+If you get a browser error like "ERR_ADDRESS_INVALID" or "無法連上這個網站" when trying to access PhotoGen:
+
+**Problem**: Clicking on `http://0.0.0.0:7860` in browser
+**Solution**: Use the correct localhost address instead:
+- ✅ **Correct**: `http://localhost:7860` 
+- ✅ **Alternative**: `http://127.0.0.1:7860`
+- ❌ **Wrong**: `http://0.0.0.0:7860` (browsers can't connect to this)
+
+**Why this happens**: 
+- PhotoGen binds to `0.0.0.0:7860` (server listens on all interfaces)
+- But browsers need to connect to `localhost:7860` or `127.0.0.1:7860`
+- `0.0.0.0` is not a valid client connection address
+
 ## Advanced Configuration
 
 ### pyproject.toml Customization

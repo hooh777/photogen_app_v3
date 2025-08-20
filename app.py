@@ -280,7 +280,9 @@ class PhotoGenApp:
         print("=" * 50)
         print("⚡ Loading AI models and initializing...")
         print("🌐 Starting web interface...")
-        print("📱 The app will be available at: http://localhost:7860")
+        print("📱 Open in your browser: http://localhost:7860")
+        print("💡 Alternative URL: http://127.0.0.1:7860")
+        print("⚠️  DO NOT use 0.0.0.0:7860 - browsers can't connect to it!")
         print("=" * 50)
         
         self.demo.launch(
@@ -289,7 +291,7 @@ class PhotoGenApp:
             inbrowser=False,  # Don't auto-open here, let run-photogen.bat handle it
             share=False,
             show_error=True,
-            quiet=False,
+            quiet=True,  # Suppress Gradio's default URL output to avoid confusion
             show_api=False
         )
 

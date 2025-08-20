@@ -21,7 +21,9 @@ call venv\Scripts\activate.bat
 echo Starting PhotoGen App...
 echo.
 echo ✓ PhotoGen will open in your default web browser
-echo ✓ Look for the local URL (usually http://127.0.0.1:7860)
+echo ✓ If it doesn't open automatically, use: http://localhost:7860
+echo ✓ Alternative URL: http://127.0.0.1:7860
+echo ⚠️  IMPORTANT: Do NOT use 0.0.0.0:7860 - browsers can't access it!
 echo ✓ Press Ctrl+C in this window to stop the app
 echo.
 echo ========================================

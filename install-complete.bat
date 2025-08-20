@@ -235,7 +235,7 @@ if "%USE_UV%"=="1" (
         echo Current directory: %CD%
         if exist requirements-gpu.txt (
             echo Requirements file found, installing...
-            uv pip install -r requirements-gpu.txt --verbose
+            uv pip install -r requirements-gpu.txt --index-strategy unsafe-best-match --verbose
         ) else (
             echo ERROR: requirements-gpu.txt not found!
             pause
@@ -245,7 +245,7 @@ if "%USE_UV%"=="1" (
         echo Current directory: %CD%
         if exist requirements-cpu.txt (
             echo Requirements file found, installing...
-            uv pip install -r requirements-cpu.txt --verbose
+            uv pip install -r requirements-cpu.txt --index-strategy unsafe-best-match --verbose
         ) else (
             echo ERROR: requirements-cpu.txt not found!
             pause
@@ -528,10 +528,10 @@ if errorlevel 1 (
 REM Use UV to install dependencies (much faster)
 if "%INSTALL_TYPE%"=="GPU" (
     echo Installing GPU dependencies with UV (ultra-fast)...
-    uv pip install -r requirements-gpu.txt --system --no-cache >nul 2>&1
+    uv pip install -r requirements-gpu.txt --system --no-cache --index-strategy unsafe-best-match >nul 2>&1
 ) else (
     echo Installing CPU dependencies with UV (ultra-fast)...
-    uv pip install -r requirements-cpu.txt --system --no-cache >nul 2>&1
+    uv pip install -r requirements-cpu.txt --system --no-cache --index-strategy unsafe-best-match >nul 2>&1
 )
 
 if errorlevel 1 (

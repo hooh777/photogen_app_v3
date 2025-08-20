@@ -39,12 +39,13 @@ echo ==========================================
 echo.
 
 REM Check if Python is installed first
-echo [1/7] Checking Python installation...
+echo [1/8] Checking Python installation...
 python --version >nul 2>&1
 if errorlevel 1 (
     echo Python not detected. Setting up Python installation...
-    timeout /t 3 >nul
+    timeout /t 2 >nul
     cls
+    timeout /t 1 >nul
     echo.
     echo ==========================================
     echo   PhotoGen App v3 - PYTHON SETUP
@@ -54,6 +55,11 @@ if errorlevel 1 (
     echo.
     echo Preparing installation options...
     timeout /t 3 >nul
+    cls
+    echo.
+    echo ==========================================
+    echo   PhotoGen App v3 - PYTHON SETUP
+    echo ==========================================
     echo.
     echo Python Installation Options:
     echo.
@@ -99,25 +105,14 @@ if errorlevel 1 (
         if errorlevel 1 goto :python_install_failed
     )
     
-    :continue_installation
-    echo.
-    echo Verifying Python installation...
-    
-    :check_python_again
-    python --version >nul 2>&1
+:continue_installation
+echo.
+echo Verifying Python installation...
+
+:check_python_again
+python --version >nul 2>&1
     if errorlevel 1 (
-        :python_install_failed
-        cls
-        echo.
-        echo ==========================================
-        echo   PhotoGen App v3 - ERROR
-        echo ==========================================
-        echo.
-        echo ERROR: Python still not found!
-        echo Please restart this installer after Python is installed.
-        echo.
-        pause
-        exit /b 1
+        goto :python_install_failed
     )
     
     REM If we get here, Python is working
@@ -128,13 +123,26 @@ if errorlevel 1 (
     timeout /t 2 >nul
     goto :python_ready
 )
+
+:python_install_failed
+cls
+echo.
+echo ==========================================
+echo   PhotoGen App v3 - ERROR
+echo ==========================================
+echo.
+echo ERROR: Python still not found!
+echo Please restart this installer after Python is installed.
+echo.
+pause
+exit /b 1
     
 :python_ready
 for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VER=%%i
 echo.
 echo Python %PYTHON_VER% is ready!
 timeout /t 2 >nul
-call :show_progress "Python %PYTHON_VER% ready" 2 7
+call :show_progress "Python %PYTHON_VER% ready" 2 8
 
 REM Check GPU and determine installation type automatically
 set GPU_DETECTED=0
@@ -146,26 +154,17 @@ if %errorlevel% == 0 (
 if %GPU_DETECTED% == 1 (
     set INSTALL_TYPE=GPU
     set TYPE_NAME=GPU (Local + API)
-    call :show_progress "NVIDIA GPU detected - GPU installation selected" 2 7
+    call :show_progress "NVIDIA GPU detected - GPU installation selected" 2 8
 ) else (
     set INSTALL_TYPE=CPU
     set TYPE_NAME=CPU (API-Only)
-    call :show_progress "No GPU detected - CPU installation selected" 2 7
+    call :show_progress "No GPU detected - CPU installation selected" 2 8
 )
 
-echo.
-echo [3/7] Installation plan...
-echo ========================
-echo Python Version: %PYTHON_VER%
-echo Installation Type: %TYPE_NAME%
-echo Duration: 2-10 minutes (depending on type and connection)
-echo.
-timeout /t 3 >nul
+call :show_progress "Installation plan ready" 3 8
+timeout /t 2 >nul
 
-echo [4/7] Creating virtual environment...
-echo =====================================
-timeout /t 1 >nul
-call :show_progress "Creating virtual environment" 3 7
+call :show_progress "Creating virtual environment" 4 8
 
 if exist venv (
     rmdir /s /q venv >nul 2>&1
@@ -186,7 +185,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-call :show_progress "Activating environment" 4 7
+call :show_progress "Activating environment" 5 8
 call venv\Scripts\activate.bat >nul 2>&1
 if errorlevel 1 (
     cls
@@ -201,14 +200,14 @@ if errorlevel 1 (
     exit /b 1
 )
 
-call :show_progress "Installing dependencies - this may take 5-10 minutes" 5 7
+call :show_progress "Installing dependencies - this may take 5-10 minutes" 6 8
 python -m pip install --upgrade pip --quiet >nul 2>&1
 
 if "%INSTALL_TYPE%"=="GPU" (
-    call :show_progress "Installing GPU dependencies (PyTorch, CUDA, FLUX)" 5 7
+    call :show_progress "Installing GPU dependencies (PyTorch, CUDA, FLUX)" 6 8
     pip install -r requirements-gpu.txt --no-cache-dir >nul 2>&1
 ) else (
-    call :show_progress "Installing CPU dependencies (PyTorch, Gradio)" 5 7
+    call :show_progress "Installing CPU dependencies (PyTorch, Gradio)" 6 8
     pip install -r requirements-cpu.txt --no-cache-dir >nul 2>&1
 )
 
@@ -230,7 +229,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-call :show_progress "Creating launch shortcuts" 6 7
+call :show_progress "Creating launch shortcuts" 7 8
 
 REM Create enhanced launch shortcut
 echo @echo off > run-photogen.bat
@@ -283,7 +282,7 @@ echo echo App is ready! Check your web browser. >> run-photogen.bat
 echo echo. >> run-photogen.bat
 echo pause >> run-photogen.bat
 
-call :show_progress "Testing installation" 7 7
+call :show_progress "Testing installation" 8 8
 
 REM Test installation
 python -c "import torch, gradio, fastapi" >nul 2>&1

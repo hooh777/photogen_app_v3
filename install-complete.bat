@@ -55,34 +55,33 @@ if errorlevel 1 (
     echo.
     pause >nul
     cls
+    timeout /t 1 /nobreak >nul
     
-    REM Use a here document approach for cleaner output
-    (
     echo.
     echo.
     echo ==========================================
     echo    Python Installation Options
     echo ==========================================
     echo.
+    timeout /t 1 /nobreak >nul
     echo.
-    echo    [1] Auto-install Python 3.11 (Recommended^)
+    echo    [1] Auto-install Python 3.11 (Recommended)
     echo        - Downloads and installs automatically
     echo        - Takes 2-3 minutes
     echo.
-    echo    [2] Auto-install Python 3.12 (Latest^)
+    timeout /t 1 /nobreak >nul
+    echo    [2] Auto-install Python 3.12 (Latest)
     echo        - Most recent version
     echo        - Takes 2-3 minutes
     echo.
+    timeout /t 1 /nobreak >nul
     echo    [3] Manual installation
-    echo        - I'll guide you to download Python
+    echo        - I will guide you to download Python
     echo.
-    echo    [4] Skip (if Python is installed elsewhere^)
+    timeout /t 1 /nobreak >nul
+    echo    [4] Skip (if Python is installed elsewhere)
     echo        - Continue without auto-installation
     echo.
-    echo.
-    echo ==========================================
-    echo.
-    )
     echo.
     echo ==========================================
     echo.

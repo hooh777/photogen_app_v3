@@ -39,22 +39,18 @@ echo ==========================================
 echo.
 
 REM Check if Python is installed first
-echo [1/8] Checking Python installation...
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo Python not detected. Setting up Python installation...
-    timeout /t 2 >nul
     cls
-    timeout /t 1 >nul
     echo.
     echo ==========================================
     echo   PhotoGen App v3 - PYTHON SETUP
     echo ==========================================
     echo.
     echo Python not found on your system.
+    echo We need to install Python first.
     echo.
-    echo Preparing installation options...
-    timeout /t 3 >nul
+    timeout /t 2 >nul
     cls
     echo.
     echo ==========================================
@@ -62,6 +58,7 @@ if errorlevel 1 (
     echo ==========================================
     echo.
     echo Python Installation Options:
+    echo.
     echo.
     echo [1] Auto-install Python 3.11 (Recommended)
     echo     - Downloads and installs automatically

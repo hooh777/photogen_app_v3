@@ -41,7 +41,6 @@ echo.
 REM Check if Python is installed first
 python --version >nul 2>&1
 if errorlevel 1 (
-    cls
     echo.
     echo ==========================================
     echo   PhotoGen App v3 - PYTHON SETUP
@@ -49,9 +48,6 @@ if errorlevel 1 (
     echo.
     echo Python not found on your system.
     echo We need to install Python first.
-    echo.
-    timeout /t 1 >nul
-    cls
     echo.
     echo ==========================================
     echo   PhotoGen App v3 - PYTHON SETUP  

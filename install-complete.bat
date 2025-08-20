@@ -42,6 +42,7 @@ REM Check if Python is installed first
 python --version >nul 2>&1
 if errorlevel 1 (
     echo.
+    echo.
     echo ==========================================
     echo   PhotoGen App v3 - PYTHON SETUP
     echo ==========================================
@@ -49,28 +50,27 @@ if errorlevel 1 (
     echo Python not found on your system.
     echo We need to install Python first.
     echo.
-    echo ==========================================
-    echo   PhotoGen App v3 - PYTHON SETUP  
-    echo ==========================================
     echo.
     echo Python Installation Options:
-    echo.
     echo.
     echo.
     echo [1] Auto-install Python 3.11 (Recommended)
     echo     - Downloads and installs automatically
     echo     - Takes 2-3 minutes
     echo.
+    echo.
     echo [2] Auto-install Python 3.12 (Latest)  
     echo     - Most recent version
     echo     - Takes 2-3 minutes
     echo.
+    echo.
     echo [3] Manual installation
     echo     - I'll guide you to download Python
     echo.
-    echo [4] Skip (if Python is installed elsewhere)
     echo.
+    echo [4] Skip (if Python is installed elsewhere)
     echo     - Continue without auto-installation
+    echo.
     echo.
     echo ==========================================
     echo.

@@ -223,29 +223,24 @@ call :show_progress "Installing dependencies - this may take 1-3 minutes" 6 8
 
 if "%USE_UV%"=="1" (
     echo Using UV for ultra-fast dependency installation...
-    echo Checking UV installation...
     uv --version >nul 2>&1
     if errorlevel 1 (
-        echo UV not available in virtual environment, installing...
+        echo Installing UV package manager...
         python -m pip install uv --quiet >nul 2>&1
     )
     
     if "%INSTALL_TYPE%"=="GPU" (
         echo Installing GPU dependencies with UV...
-        echo Current directory: %CD%
         if exist requirements-gpu.txt (
-            echo Requirements file found, installing...
-            uv pip install -r requirements-gpu.txt --index-strategy unsafe-best-match --verbose
+            uv pip install -r requirements-gpu.txt --index-strategy unsafe-best-match --quiet
         ) else (
             echo ERROR: requirements-gpu.txt not found!
             pause
         )
     ) else (
         echo Installing CPU dependencies with UV...
-        echo Current directory: %CD%
         if exist requirements-cpu.txt (
-            echo Requirements file found, installing...
-            uv pip install -r requirements-cpu.txt --index-strategy unsafe-best-match --verbose
+            uv pip install -r requirements-cpu.txt --index-strategy unsafe-best-match --quiet
         ) else (
             echo ERROR: requirements-cpu.txt not found!
             pause
@@ -253,12 +248,10 @@ if "%USE_UV%"=="1" (
     )
     
     if errorlevel 1 (
-        echo UV installation failed, falling back to pip...
-        echo Error level: %errorlevel%
-        echo Trying pip installation instead...
+        echo UV installation failed, using pip instead...
         call :install_with_pip
         if errorlevel 1 (
-            echo ERROR: Both UV and pip installation failed!
+            echo ERROR: Installation failed!
             echo.
             pause
             exit /b 1
@@ -545,25 +538,20 @@ exit /b 0
 :install_with_pip
 REM Fallback to traditional pip installation
 echo Using traditional pip installation...
-echo Upgrading pip...
 python -m pip install --upgrade pip --quiet >nul 2>&1
 
 if "%INSTALL_TYPE%"=="GPU" (
     echo Installing GPU dependencies with pip...
-    echo Current directory: %CD%
     if exist requirements-gpu.txt (
-        echo Requirements file found, installing with pip...
-        pip install -r requirements-gpu.txt --no-cache-dir --disable-pip-version-check --prefer-binary --verbose
+        pip install -r requirements-gpu.txt --no-cache-dir --disable-pip-version-check --prefer-binary --quiet
     ) else (
         echo ERROR: requirements-gpu.txt not found!
         exit /b 1
     )
 ) else (
     echo Installing CPU dependencies with pip...
-    echo Current directory: %CD%
     if exist requirements-cpu.txt (
-        echo Requirements file found, installing with pip...
-        pip install -r requirements-cpu.txt --no-cache-dir --disable-pip-version-check --prefer-binary --verbose
+        pip install -r requirements-cpu.txt --no-cache-dir --disable-pip-version-check --prefer-binary --quiet
     ) else (
         echo ERROR: requirements-cpu.txt not found!
         exit /b 1
@@ -571,10 +559,10 @@ if "%INSTALL_TYPE%"=="GPU" (
 )
 
 if errorlevel 1 (
-    echo Pip installation failed with error level: %errorlevel%
+    echo Installation failed!
     pause
     exit /b 1
 )
 
-echo Dependencies installed successfully with pip!
+echo Dependencies installed successfully!
 exit /b 0

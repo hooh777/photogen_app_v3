@@ -195,6 +195,23 @@ uv cache dir
 uv pip install --no-cache package-name
 ```
 
+### Direct References Error (pyproject.toml)
+If you get an error about "direct reference" when using `uv pip install -e ".[gpu]"`:
+
+```
+ValueError: Dependency #4 of option `gpu` of field `project.optional-dependencies` 
+cannot be a direct reference unless field `tool.hatch.metadata.allow-direct-references` 
+is set to `true`
+```
+
+**Solution**: This is already fixed in the project's `pyproject.toml`, but if you encounter it:
+```toml
+[tool.hatch.metadata]
+allow-direct-references = true
+```
+
+This allows installation of packages directly from Git repositories (like diffusers and nunchaku).
+
 ## Advanced Configuration
 
 ### pyproject.toml Customization

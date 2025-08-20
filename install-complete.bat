@@ -52,6 +52,9 @@ if errorlevel 1 (
     echo.
     echo Python not found on your system.
     echo.
+    echo Preparing installation options...
+    timeout /t 3 >nul
+    echo.
     echo Python Installation Options:
     echo.
     echo [1] Auto-install Python 3.11 (Recommended)

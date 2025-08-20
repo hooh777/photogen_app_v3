@@ -50,15 +50,14 @@ if errorlevel 1 (
     echo Python not found on your system.
     echo We need to install Python first.
     echo.
-    timeout /t 2 >nul
+    timeout /t 3 >nul
     cls
     echo.
     echo ==========================================
-    echo   PhotoGen App v3 - PYTHON SETUP
+    echo   PhotoGen App v3 - PYTHON SETUP  
     echo ==========================================
     echo.
     echo Python Installation Options:
-    echo.
     echo.
     echo [1] Auto-install Python 3.11 (Recommended)
     echo     - Downloads and installs automatically
@@ -74,6 +73,8 @@ if errorlevel 1 (
     echo [4] Skip (if Python is installed elsewhere)
     echo.
     echo     - Continue without auto-installation
+    echo.
+    echo ==========================================
     echo.
     
     set /p python_choice="Choose option (1-4): "

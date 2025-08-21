@@ -1,23 +1,23 @@
 # PhotoGen App v3
 
-> **🎯 Quick Navigation:**  
-> **👥 Just want to use PhotoGen?** → [For Users](#👥-for-users-just-want-to-use-photogen)  
-> **🛠️ Want to develop/modify code?** → [For Developers](#🛠️-for-developers-want-to-modifycontribute)
+**Quick Navigation:**  
+**Just want to use PhotoGen?** → [For Users](#for-users-just-want-to-use-photogen)  
+**Want to develop/modify code?** → [For Developers](#for-developers-want-to-modifycontribute)
 
 ## Key Features
 
-### **Multi-Modal Image Generation**
+### Multi-Modal Image Generation
 - **Text-to-Image (T2I)**: Create stunning images from text descriptions
 - **Image-to-Image (I2I)**: Transform and enhance existing images
 - **Multi-Image Composition**: Combine up to 10 images into cohesive scenes
 
-### **AI-Powered Workflow**
+### AI-Powered Workflow
 - **FLUX.1 Kontext Integration**: State-of-the-art image generation models
 - **Smart Prompt Generation**: AI vision analysis with Qwen-VL-Max
 - **Interactive Canvas**: Click and select areas for targeted editing
 - **Contextual Understanding**: Intelligent object placement and scene composition
 
-### **Flexible Processing Options**
+### Flexible Processing Options
 - **Local Processing**: Privacy-focused on-device generation (GPU with CUDA required)
 - **Pro API Integration**: High-quality cloud processing (works on any hardware)
 - **CPU-Compatible**: Full API functionality without GPU requirements
@@ -27,11 +27,11 @@
 
 ---
 
-## 👥 For Users (Just Want to Use PhotoGen)
+## For Users (Just Want to Use PhotoGen)
 
 **If you just want to use PhotoGen for image generation, this is for you!**
 
-### **Windows Installation (Recommended)**
+### Windows Installation (Recommended)
 
 ```bash
 # 1. Clone the repository
@@ -42,27 +42,50 @@ cd photogen_app_v3
 install-complete.bat
 ```
 
-**What the installer does automatically:**
-- ✅ **Installs Python** if you don't have it (your choice of version)
-- ✅ **Detects your hardware** (NVIDIA GPU or CPU-only)
-- ✅ **Installs everything** needed for PhotoGen
-- ✅ **Creates shortcuts** for easy launching
-- ✅ **Tests installation** to make sure it works
+### macOS/Linux Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/hooh777/photogen_app_v3.git
+cd photogen_app_v3
+
+# 2. Make the installer executable and run it
+chmod +x install.sh
+./install.sh
+```
+
+**What the installers do automatically:**
+- Installs Python if you don't have it (your choice of version)
+- Detects your hardware (NVIDIA GPU or CPU-only)
+- Installs everything needed for PhotoGen
+- Creates shortcuts for easy launching
+- Tests installation to make sure it works
 
 **That's it! No technical knowledge required.**
 
-### **After Installation:**
-- **Double-click** the desktop shortcut, OR
-- **Double-click** `run-photogen.bat` in the PhotoGen folder
-- **Web interface opens automatically** at http://localhost:7860
+### After Installation:
+
+**Windows:**
+- Double-click the desktop shortcut, OR
+- Double-click `run-photogen.bat` in the PhotoGen folder
+
+**macOS:**
+- Double-click `PhotoGen App.command` on your Desktop, OR
+- Run `./run-photogen.sh` in the PhotoGen folder
+
+**Linux:**
+- Double-click `PhotoGen App.desktop` on your Desktop, OR
+- Run `./run-photogen.sh` in the PhotoGen folder
+
+- Web interface opens automatically at http://localhost:7860
 
 ---
 
-## 🛠️ For Developers (Want to Modify/Contribute)
+## For Developers (Want to Modify/Contribute)
 
 **If you want to develop, modify, or contribute to PhotoGen:**
 
-### **Method 1: UV (Recommended - Much Faster)**
+### Method 1: UV (Recommended - Much Faster)
 
 ```bash
 # Clone the repository
@@ -100,12 +123,12 @@ python app.py
 ```
 
 **UV Benefits for Developers:**
-- ⚡ **10-100x faster** dependency installation (2-3 min vs 8-12 min)
-- 🔧 **Better dependency resolution** - handles conflicts intelligently  
-- 💾 **Intelligent caching** - reuses downloads across projects
-- 🚀 **Modern Python tooling** built for development workflows
+- 10-100x faster dependency installation (2-3 min vs 8-12 min)
+- Better dependency resolution - handles conflicts intelligently  
+- Intelligent caching - reuses downloads across projects
+- Modern Python tooling built for development workflows
 
-### **Method 2: pip (Traditional Fallback)**
+### Method 2: pip (Traditional Fallback)
 
 ```bash
 # Clone the repository
@@ -127,37 +150,46 @@ pip install -r requirements-cpu.txt
 python app.py
 ```
 
-### **Developer Resources:**
-- 📖 **[DEVELOPER_GUIDE_UV.md](DEVELOPER_GUIDE_UV.md)** - Complete UV usage guide
-- 🧪 **Testing**: `pytest` (if installed with `[dev]` extras)
-- 🎨 **Code formatting**: `black .` (if installed with `[dev]` extras)
-- 🔍 **Linting**: `flake8 .` (if installed with `[dev]` extras)
+### Developer Resources:
+- [DEVELOPER_GUIDE_UV.md](DEVELOPER_GUIDE_UV.md) - Complete UV usage guide
+- Testing: `pytest` (if installed with `[dev]` extras)
+- Code formatting: `black .` (if installed with `[dev]` extras)
+- Linting: `flake8 .` (if installed with `[dev]` extras)
 
 ---
 
 ## Installation Files Overview
 
-### **Files for Users (Simple .bat Installation)**
-- **`install-complete.bat`**: **THE installer for users**
-  - Only installation method recommended for users
+### Files for Users (Simple Installer)
+
+**Windows:**
+- `install-complete.bat`: THE installer for Windows users
+  - Only installation method recommended for Windows users
   - Handles Python installation, dependency management, shortcuts
   - No technical knowledge required
 
-### **Files for Developers (Manual Installation)**
+**macOS/Linux:**
+- `install.sh`: THE installer for macOS/Linux users
+  - Complete auto-installer for Unix-based systems
+  - Handles Python installation via Homebrew (macOS) or package manager (Linux)
+  - Creates desktop shortcuts and launch scripts
+  - No technical knowledge required
+
+### Files for Developers (Manual Installation)
 
 **Modern Approach (Recommended):**
-- **`pyproject.toml`**: Modern Python project configuration
+- `pyproject.toml`: Modern Python project configuration
   - `uv pip install -e ".[gpu]"` - GPU development
   - `uv pip install -e ".[dev]"` - Development tools  
   - `uv pip install -e ".[all]"` - Everything
   - Contains all dependencies - no separate requirements files needed
 
 **Traditional pip Approach (Fallback):**
-- **`requirements-gpu.txt`**: GPU dependencies for traditional pip
-- **`requirements-cpu.txt`**: CPU dependencies for traditional pip
+- `requirements-gpu.txt`: GPU dependencies for traditional pip
+- `requirements-cpu.txt`: CPU dependencies for traditional pip
 
 **Developer Resources:**
-- **`DEVELOPER_GUIDE_UV.md`**: Complete UV usage guide
+- `DEVELOPER_GUIDE_UV.md`: Complete UV usage guide
 
 ### First Launch Setup
 
@@ -169,20 +201,20 @@ python app.py
 
 ## System Requirements
 
-*These requirements apply whether you use the simple `.bat` installer (users) or manual installation (developers)*
+*These requirements apply whether you use the simple installers (users) or manual installation (developers)*
 
-### **GPU Setup (Local + API Processing)**
-- **OS**: Windows 10/11, Linux, macOS
+### GPU Setup (Local + API Processing)
+- **OS**: Windows 10/11, macOS 10.15+, Linux (Ubuntu 18.04+/CentOS 7+)
 - **GPU**: NVIDIA GPU with 8GB+ VRAM (RTX 3070/4060 or better recommended)
-- **CUDA**: Version 12.1 or higher (automatically handled by installer)
+- **CUDA**: Version 12.1 or higher (automatically handled by installers)
 - **RAM**: 16GB+ system RAM recommended
 - **Storage**: 10GB+ free space for AI models
 - **Features**: Full local processing + all API capabilities
 
 **Perfect for:** Privacy-focused workflows, high-volume generation, offline usage
 
-### **CPU Setup (API-Only Processing)**
-- **OS**: Windows 10/11, Linux, macOS  
+### CPU Setup (API-Only Processing)
+- **OS**: Windows 10/11, macOS 10.15+, Linux (Ubuntu 18.04+/CentOS 7+)
 - **Hardware**: Any CPU (GPU not required)
 - **RAM**: 4GB+ system RAM recommended
 - **Storage**: 2GB+ free space
@@ -193,14 +225,14 @@ python app.py
 
 ## API Configuration
 
-### **Required API Keys**
+### Required API Keys
 
-#### **AI Vision Analysis (Required)**
+#### AI Vision Analysis (Required)
 - **Qwen-VL-Max (Alibaba Cloud)**: For smart prompt generation
   - Get key: [Alibaba Cloud Console](https://dashscope.console.aliyun.com/)
   - Used for: Image analysis and prompt enhancement
 
-#### **Image Generation APIs (Choose One)**
+#### Image Generation APIs (Choose One)
 - **Black Forest Labs**: Premium FLUX Pro API
   - Get key: [Black Forest Labs](https://api.bfl.ml/)
   - Quality: Highest, Speed: Fast
@@ -209,14 +241,14 @@ python app.py
   - Get key: [GRS AI](https://api.grsai.com/)
   - Quality: High, Speed: Fast, Cost: Lower
 
-### **API Key Security**
+### API Key Security
 - All API keys are encrypted using Fernet encryption
 - Keys are stored locally in encrypted format
 - Never transmitted in plain text
 
 ## How to Use PhotoGen
 
-### **Basic Workflow**
+### Basic Workflow
 
 1. **Step 1: Upload Images**
    - Drag & drop or browse to upload up to 10 images
@@ -232,72 +264,91 @@ python app.py
    - Adjust advanced settings if needed
    - Click "Generate" and watch the magic happen!
 
-### **Advanced Features**
+### Advanced Features
 
-#### **Multi-Image Composition**
+#### Multi-Image Composition
 - Upload multiple images (people, objects, backgrounds)
 - Select which image serves as the background
 - Use AI to intelligently place objects in scenes
 
-#### **Smart Prompt Generation**
+#### Smart Prompt Generation
 - AI analyzes your images and selection areas
 - Generates contextual prompts automatically  
 - Understands spatial relationships and object placement
 
-#### **Interactive Canvas**
+#### Interactive Canvas
 - Click and drag to select specific areas for editing
 - Visual feedback with selection boxes
 - Reset selections anytime
 
 ## Configuration
 
-### **Model Selection**
+### Model Selection
 - **Local**: Uses downloaded FLUX.1 models (GPU required)
 - **Pro (Black Forest Labs)**: Premium cloud API
 - **Pro (GRS AI)**: Cost-effective cloud alternative
 
-### **Image Dimensions (Not available currently)** 
+### Image Dimensions (Not available currently) 
 - Match Input: Uses source image dimensions
 - Standard ratios: 1:1, 16:9, 9:16, 4:3, 3:4
 - Automatic optimization for quality and performance
 
-### **Advanced Settings**
+### Advanced Settings
 - **Inference Steps**: 1-50 (higher = better quality, slower)
 - **Guidance Scale**: 0-10 (higher = more prompt adherence)
 
 ## Troubleshooting
 
-### **Common Issues**
+### Common Issues
 
-#### **Quick Solutions (Use the Complete Installer)**
+#### Quick Solutions (Use the Complete Installers)
 ```bash
 # For complete zero-setup installation:
+
+# Windows:
 install-complete.bat   # Handles everything automatically
+
+# macOS/Linux:
+chmod +x install.sh
+./install.sh           # Handles everything automatically
 ```
 
-#### **Installation Problems**
+#### Installation Problems
 The enhanced installers now handle most issues automatically:
 
 **Issue**: `Cannot import FluxKontextPipeline` or similar import errors
-**Solution**: The complete installer prevents this automatically
+**Solution**: The complete installers prevent this automatically
 ```bash
-# The complete installer prevents this by:
+# Windows:
+install-complete.bat
+
+# macOS/Linux:
+chmod +x install.sh && ./install.sh
+
+# The installers prevent this by:
 # 1. Installing Python if needed
 # 2. Detecting your hardware automatically (GPU vs CPU)
 # 3. Installing correct dependencies for your system
 # 4. Testing installation before completion
-install-complete.bat
 ```
 
 **Issue**: "Python not found" or "Python not installed"
-**Solution**: The complete installer handles Python installation
+**Solution**: The complete installers handle Python installation
 ```bash
-# Complete installer will:
+# Windows: Complete installer will check and install Python
+install-complete.bat
+
+# macOS: Installer will use Homebrew to install Python
+chmod +x install.sh && ./install.sh
+
+# Linux: Installer will use your package manager (apt/yum)
+chmod +x install.sh && ./install.sh
+
+# All installers will:
 # - Check if Python is installed
 # - Offer to auto-install Python 3.11 or 3.12
 # - Guide manual installation if needed
 # - Continue with PhotoGen setup automatically
-install-complete.bat
 ```
 
 **Issue**: Version conflicts (Gradio, FastAPI, PyTorch)
@@ -308,16 +359,44 @@ install-complete.bat
 # No more dependency conflicts!
 ```
 
-**Issue**: CUDA/GPU detection problems
+**Issue**: CUDA/GPU detection problems (NVIDIA GPUs only)
 **Solution**: Enhanced GPU verification and fallback
 ```bash
-# The complete installer now:
-# - Checks NVIDIA drivers automatically
-# - Verifies CUDA installation  
-# - Tests GPU accessibility
-# - Provides specific error guidance
-# - Falls back to CPU installation if needed
+# All installers now:
+# - Check NVIDIA drivers automatically
+# - Verify CUDA installation  
+# - Test GPU accessibility
+# - Provide specific error guidance
+# - Fall back to CPU installation if needed
+
+# Windows:
 install-complete.bat
+
+# macOS/Linux:  
+chmod +x install.sh && ./install.sh
+```
+
+**Issue**: Permission denied (macOS/Linux)
+**Solution**: Make installer executable and check permissions
+```bash
+# Make installer executable:
+chmod +x install.sh
+
+# If still getting permission errors, try:
+sudo chmod +x install.sh
+
+# Or run with appropriate permissions:
+bash install.sh
+```
+
+**Issue**: Homebrew installation fails (macOS)
+**Solution**: Manual Homebrew installation
+```bash
+# Install Homebrew manually first:
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Then run PhotoGen installer:
+./install.sh
 ```
 
 #### **Manual Troubleshooting (If Complete Installer Fails)**
@@ -333,20 +412,22 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 python -c "import torch; print('CUDA Available:', torch.cuda.is_available())"
 ```
 
-#### **API Connection Issues**
+#### API Connection Issues
 - Verify API keys are correctly entered and saved
 - Check internet connection and firewall settings
 - Ensure API quotas/credits are available  
 - Try switching between API providers (Black Forest Labs vs GRS AI)
 
-#### **Performance Optimization**
+#### Performance Optimization
 - **CPU Users**: API-only mode provides best performance and reliability
 - **GPU Users**: Ensure CUDA drivers and toolkit are up to date
 - **All Users**: Close unnecessary applications before generation
 - **Pro Tip**: Cloud API processing is often faster and more reliable than local
 
-### **Getting Help**
-- **Installation Issues**: Re-run `install-complete.bat` - it handles most problems automatically
+### Getting Help
+- **Installation Issues**: 
+  - **Windows**: Re-run `install-complete.bat` - it handles most problems automatically
+  - **macOS/Linux**: Re-run `./install.sh` - it handles most problems automatically
 - **GitHub Issues**: Check [Issues](https://github.com/hooh777/photogen_app_v3/issues) for known problems
 - **Configuration**: Review `config.yaml` for model and API settings
 - **Debug Mode**: Enable debug logging in app settings for detailed error information
@@ -354,14 +435,14 @@ python -c "import torch; print('CUDA Available:', torch.cuda.is_available())"
 
 ## Technical Details
 
-### **Architecture**
+### Architecture
 - **Frontend**: Gradio-based web interface
 - **Backend**: Python with FastAPI/Uvicorn
 - **Models**: FLUX.1 Kontext for image generation
 - **Vision**: Qwen-VL-Max for image analysis
 - **Security**: Fernet encryption for API keys
 
-### **File Structure**
+### File Structure
 ```
 photogen_app_v3/
 ├── app.py                    # Main application entry
@@ -369,8 +450,9 @@ photogen_app_v3/
 ├── requirements-gpu.txt      # GPU installation dependencies
 ├── requirements-cpu.txt      # CPU-only dependencies
 ├── install-complete.bat      # Complete one-click installer (Windows)
-├── install.sh               # Installation script (Linux/macOS)
-├── run-photogen.bat         # Launch script (created by installer)
+├── install.sh               # Complete installer (macOS/Linux)
+├── run-photogen.bat         # Launch script (Windows, created by installer)
+├── run-photogen.sh          # Launch script (macOS/Linux, created by installer)
 ├── api_keys.json.enc        # Encrypted API keys storage
 ├── secret.key               # Encryption key for API storage
 ├── test_cpu_compatibility.py # CPU compatibility test script

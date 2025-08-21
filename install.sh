@@ -41,6 +41,7 @@ echo "- Create launch shortcuts"
 echo "- Test everything"
 echo ""
 echo "No technical knowledge required!"
+echo ""
 
 # Prompt for confirmation
 read -p "Proceed with user installation? (Y/N): " choice

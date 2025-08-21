@@ -2,6 +2,7 @@
 Streamlined I2I Handler - Main orchestrator optimized for Pro model workflow
 Dramatically reduced from 983 lines to focus on essential coordination
 """
+import os
 import gradio as gr
 import logging
 
@@ -10,6 +11,9 @@ from .canvas_manager import CanvasManager
 from .auto_prompt_manager import AutoPromptManager
 from .state_manager import StateManager
 from .generation_manager import GenerationManager
+
+# Import default canvas image
+from ..ui import create_default_canvas_image
 
 
 class I2IHandler:
@@ -41,6 +45,22 @@ class I2IHandler:
         # Multi-image upload handler (simplified)
         self.ui['i2i_source_uploader'].upload(
             self.handle_multi_image_upload,
+            inputs=[self.ui['i2i_source_uploader']],
+            outputs=[
+                self.ui['uploaded_images_preview'],    # gallery
+                self.ui['i2i_canvas_image_state'],     # background state
+                self.ui['i2i_object_image_state'],     # object state
+                self.ui['i2i_interactive_canvas'],     # update canvas directly
+                self.ui['step1_status'],               # status markdown
+                self.ui['canvas_mode_info'],           # update canvas info
+                self.ui['i2i_pin_coords_state'],       # clear previous selection
+                self.ui['i2i_anchor_coords_state']     # clear previous selection
+            ]
+        )
+        
+        # Handle file changes (including when files are removed with cross button)
+        self.ui['i2i_source_uploader'].change(
+            self.handle_file_change,
             inputs=[self.ui['i2i_source_uploader']],
             outputs=[
                 self.ui['uploaded_images_preview'],    # gallery
@@ -170,63 +190,139 @@ class I2IHandler:
             # No files uploaded - reset state
             return [], None, None, None, "**Status:** Ready to upload images 📁", "**Upload images above to start editing**", None, None
         
-        # Process uploaded files (max 10 images)
+        # Process uploaded files (max 10 images) with duplicate filename handling
         processed_images = []
         preview_images = []
+        used_filenames = set()  # Track filenames to handle duplicates
         
         for file_obj in uploaded_files[:10]:  # Limit to 10 images
             try:
                 if hasattr(file_obj, 'name'):
                     # File object with .name attribute
                     img = Image.open(file_obj.name)
+                    original_filename = os.path.basename(file_obj.name)
                 else:
                     # Direct file path
                     img = Image.open(file_obj)
+                    original_filename = os.path.basename(file_obj)
+                
+                # Handle duplicate filenames by adding numbers
+                unique_filename = self._get_unique_filename(original_filename, used_filenames)
+                used_filenames.add(unique_filename)
+                
+                # Debug logging for filename handling
+                if original_filename != unique_filename:
+                    logging.info(f"🔄 Filename collision detected: '{original_filename}' -> '{unique_filename}'")
+                else:
+                    logging.info(f"📄 Processing file: '{original_filename}'")
+                
+                # Set the unique filename as metadata for tracking
+                img.info['filename'] = unique_filename
                 
                 processed_images.append(img)
-                preview_images.append(img)  # For gallery display
+                # For gallery display - use tuple format (image, caption) to force separate entries
+                preview_images.append((img, unique_filename))  # Filename as caption
                 
             except Exception as e:
                 logging.error(f"Error processing uploaded file: {e}")
                 continue
         
         if not processed_images:
-            return [], None, None, None, "**Status:** Error processing images ❌", "**Upload valid images to start**", None, None
+            return [], None, None, create_default_canvas_image(), "**Status:** Error processing images ❌", "**Upload valid images to start**", None, None
         
         # Set up states but don't show canvas automatically - user must select from gallery
+        # Get filenames for status display
+        adjusted_filenames = [img.info.get('filename', 'unknown') for img in processed_images]
+        filename_display = ", ".join(adjusted_filenames[:3])  # Show first 3 filenames
+        if len(adjusted_filenames) > 3:
+            filename_display += f" (+{len(adjusted_filenames) - 3} more)"
+        
         if len(processed_images) == 1:
             # Single image - ready for selection
             background_state = processed_images[0]
             object_state = None
-            status_msg = f"**Status:** 1 image uploaded - Click the image below to edit! 🎯"
+            status_msg = f"**Status:** image uploaded: `{adjusted_filenames[0]}`"
             canvas_info = "**Select an image from the gallery above to start editing**"
             
         else:
             # Multiple images - ready for selection
             background_state = processed_images[0]  # Default background
             object_state = processed_images[1] if len(processed_images) > 1 else None
-            status_msg = f"**Status:** {len(processed_images)} images uploaded - Click any image below to edit! 🎨"
+            status_msg = f"**Status:** {len(processed_images)} images uploaded: `{filename_display}` - Click any image below to edit! 🎨"
             canvas_info = f"**Select an image from the gallery above to start editing**"
         
         # Don't show image in canvas automatically - wait for gallery selection
-        canvas_image = None
+        canvas_image = create_default_canvas_image()  # Show default white image instead of None
         
         # Store images for gallery selection
         self.uploaded_images = processed_images
+        
+        # Debug: Show final filename summary
+        if processed_images:
+            filenames = [img.info.get('filename', 'unknown') for img in processed_images]
+            logging.info(f"📋 Final filename list: {filenames}")
+            logging.info(f"📊 Used filenames set: {sorted(used_filenames)}")
+            logging.info(f"🖼️ Gallery preview format: {len(preview_images)} items with captions")
         
         logging.info(f"✅ Multi-image upload: {len(processed_images)} images processed")
         logging.info(f"✅ Uploaded images stored: {[type(img) for img in self.uploaded_images]}")
         
         return (
-            preview_images,           # uploaded_images_preview
-            background_state,         # i2i_canvas_image_state  
-            object_state,            # i2i_object_image_state
-            canvas_image,            # i2i_interactive_canvas - None until selection
-            status_msg,              # step1_status
-            canvas_info,             # canvas_mode_info - instructions
-            None,                    # i2i_pin_coords_state - clear previous selection
-            None                     # i2i_anchor_coords_state - clear previous selection
+            preview_images,          # uploaded_images_preview
+            background_state,        # i2i_canvas_image_state  
+            object_state,           # i2i_object_image_state
+            canvas_image,           # i2i_interactive_canvas - None until selection
+            status_msg,             # step1_status
+            canvas_info,            # canvas_mode_info - instructions
+            None,                   # i2i_pin_coords_state - clear previous selection
+            None                    # i2i_anchor_coords_state - clear previous selection
         )
+
+    def handle_file_change(self, uploaded_files):
+        """
+        Handle file changes including when files are removed via cross button.
+        This is triggered whenever the file list changes (add/remove).
+        
+        Args:
+            uploaded_files: Current list of uploaded file objects from gr.File
+            
+        Returns:
+            Tuple of outputs for UI updates
+        """
+        logging.info(f"🔄 File change detected: {len(uploaded_files) if uploaded_files else 0} files")
+        
+        # Use the same logic as handle_multi_image_upload
+        return self.handle_multi_image_upload(uploaded_files)
+    
+    def _get_unique_filename(self, filename, used_filenames):
+        """
+        Generate a unique filename by adding numbers if duplicates exist.
+        
+        Args:
+            filename: Original filename
+            used_filenames: Set of already used filenames
+            
+        Returns:
+            str: Unique filename
+        """
+        if filename not in used_filenames:
+            logging.info(f"✅ Filename '{filename}' is unique")
+            return filename
+        
+        logging.info(f"⚠️ Filename '{filename}' already exists, generating unique version...")
+        
+        # Split filename and extension
+        name, ext = os.path.splitext(filename)
+        counter = 1
+        
+        # Keep trying until we find a unique name
+        while True:
+            new_filename = f"{name} ({counter}){ext}"
+            if new_filename not in used_filenames:
+                logging.info(f"✅ Generated unique filename: '{new_filename}'")
+                return new_filename
+            logging.info(f"⚠️ '{new_filename}' also exists, trying next number...")
+            counter += 1
 
     def handle_gallery_click(self, evt: gr.SelectData):
         """Handle when user clicks on an image in the gallery - set as background, keep others as objects"""
@@ -266,11 +362,11 @@ class I2IHandler:
                     )
             else:
                 logging.warning(f"Gallery click index {evt.index} out of range")
-                return None, None, None, "**No image selected**", None, None
+                return None, None, create_default_canvas_image(), "**No image selected**", None, None
                 
         except Exception as e:
             logging.error(f"Gallery click error: {e}")
-            return None, None, None, "**Error loading image**", None, None
+            return None, None, create_default_canvas_image(), "**Error loading image**", None, None
 
 
 

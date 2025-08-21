@@ -1,7 +1,8 @@
 """
-Core Vision Module - Streamlined for Pro model auto-prompt workflow
-Extracted essential functions from the large vision.py (1589 lines → focused essentials)
-Optimized for 90% auto-prompt usage pattern
+Core Vision Module - Enhanced with Generic Object Intelligence
+Extracted essential functions from the large vision.py and enhanced with comprehensive object analysis
+Optimized for intelligent auto-prompt generation with material-aware, physics-based object placement
+Features universal object categorization, surface compatibility analysis, and contextual integration
 """
 from openai import OpenAI
 from PIL import Image
@@ -11,7 +12,7 @@ import logging
 
 
 class VisionAnalyzer:
-    """Streamlined vision analysis optimized for auto-prompt generation"""
+    """Enhanced vision analysis with generic object intelligence and material-aware placement"""
     
     def __init__(self):
         self.api_base = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
@@ -20,8 +21,9 @@ class VisionAnalyzer:
     def generate_comprehensive_auto_prompt(self, background_image: Image.Image, object_image: Image.Image = None, 
                                           selection_coords: tuple = None, provider_name: str = "", api_key: str = ""):
         """
-        Comprehensive auto-prompt generation - simplified without redundant human surfaces toggle.
-        The AI already handles object placement naturally, and post-processing provides sufficient filtering.
+        Enhanced comprehensive auto-prompt generation with generic object intelligence.
+        Features universal object analysis including material properties, form factors, placement intelligence,
+        and physics-based surface compatibility for realistic integration across any object type.
         """
         if "Qwen-VL-Max" not in provider_name:
             raise ValueError(f"{provider_name} is not supported. Please use Qwen-VL-Max.")
@@ -61,7 +63,7 @@ class VisionAnalyzer:
             if object_image:
                 logging.info(f"  📦 Object Image: {object_image.size} {object_image.mode}")
             
-            # ADD VISION ANALYSIS REQUEST - Ask model to describe what it sees first
+            # ADD VISION ANALYSIS REQUEST - Enhanced generic object analysis
             analysis_prompt = f"""Analyze both images and respond in JSON format:
 
 Image 1: Shows a scene with a blue selection box
@@ -74,9 +76,21 @@ Respond with this exact JSON structure:
             "scene_description": "Who are the people (specify positions like 'person on the left/right' if multiple), where is the location, what are they doing, lighting/environment details",
             "selection_area": "What specifically is inside the blue selection box area, including whose body part it is if applicable"
         }},
-        "image2_description": "What object you see in image 2 with details"
+        "object_analysis": {{
+            "category": "Object type and general category (e.g., beverage, electronics, decoration, tool, etc.)",
+            "form_factor": "Size, shape, dimensions, proportions - describe physical structure",
+            "material_properties": "Surface texture, finish (matte/glossy/metallic), transparency, apparent weight/solidity",
+            "visual_elements": "Colors, patterns, text, logos, distinctive features, branding if visible",
+            "functional_context": "How this object is typically used, displayed, or handled in real life"
+        }},
+        "placement_intelligence": {{
+            "natural_surfaces": "List appropriate surfaces where this object would realistically be placed",
+            "orientation": "How this object would naturally sit, rest, or be positioned",
+            "scale_indicators": "Size relative to human hands or common reference objects",
+            "environmental_fit": "What types of environments or contexts this object belongs in"
+        }}
     }},
-    "generation_prompt": "Clean 40-60 word prompt describing the object integration/placement in the scene. When multiple people are present, weave in multi-person context (e.g., 'while both individuals continue their activity', 'as the person on the left/right...') while maintaining focus on the selection area"
+    "generation_prompt": "Clean 40-60 word prompt describing realistic object integration based on its physical properties, appropriate surfaces, and natural positioning. Focus on material-accurate lighting, physics-based placement, and contextually appropriate environments."
 }}
 
 Original task: {prompt_text}"""
@@ -139,7 +153,7 @@ Original task: {prompt_text}"""
                         json_str = raw_response[json_start:json_end]
                         response_data = json.loads(json_str)
                         
-                        # LOG WHAT THE VISION MODEL SAW
+                        # LOG WHAT THE VISION MODEL SAW - Enhanced object analysis
                         logging.info("👁️ VISION MODEL IMAGE ANALYSIS:")
                         if "analysis" in response_data:
                             analysis = response_data["analysis"]
@@ -152,8 +166,28 @@ Original task: {prompt_text}"""
                                 else:
                                     # Legacy structure
                                     logging.info(f"  👁️ Image 1 (Blue Box): {img1_desc}")
-                            if "image2_description" in analysis:
+                            
+                            # Enhanced object analysis logging
+                            if "object_analysis" in analysis:
+                                obj_analysis = analysis["object_analysis"]
+                                logging.info("  🎯 ENHANCED OBJECT ANALYSIS:")
+                                logging.info(f"    📋 Category: {obj_analysis.get('category', 'Not specified')}")
+                                logging.info(f"    📐 Form Factor: {obj_analysis.get('form_factor', 'Not specified')}")
+                                logging.info(f"    🎨 Material Properties: {obj_analysis.get('material_properties', 'Not specified')}")
+                                logging.info(f"    ✨ Visual Elements: {obj_analysis.get('visual_elements', 'Not specified')}")
+                                logging.info(f"    🔧 Functional Context: {obj_analysis.get('functional_context', 'Not specified')}")
+                            elif "image2_description" in analysis:
+                                # Fallback to legacy structure
                                 logging.info(f"  🎯 Image 2 (Object): {analysis['image2_description']}")
+                            
+                            # Placement intelligence logging
+                            if "placement_intelligence" in analysis:
+                                placement = analysis["placement_intelligence"]
+                                logging.info("  🏗️ PLACEMENT INTELLIGENCE:")
+                                logging.info(f"    🪑 Natural Surfaces: {placement.get('natural_surfaces', 'Not specified')}")
+                                logging.info(f"    🔄 Orientation: {placement.get('orientation', 'Not specified')}")
+                                logging.info(f"    📏 Scale Indicators: {placement.get('scale_indicators', 'Not specified')}")
+                                logging.info(f"    🌍 Environmental Fit: {placement.get('environmental_fit', 'Not specified')}")
                         
                         # Extract the clean generation prompt
                         if "generation_prompt" in response_data:
@@ -238,21 +272,21 @@ Original task: {prompt_text}"""
             return "center"
     
     def _create_analysis_prompt(self, position_desc: str, has_object_image: bool = True) -> str:
-        """Create optimized analysis prompt - simplified without redundant human surface distinction"""
+        """Create optimized analysis prompt - enhanced with generic object intelligence"""
         
         if not has_object_image:
             # Single image mode - analyze just the selected area for enhancement/editing
             return f"""Create a 40-60 word prompt describing enhancement/modification of the blue selection area in the {position_desc}.
 
-Focus on what you observe in the blue highlighted area and describe realistic improvements as a natural scene composition."""
+Focus on what you observe in the blue highlighted area and describe realistic improvements as a natural scene composition with appropriate lighting and material properties."""
         
-        # Multi-image mode - focus on natural object integration with environmental surfaces
+        # Multi-image mode - focus on intelligent object integration with comprehensive analysis
         return f"""Create a 40-60 word prompt describing natural object placement/integration in the blue selection area in the {position_desc}.
 
-Focus on how the object integrates with environmental surfaces in the blue highlighted area. Describe the placement as a natural scene composition, not as instructions."""
+Use the detailed object analysis (category, materials, form factor) to determine realistic placement. Consider the object's physical properties, appropriate surfaces, natural orientation, and material-accurate lighting interactions. Describe the integration as a physically plausible scene composition."""
     
     def _clean_prompt_response(self, prompt: str) -> str:
-        """Clean up the generated prompt response for ultra-concise output"""
+        """Clean up the generated prompt response for ultra-concise output with enhanced object intelligence"""
         # Remove common prefixes/suffixes
         prompt = prompt.replace("Here's the prompt:", "").replace("Prompt:", "").strip()
         prompt = prompt.strip('"').strip("'").strip()
@@ -265,19 +299,29 @@ Focus on how the object integrates with environmental surfaces in the blue highl
         if "REQUIREMENTS:" in prompt:
             prompt = prompt.split("REQUIREMENTS:")[0].strip()
             
-        # Human surface detection and correction (simplified)
-        human_surface_keywords = ["on skin", "on clothing", "on fabric"]
-        environmental_replacements = {
-            "on skin": "on table surface",
-            "on clothing": "on nearby surface", 
-            "on fabric": "on solid surface"
+        # Enhanced surface detection and correction (generic approach)
+        surface_corrections = {
+            # Human surfaces to environmental surfaces
+            "on skin": "on nearby table surface",
+            "on clothing": "on adjacent surface", 
+            "on fabric": "on solid surface",
+            "on person": "on table nearby",
+            "on body": "on counter surface",
+            "on hand": "held naturally in hand",
+            "on arm": "on table surface",
+            "on lap": "on table surface",
+            
+            # Enhanced material-aware corrections
+            "floating": "resting securely",
+            "suspended": "placed naturally",
+            "attached to": "positioned near",
         }
         
-        # Apply corrections if human surfaces detected
-        for human_phrase, env_phrase in environmental_replacements.items():
+        # Apply surface corrections for safer, more realistic placement
+        for human_phrase, env_phrase in surface_corrections.items():
             if human_phrase in prompt.lower():
                 prompt = prompt.replace(human_phrase, env_phrase)
-                logging.info(f"🔧 Corrected: '{human_phrase}' → '{env_phrase}'")
+                logging.info(f"🔧 Enhanced Surface Correction: '{human_phrase}' → '{env_phrase}'")
         
         # Ensure it doesn't end with period for consistency
         if prompt.endswith('.'):
@@ -324,11 +368,12 @@ Focus on how the object integrates with environmental surfaces in the blue highl
         return prompt
     
     def _log_human_surface_detection(self, prompt: str) -> None:
-        """Log when human surfaces are detected in the prompt and provide user feedback"""
+        """Log when human surfaces are detected in the prompt and provide user feedback with enhanced object intelligence"""
         import gradio as gr
         
         human_indicators = [
-            "skin", "clothing", "fabric", "hand", "body", "person's", "human"
+            "skin", "clothing", "fabric", "hand", "body", "person's", "human", 
+            "arm", "leg", "chest", "back", "shoulder", "lap", "on person"
         ]
         
         detected_indicators = [indicator for indicator in human_indicators if indicator in prompt.lower()]
@@ -336,10 +381,11 @@ Focus on how the object integrates with environmental surfaces in the blue highl
         if detected_indicators:
             logging.info(f"🚨 Human surface indicators detected: {detected_indicators}")
             logging.info(f"Original prompt: '{prompt}'")
-            # Provide helpful user feedback
-            gr.Info("👥 Human figures detected! Automatically redirecting to environmental surfaces (tables, counters, etc.). Enable the '🤝 Allow objects on people' option if you want to place objects directly on people.")
+            # Enhanced user feedback with object intelligence context
+            gr.Info("👥 Human surfaces detected! Enhanced object analysis is automatically redirecting to appropriate environmental surfaces (tables, counters, stands) for more realistic and comfortable object placement. The system now considers object properties like size, weight, and typical usage context.")
         else:
-            logging.info("✅ No human surface issues detected")
+            logging.info("✅ No human surface issues detected - object placement appears appropriate")
+            logging.info(f"✅ Enhanced analysis successfully guided realistic placement: '{prompt}'")
 
 
 # Legacy compatibility functions for existing code

@@ -282,9 +282,9 @@ class Generator:
             raise gr.Error(f"❌ API Request Error: {e}\n\nResponse: {response_text}\n\nTry switching to a different model provider.")
         
         # Polling loop with improved error handling
-        for i in range(60):
+        for i in range(25):
             try:
-                progress((i + 1) / 60, desc=f"Waiting for result (Attempt {i+1})...")
+                progress((i + 1) / 25, desc=f"Waiting for result (Attempt {i+1})...")
                 get_response = requests.get(polling_url, headers={"x-key": api_key}, timeout=30)
                 get_response.raise_for_status()
                 result_data = get_response.json()
@@ -315,17 +315,17 @@ class Generator:
                     raise gr.Error(f"API job failed: {result_data.get('error', 'Unknown error')}")
                 
             except requests.exceptions.Timeout:
-                logging.warning(f"⏰ Polling timeout on attempt {i+1}/60")
-                if i >= 55:  # Last few attempts
+                logging.warning(f"⏰ Polling timeout on attempt {i+1}/25")
+                if i >= 22:  # Last few attempts
                     raise gr.Error("⏰ Polling Timeout: Server is taking too long to process your request. Please try again.")
             except requests.exceptions.RequestException as e:
-                logging.warning(f"🌐 Polling error on attempt {i+1}/60: {e}")
-                if i >= 55:  # Last few attempts  
+                logging.warning(f"🌐 Polling error on attempt {i+1}/25: {e}")
+                if i >= 22:  # Last few attempts  
                     raise gr.Error(f"🌐 Polling Error: {e}")
             
             time.sleep(2)
 
-        raise gr.Error("API request timed out after 2 minutes.")
+        raise gr.Error("API request timed out after 50 seconds.")
 
     def _get_pro_provider_info(self, model_choice):
         """Extract provider info from Pro model choice and return config keys and provider name"""

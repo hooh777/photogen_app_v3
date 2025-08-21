@@ -38,49 +38,60 @@ class PhotoGenApp:
 
     def _register_additional_handlers(self):
         """Register additional handlers for saving and enhancement."""
-        # Simplified download button - no gallery selection needed
+        # Enhanced download button - tries auto-download first, fallback to manual
         if 'download_result_btn' in self.ui and 'download_output' in self.ui:
-            # Simplified download method - gets state values as inputs
+            # Enhanced download method with auto-download to Downloads folder
             def download_latest_image(gallery_images, last_generated_state):
-                """Download the most recently generated image from inputs"""
+                """Download the most recently generated image - auto-download to Downloads folder"""
                 try:
+                    # Get the image to download
+                    target_img = None
+                    
                     # Primary method: get from last_generated_image_state input
                     logging.info(f"💾 Checking last_generated_state input: {type(last_generated_state)} - {last_generated_state is not None}")
                     if last_generated_state is not None:
-                        logging.info(f"💾 Downloading from last_generated_state: {type(last_generated_state)}")
-                        filepath = self.save_and_download_image(last_generated_state, "photogen")
-                        if filepath and os.path.exists(filepath):
-                            absolute_path = os.path.abspath(filepath)
-                            logging.info(f"💾 Triggering download with gr.update: {absolute_path}")
-                            return gr.update(value=absolute_path, visible=True)
-                        else:
-                            logging.error(f"💾 File not found or save failed: {filepath}")
-                            return gr.update(visible=False)
+                        logging.info(f"💾 Using last_generated_state: {type(last_generated_state)}")
+                        target_img = last_generated_state
                     
                     # Fallback: get from gallery input
-                    logging.info(f"💾 Checking gallery_images input: {type(gallery_images)} - Length: {len(gallery_images) if gallery_images else 0}")
-                    if gallery_images and len(gallery_images) > 0:
+                    elif gallery_images and len(gallery_images) > 0:
                         # Get the most recent image (last in the gallery)
-                        recent_img = gallery_images[-1]
-                        logging.info(f"💾 Downloading latest image from gallery: {type(recent_img)}")
-                        filepath = self.save_and_download_image(recent_img, "photogen")
+                        target_img = gallery_images[-1]
+                        logging.info(f"💾 Using latest image from gallery: {type(target_img)}")
+                    
+                    if target_img is None:
+                        gr.Warning("No image available to download. Please generate an image first.")
+                        return gr.update(visible=False)
+                    
+                    # Try auto-download to Downloads folder first
+                    success = self.auto_download_to_downloads(target_img)
+                    
+                    if success:
+                        # Auto-download succeeded - hide the manual download button
+                        logging.info(f"💾 Auto-download successful, hiding manual download button")
+                        return gr.update(visible=False)
+                    else:
+                        # Auto-download failed - fallback to manual download process
+                        logging.info(f"💾 Auto-download failed, falling back to manual process")
+                        filepath = self.save_and_download_image(target_img, "photogen")
                         if filepath and os.path.exists(filepath):
                             absolute_path = os.path.abspath(filepath)
-                            logging.info(f"💾 Triggering download with gr.update: {absolute_path}")
+                            logging.info(f"💾 Manual fallback ready: {absolute_path}")
+                            gr.Error("Auto-download failed. Click 'Download Image' button below to download manually.")
                             return gr.update(value=absolute_path, visible=True)
                         else:
-                            logging.error(f"💾 File not found or save failed: {filepath}")
+                            logging.error(f"💾 Manual fallback also failed: {filepath}")
+                            gr.Error("Download failed. Please try again or check your permissions.")
                             return gr.update(visible=False)
                     
                 except Exception as e:
                     logging.error(f"💾 Download failed: {e}")
                     import traceback
                     logging.error(f"💾 Traceback: {traceback.format_exc()}")
-                
-                gr.Warning("No image available to download. Please generate an image first.")
-                return gr.update(visible=False)
+                    gr.Error("Download failed. Please try again or check your permissions.")
+                    return gr.update(visible=False)
             
-            # Register the download method with inputs - output directly to download
+            # Register the enhanced download method
             self.ui['download_result_btn'].click(
                 download_latest_image,
                 inputs=[self.ui['output_gallery'], self.ui['last_generated_image_state']],
@@ -190,18 +201,21 @@ class PhotoGenApp:
         """Clear all state and reset the app to initial state."""
         logging.info("🗑️ Clearing all: resetting app state completely")
         
+        # Import the default image function
+        from core.ui import create_default_canvas_image
+        
         # Clear uploaded images from i2i_handler
         if hasattr(self.i2i_handler, 'uploaded_images'):
             self.i2i_handler.uploaded_images = []
         
-        gr.Info("�️ All data cleared! Upload new images to start fresh.")
+        gr.Info("All data cleared! Upload new images to start fresh.")
         
         return (
             [],  # output_gallery - empty list
             "",  # i2i_prompt - empty string
             None,  # i2i_source_uploader - clear files
             [],  # uploaded_images_preview - empty gallery
-            None,  # i2i_interactive_canvas - clear image
+            create_default_canvas_image(),  # i2i_interactive_canvas - show default white image
             "**Upload images above to start editing**",  # canvas_mode_info - update message
             None,  # selected_gallery_image_state - clear state
             None,  # last_generated_image_state - clear state
@@ -214,18 +228,57 @@ class PhotoGenApp:
             "**Status:** Ready to generate! 🎉"  # final_status - reset
         )
 
-    def save_and_download_image(self, img, img_type):
-        """Saves image and returns path for immediate download."""
-        logging.info(f"💾 Save and download image called - Type: {type(img)}")
+    def auto_download_to_downloads(self, img):
+        """Automatically download image to user's Downloads folder."""
+        logging.info(f"💾 Auto-download to Downloads folder - Type: {type(img)}")
         
         if img is None:
-            gr.Warning("No image available to download.")
-            return None
-            
-        os.makedirs(const.OUTPUTS_DIR, exist_ok=True)
+            logging.error("💾 No image provided for auto-download")
+            return False
         
-        # Process the image to get PIL format
+        try:
+            # Get user's Downloads folder
+            import pathlib
+            downloads_path = str(pathlib.Path.home() / "Downloads")
+            
+            # Check if Downloads folder exists and is writable
+            if not os.path.exists(downloads_path):
+                logging.error(f"💾 Downloads folder not found: {downloads_path}")
+                return False
+            
+            if not os.access(downloads_path, os.W_OK):
+                logging.error(f"💾 No write permission to Downloads folder: {downloads_path}")
+                return False
+            
+            # Process the image to get PIL format (reuse existing logic)
+            pil_img = self._process_image_for_download(img)
+            if pil_img is None:
+                logging.error("💾 Could not process image for auto-download")
+                return False
+            
+            # Generate filename with timestamp (same format as manual download)
+            filename = f"photogen_output_{int(time.time())}.png"
+            filepath = os.path.join(downloads_path, filename)
+            
+            # Save directly to Downloads folder
+            pil_img.save(filepath)
+            logging.info(f"💾 Image auto-downloaded successfully to: {filepath}")
+            
+            # Show success message
+            gr.Info(f"✅ Downloaded: {filename} (saved to Downloads folder)")
+            return True
+            
+        except PermissionError as e:
+            logging.error(f"💾 Permission denied for auto-download: {e}")
+            return False
+        except Exception as e:
+            logging.error(f"💾 Auto-download failed: {e}")
+            return False
+    
+    def _process_image_for_download(self, img):
+        """Extract PIL image from various input formats."""
         pil_img = None
+        
         if isinstance(img, tuple):
             img = img[0]
             
@@ -257,17 +310,31 @@ class PhotoGenApp:
             pil_img = Image.fromarray(img)
         elif hasattr(img, 'save'):
             pil_img = img  # Already a PIL Image
+            
+        return pil_img
+
+    def save_and_download_image(self, img, img_type):
+        """Saves image and returns path for immediate download (fallback method)."""
+        logging.info(f"💾 Save and download image called (fallback) - Type: {type(img)}")
+        
+        if img is None:
+            gr.Warning("No image available to download.")
+            return None
+            
+        os.makedirs(const.OUTPUTS_DIR, exist_ok=True)
+        
+        # Use the helper method to process the image
+        pil_img = self._process_image_for_download(img)
         
         if pil_img is None:
             logging.error(f"💾 Could not process image type: {type(img)}")
             return None
         
-        # Save the image
+        # Save the image to outputs folder (for manual download)
         filepath = f"{const.OUTPUTS_DIR}/{img_type}_output_{int(time.time())}.png"
         try:
             pil_img.save(filepath)
-            logging.info(f"💾 Image saved successfully to: {filepath}")
-            gr.Info(f"Image downloaded: {os.path.basename(filepath)}")
+            logging.info(f"💾 Image saved for manual download to: {filepath}")
             return filepath
         except Exception as e:
             logging.error(f"💾 Failed to save image: {e}")
@@ -276,13 +343,12 @@ class PhotoGenApp:
 
     def launch(self):
         print("=" * 50)
-        print("🚀 PhotoGen App v3 Starting...")
+        print("PhotoGen App v3 Starting...")
         print("=" * 50)
-        print("⚡ Loading AI models and initializing...")
-        print("🌐 Starting web interface...")
-        print("📱 Open in your browser: http://localhost:7860")
-        print("💡 Alternative URL: http://127.0.0.1:7860")
-        print("⚠️  DO NOT use 0.0.0.0:7860 - browsers can't connect to it!")
+        print("Loading AI models and initializing...")
+        print("Starting web interface...")
+        print("Open in your browser: http://localhost:7860")
+        print("Alternative URL: http://127.0.0.1:7860")
         print("=" * 50)
         
         self.demo.launch(

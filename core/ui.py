@@ -1,5 +1,12 @@
 import gradio as gr
+from PIL import Image, ImageDraw
 from core import constants as const
+
+def create_default_canvas_image():
+    """Create a default plain white image for the interactive canvas."""
+    # Create a completely plain white image
+    img = Image.new('RGB', (600, 400), 'white')
+    return img
 
 def create_ui():
     """Creates the final three-panel Gradio UI."""
@@ -40,6 +47,38 @@ def create_ui():
         width: 100% !important;
         height: auto !important;
     }
+    
+    /* Hide ONLY upload prompts, keep image display functionality */
+    .canvas-no-upload .upload-button,
+    .canvas-no-upload .drag-drop-text,
+    .canvas-no-upload .file-upload-text {
+        display: none !important;
+    }
+    
+    /* Hide cross/clear buttons from interactive canvas */
+    .interactive-canvas .clear-button,
+    .interactive-canvas button[aria-label="Clear"],
+    .interactive-canvas button[title="Clear"],
+    .interactive-canvas [data-testid="clear-button"],
+    .canvas-no-upload .clear-button,
+    .canvas-no-upload button[aria-label="Clear"],
+    .canvas-no-upload button[title="Clear"],
+    .canvas-no-upload [data-testid="clear-button"],
+    .interactive-canvas .image-button,
+    .canvas-no-upload .image-button {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    /* Hide any buttons inside the image container */
+    .interactive-canvas [data-testid="image"] button,
+    .canvas-no-upload [data-testid="image"] button {
+        display: none !important;
+    }
+    
+    </style>
+    
+    <style>
     
     /* More specific targeting for canvas images */
     .interactive-canvas [data-testid="image"] img {
@@ -182,13 +221,14 @@ def create_ui():
                 canvas_instructions = gr.Markdown("**🎯 Click on the image** to select areas for targeted editing:", visible=True)
                 
                 i2i_interactive_canvas = gr.Image(
+                    value=create_default_canvas_image(),  # Start with default white image
                     type="pil", 
                     label="🎨 Interactive Canvas", 
                     visible=True, 
                     height=600, 
                     interactive=True, 
-                    sources=None,  # Explicitly disable all upload sources
-                    elem_classes="interactive-canvas",
+                    sources=[],  # Empty list instead of None - this should actually disable uploads
+                    elem_classes="interactive-canvas canvas-no-upload",
                     container=True,
                     show_label=True
                 )
@@ -200,6 +240,162 @@ def create_ui():
                 
                 # Canvas info (for upload instructions when no image)
                 canvas_mode_info = gr.Markdown("**Upload images first to start selecting area**", visible=True)
+                
+                # Add JavaScript for canvas monitoring
+                gr.HTML("""
+                <script>
+                console.log('🚀 PhotoGen Debug Script Loading...');
+                
+                // Monitor canvas and restore white image when cleared
+                let canvasCheckInterval;
+                let defaultImageDataUrl = null;
+                let debugCounter = 0;
+                let lastCanvasState = {};
+                
+                // Create default white image data URL
+                function createDefaultImageDataUrl() {
+                    if (!defaultImageDataUrl) {
+                        console.log('🎨 Creating default white image data URL...');
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 600;
+                        canvas.height = 400;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(0, 0, 600, 400);
+                        defaultImageDataUrl = canvas.toDataURL();
+                        console.log('🎨 Default white image created:', defaultImageDataUrl.substring(0, 50) + '...');
+                    }
+                    return defaultImageDataUrl;
+                }
+                
+                // Check if canvas is empty and restore white image
+                function checkAndRestoreCanvas(triggerReason = 'interval') {
+                    debugCounter++;
+                    const timestamp = new Date().toLocaleTimeString();
+                    const canvasElements = document.querySelectorAll('.canvas-no-upload img, .interactive-canvas img, [data-testid="image"] img');
+                    
+                    console.log(`🔍 Check #${debugCounter} (${triggerReason}) at ${timestamp}: Found ${canvasElements.length} canvas image elements`);
+                    
+                    let restoredCount = 0;
+                    canvasElements.forEach((img, index) => {
+                        const currentState = {
+                            src: img.src ? img.src.substring(0, 50) + '...' : 'EMPTY',
+                            display: img.style.display,
+                            visibility: img.style.visibility,
+                            offsetHeight: img.offsetHeight,
+                            offsetWidth: img.offsetWidth
+                        };
+                        
+                        // Only log if state changed
+                        const stateKey = `canvas_${index}`;
+                        if (JSON.stringify(currentState) !== JSON.stringify(lastCanvasState[stateKey])) {
+                            console.log(`🔄 Canvas ${index} state changed:`, currentState);
+                            lastCanvasState[stateKey] = currentState;
+                        }
+                        
+                        // Check if image is missing or shows upload placeholder
+                        const isEmpty = !img.src || img.src === '' || img.src === 'data:,' || 
+                                       img.style.display === 'none' || img.offsetHeight === 0 ||
+                                       img.src.includes('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP') ||
+                                       img.naturalWidth === 0;
+                                       
+                        if (isEmpty) {
+                            console.log(`❌ Canvas ${index} is empty, restoring white image... (trigger: ${triggerReason})`);
+                            const whiteImageSrc = createDefaultImageDataUrl();
+                            img.src = whiteImageSrc;
+                            img.style.display = 'block';
+                            img.style.visibility = 'visible';
+                            restoredCount++;
+                            console.log(`✅ White image restored to canvas ${index}`);
+                        } else {
+                            console.log(`✅ Canvas ${index} has image, no action needed`);
+                        }
+                    });
+                    
+                    if (restoredCount > 0) {
+                        console.log(`🎉 Restored ${restoredCount} canvas(es) to white image`);
+                    }
+                    
+                    // Also check for upload text and hide it
+                    const uploadTexts = document.querySelectorAll('.canvas-no-upload .upload-message, .canvas-no-upload .drop-message, .interactive-canvas .upload-message');
+                    if (uploadTexts.length > 0) {
+                        console.log(`🚫 Found ${uploadTexts.length} upload text elements, hiding them`);
+                        uploadTexts.forEach(text => {
+                            text.style.display = 'none';
+                        });
+                    }
+                    
+                    // Log canvas container info
+                    const canvasContainers = document.querySelectorAll('.canvas-no-upload, .interactive-canvas');
+                    console.log(`📦 Found ${canvasContainers.length} canvas containers`);
+                }
+                
+                // Add event listeners for immediate canvas checks
+                function addButtonEventListeners() {
+                    console.log('🎯 Setting up button event listeners...');
+                    
+                    // Check every 200ms for new buttons (they might be dynamically created)
+                    setInterval(() => {
+                        // Clear All button
+                        const clearAllBtns = document.querySelectorAll('button[data-testid="Clear All"], button:contains("Clear All"), button:contains("🗑️")');
+                        clearAllBtns.forEach(btn => {
+                            if (!btn.hasAttribute('canvas-listener')) {
+                                btn.setAttribute('canvas-listener', 'true');
+                                console.log('🔗 Added Clear All button listener');
+                                btn.addEventListener('click', () => {
+                                    console.log('🗑️ Clear All button clicked!');
+                                    // Check immediately and then a few more times
+                                    setTimeout(() => checkAndRestoreCanvas('clear-all-100ms'), 100);
+                                    setTimeout(() => checkAndRestoreCanvas('clear-all-300ms'), 300);
+                                    setTimeout(() => checkAndRestoreCanvas('clear-all-500ms'), 500);
+                                    setTimeout(() => checkAndRestoreCanvas('clear-all-1000ms'), 1000);
+                                });
+                            }
+                        });
+                        
+                        // Note: Cross buttons removed from interactive canvas, no need to monitor them
+                    }, 200);
+                }
+                
+                // Start monitoring when page loads
+                function startCanvasMonitoring() {
+                    console.log('🚀 Starting canvas monitoring...');
+                    if (canvasCheckInterval) {
+                        console.log('🛑 Clearing existing interval');
+                        clearInterval(canvasCheckInterval);
+                    }
+                    
+                    // Check every 300ms for cleared canvas (faster response)
+                    canvasCheckInterval = setInterval(() => {
+                        checkAndRestoreCanvas('interval');
+                    }, 300);
+                    
+                    // Also check immediately
+                    console.log('🔄 Running initial canvas check...');
+                    setTimeout(() => checkAndRestoreCanvas('initial'), 500);
+                    
+                    // Set up button listeners
+                    addButtonEventListeners();
+                }
+                
+                // Initialize monitoring with delay to ensure DOM is ready
+                setTimeout(() => {
+                    console.log('⏱️ Delayed start - initializing canvas monitoring');
+                    startCanvasMonitoring();
+                }, 2000);
+                
+                // Also try on DOMContentLoaded
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', () => {
+                        console.log('📄 DOM Content Loaded - starting canvas monitoring');
+                        setTimeout(startCanvasMonitoring, 1000);
+                    });
+                } else {
+                    console.log('📄 DOM already ready - starting canvas monitoring immediately');
+                    setTimeout(startCanvasMonitoring, 1000);
+                }
+                </script>
+                """)
 
             # --- RIGHT PANEL (GENERATION & OUTPUT SETTINGS) ---
             with gr.Column(scale=2, min_width=280):

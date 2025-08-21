@@ -1,0 +1,9 @@
+1. change the light blue background of each girl selfie to be a fantasy garden. Maintain the 2x4 grid pattern
+
+2. change the light grey background of each girls' selfie to be in an industrial elevator, with detailed and clear interior decoration. Maintain the 2x4 grid pattern
+
+3. Change the light grey background of each girls' selfie to be inside  Japanese Rail Car, with detailed interior decoration. The background should be at the windows. Maintain the 2x2 grid pattern, and the tan photo frame layout
+
+4. Change the light grey background of each girls' selfie to be inside  Japanese Rail Car, with detailed interior decoration. The background should be at the windows. The background in each selfie should be a bit different angle of the inside of Japanese Rail Car. Maintain the 2x2 grid pattern, and the tan photo frame layout
+
+5. Change the light blue background of each girl selfie: the first one  to be in a realistic train with Victorian style. The second one to be in front of a real Amazonian waterfall, with water splashing. The third one to be in front of the entrance of JR station, with a group of kindergarteners behind. The forth one to be in a Korean night club, with 2 Korean people fighting. Maintain the 1x4 grid pattern. Don't change the girls 

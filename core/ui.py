@@ -176,8 +176,36 @@ def create_ui():
                 """)
                 
                 with gr.Column():
-                    # Human interaction toggle removed - functionality was redundant
-                    
+                    # Add Selfie Background Presets Section
+                    gr.Markdown("#### 🎯 Selfie Background Presets")
+                    selfie_preset_dropdown = gr.Dropdown(
+                        choices=[
+                            "None (Custom Prompt)",
+                            # Elevator variations
+                            "Elevator - Modern",
+                            "Elevator - Vintage",
+                            "Elevator - Glass/Panoramic",
+                            "Elevator - Industrial",
+                            # Train variations
+                            "Train - Subway Car",
+                            "Train - Luxury Train",
+                            "Train - Vintage Train Car",
+                            "Train - Bullet Train Interior",
+                            # Cafe variations
+                            "Cafe - Cozy Coffee Shop",
+                            "Cafe - Modern Minimalist",
+                            "Cafe - Outdoor Patio",
+                            "Cafe - Bookstore Cafe",
+                            # Restaurant variations
+                            "Restaurant - Fine Dining",
+                            "Restaurant - Casual Bistro",
+                            "Restaurant - Rooftop Bar",
+                            "Restaurant - Kitchen Counter"
+                        ],
+                        value="None (Custom Prompt)",
+                        label="🏢 Choose Background Setting",
+                        info="Select a preset to auto-fill the prompt, then customize as needed"
+                    )
 
 
                     prompt_separator = gr.Markdown("## Write or Adjust Your Prompt", visible=True, elem_id="prompt_separator")
@@ -457,6 +485,9 @@ def create_ui():
         "prompt_separator": prompt_separator,
         "step1_status": step1_status, "step2_status": step2_status,
         "final_status": final_status,
+        
+        # Add selfie preset to components
+        "selfie_preset_dropdown": selfie_preset_dropdown,
         
         # Download/Clear components
         "download_result_btn": download_result_btn, "clear_all_btn": clear_all_btn, "download_output": download_output,

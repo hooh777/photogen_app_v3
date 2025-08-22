@@ -368,6 +368,46 @@ class I2IHandler:
             logging.error(f"Gallery click error: {e}")
             return None, None, create_default_canvas_image(), "**Error loading image**", None, None
 
+    def handle_selfie_preset_selection(self, preset_selection):
+        """Handle selfie background preset selection and return appropriate prompt."""
+        logging.info(f"🎯 Selfie preset selected: {preset_selection}")
+        
+        # Define preset prompts for each background
+        preset_prompts = {
+            "None (Custom Prompt)": "",
+            
+            # Elevator variations
+            "Elevator - Modern": "standing in a sleek modern elevator with brushed steel walls, LED lighting panels, and polished floor reflecting the person",
+            "Elevator - Vintage": "standing in a classic vintage elevator with brass buttons, wood paneling, and warm ambient lighting",
+            "Elevator - Glass/Panoramic": "standing in a glass panoramic elevator with city views visible through transparent walls and modern lighting",
+            "Elevator - Industrial": "standing in an industrial freight elevator with exposed metal walls, heavy-duty controls, and utilitarian lighting",
+            
+            # Train variations
+            "Train - Subway Car": "sitting in a modern subway train car with bright fluorescent lighting, metal handrails, and urban transit atmosphere",
+            "Train - Luxury Train": "standing in an elegant luxury train car with rich wood interiors, plush seating, and sophisticated ambient lighting",
+            "Train - Vintage Train Car": "standing in a vintage train car with classic wooden benches, brass fittings, and nostalgic railway atmosphere",
+            "Train - Bullet Train Interior": "sitting in a sleek bullet train interior with modern seating, large windows, and high-tech ambient lighting",
+            
+            # Cafe variations
+            "Cafe - Cozy Coffee Shop": "sitting in a cozy coffee shop with warm lighting, exposed brick walls, wooden tables, and coffee aroma atmosphere",
+            "Cafe - Modern Minimalist": "standing in a modern minimalist cafe with clean lines, white walls, natural lighting, and contemporary furniture",
+            "Cafe - Outdoor Patio": "sitting on an outdoor cafe patio with natural daylight, bistro tables, and urban street atmosphere",
+            "Cafe - Bookstore Cafe": "standing in a bookstore cafe surrounded by bookshelves, reading nooks, and warm literary atmosphere",
+            
+            # Restaurant variations
+            "Restaurant - Fine Dining": "standing in an upscale fine dining restaurant with elegant decor, soft ambient lighting, and sophisticated atmosphere",
+            "Restaurant - Casual Bistro": "sitting in a casual bistro with comfortable seating, warm lighting, and relaxed dining atmosphere",
+            "Restaurant - Rooftop Bar": "standing on a rooftop restaurant bar with city skyline views, modern furniture, and evening ambient lighting",
+            "Restaurant - Kitchen Counter": "standing at a restaurant kitchen counter with stainless steel surfaces, professional lighting, and culinary atmosphere"
+        }
+        
+        # Get the preset prompt
+        preset_prompt = preset_prompts.get(preset_selection, "")
+        
+        logging.info(f"📝 Generated preset prompt: {preset_prompt[:100]}..." if len(preset_prompt) > 100 else f"📝 Generated preset prompt: {preset_prompt}")
+        
+        return preset_prompt
+
 
 
 

@@ -125,6 +125,13 @@ class PhotoGenApp:
         # Simplified workflow - no complex handlers needed
         logging.info("Using simplified auto-prompt workflow - handlers reduced")
 
+        # Selfie Preset Handler
+        self.ui['selfie_preset_dropdown'].change(
+            fn=self.i2i_handler.handle_selfie_preset_selection,
+            inputs=[self.ui['selfie_preset_dropdown']],
+            outputs=[self.ui['i2i_prompt']]
+        )
+
     def _register_api_key_handlers(self):
         self.ui['provider_select'].change(fn=self.load_saved_key, inputs=self.ui['provider_select'], outputs=self.ui['api_key_input'])
         self.ui['save_api_key_btn'].click(self.save_enhancer_api_key, inputs=[self.ui['provider_select'], self.ui['api_key_input']])
